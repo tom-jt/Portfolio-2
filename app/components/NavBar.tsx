@@ -7,7 +7,6 @@ import {
   MobileNavMenu,
   MobileNavToggle,
   Navbar,
-  NavbarButton,
   NavbarLogo,
   NavBody,
   NavItems,
@@ -19,6 +18,7 @@ import {
   IconBrandInstagram,
   IconBrandLinkedin,
 } from "@tabler/icons-react";
+import { Gamepad2Icon } from "lucide-react";
 
 interface NavBarProps extends PropsWithChildren {
   children?: ReactNode;
@@ -52,8 +52,11 @@ const NavBar = ({ children }: NavBarProps) => {
           <div className="flex items-center gap-4">
             <NavBarIconButton icon={<IconBrandGithub />} />
             <NavBarIconButton icon={<IconBrandLinkedin />} />
-            <NavBarIconButton icon={<IconBrandInstagram />} />
-            <AnimatedThemeToggler className="z-0 cursor-pointer ml-16" />
+            <NavBarIconButton icon={<Gamepad2Icon />} />
+            <NavBarIconButton
+              icon={<AnimatedThemeToggler className="cursor-pointer" />}
+              className="ml-16"
+            />
           </div>
         </NavBody>
 
@@ -66,7 +69,9 @@ const NavBar = ({ children }: NavBarProps) => {
                 isOpen={isMobileMenuOpen}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               />
-              <AnimatedThemeToggler className="z-0 cursor-pointer" />
+              <NavBarIconButton
+                icon={<AnimatedThemeToggler className="cursor-pointer" />}
+              />
             </div>
           </MobileNavHeader>
 
@@ -87,7 +92,7 @@ const NavBar = ({ children }: NavBarProps) => {
             <div className="flex w-full gap-4 justify-center">
               <NavBarIconButton icon={<IconBrandGithub />} />
               <NavBarIconButton icon={<IconBrandLinkedin />} />
-              <NavBarIconButton icon={<IconBrandInstagram />} />
+              <NavBarIconButton icon={<Gamepad2Icon />} />
             </div>
           </MobileNavMenu>
         </MobileNav>
