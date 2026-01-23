@@ -50,7 +50,7 @@ export const HeroParallax = ({
     springConfig,
   );
   const translateY = useSpring(
-    useTransform(scrollYProgress, [0, 0.2], [-700, 500]),
+    useTransform(scrollYProgress, [0, 0.2], [-800, 100]),
     springConfig,
   );
   return (
@@ -59,6 +59,7 @@ export const HeroParallax = ({
       className="h-[300vh] overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
     >
       <Header />
+      <ProductTitle />
       <motion.div
         style={{
           rotateX,
@@ -102,7 +103,7 @@ export const HeroParallax = ({
 
 export const Header = () => {
   return (
-    <div className="w-screen h-screen flex justify-center items-center">
+    <div className="w-screen h-screen flex justify-center items-center z-10">
       <div className="px-20 md:px-80 h-3/7 md:h-2/7 w-full flex flex-col justify-between gap-8">
         <TextType
           text={[
@@ -125,6 +126,14 @@ export const Header = () => {
           projects, and discovering life the hard way.
         </p>
       </div>
+    </div>
+  );
+};
+
+export const ProductTitle = () => {
+  return (
+    <div className="w-full flex justify-center z-10">
+      <h1 className="text-center text-7xl font-bold">Featured Projects</h1>
     </div>
   );
 };
