@@ -13,21 +13,17 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import NavBarIconButton from "./NavBarIconButton";
-import {
-  IconBrandGithub,
-  IconBrandInstagram,
-  IconBrandLinkedin,
-} from "@tabler/icons-react";
-import { Gamepad2Icon } from "lucide-react";
+import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 
 interface NavBarProps extends PropsWithChildren {
   children?: ReactNode;
+  className?: string;
 }
 
-const NavBar = ({ children }: NavBarProps) => {
+const NavBar = ({ children, className }: NavBarProps) => {
   const navItems = [
     {
-      name: "Me",
+      name: "Home",
       link: "#me",
     },
     {
@@ -35,15 +31,15 @@ const NavBar = ({ children }: NavBarProps) => {
       link: "#projects",
     },
     {
-      name: "Contact",
-      link: "#contact",
+      name: "Error",
+      link: "/game",
     },
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="relative w-full">
+    <div className={`relative w-full ${className}`}>
       <Navbar>
         {/* Desktop Navigation */}
         <NavBody>
@@ -52,7 +48,6 @@ const NavBar = ({ children }: NavBarProps) => {
           <div className="flex items-center gap-4">
             <NavBarIconButton icon={<IconBrandGithub />} />
             <NavBarIconButton icon={<IconBrandLinkedin />} />
-            <NavBarIconButton icon={<Gamepad2Icon />} />
             <NavBarIconButton
               icon={<AnimatedThemeToggler className="cursor-pointer" />}
               className="ml-16"
@@ -92,7 +87,6 @@ const NavBar = ({ children }: NavBarProps) => {
             <div className="flex w-full gap-4 justify-center">
               <NavBarIconButton icon={<IconBrandGithub />} />
               <NavBarIconButton icon={<IconBrandLinkedin />} />
-              <NavBarIconButton icon={<Gamepad2Icon />} />
             </div>
           </MobileNavMenu>
         </MobileNav>

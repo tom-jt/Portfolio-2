@@ -20,7 +20,6 @@ export const HeroParallax = ({
 }) => {
   const firstRow = products.slice(0, 5);
   const secondRow = products.slice(5, 10);
-  const thirdRow = products.slice(10, 15);
   const ref = React.useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -56,7 +55,7 @@ export const HeroParallax = ({
   return (
     <div
       ref={ref}
-      className="h-[300vh] overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
+      className="overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
     >
       <Header />
       <ProductTitle />
@@ -78,20 +77,11 @@ export const HeroParallax = ({
             />
           ))}
         </motion.div>
-        <motion.div className="flex flex-row  mb-20 space-x-20 ">
+        <motion.div className="flex flex-row  mb-20 space-x-20">
           {secondRow.map((product) => (
             <ProductCard
               product={product}
               translate={translateXReverse}
-              key={product.title}
-            />
-          ))}
-        </motion.div>
-        <motion.div className="flex flex-row-reverse space-x-reverse space-x-20">
-          {thirdRow.map((product) => (
-            <ProductCard
-              product={product}
-              translate={translateX}
               key={product.title}
             />
           ))}
@@ -103,7 +93,7 @@ export const HeroParallax = ({
 
 export const Header = () => {
   return (
-    <div className="w-screen h-screen flex justify-center items-center z-10">
+    <div className="w-full h-screen flex justify-center items-center z-10">
       <div className="px-20 md:px-80 h-3/7 md:h-2/7 w-full flex flex-col justify-between gap-8">
         <TextType
           text={[
