@@ -23,16 +23,16 @@ interface NavBarProps extends PropsWithChildren {
 const NavBar = ({ children, className }: NavBarProps) => {
   const navItems = [
     {
-      name: "Home",
+      name: "About Me",
       link: "#me",
     },
     {
-      name: "Projects",
+      name: "My Creations",
       link: "#projects",
     },
     {
-      name: "Error",
-      link: "/game",
+      name: "Contact",
+      link: "#contact",
     },
   ];
 

@@ -1,3 +1,5 @@
+"use client";
+
 import LogoLoop from "@/components/LogoLoop";
 import {
   Terminal,
@@ -5,15 +7,18 @@ import {
   TypingAnimation,
 } from "@/components/ui/terminal";
 import {
-  IconBrandCSharp,
-  IconBrandMongodb,
-  IconBrandMysql,
-  IconBrandNextjs,
-  IconBrandReact,
-  IconBrandTailwind,
-  IconBrandTypescript,
-  IconBrandUnity,
-} from "@tabler/icons-react";
+  AndroidOriginalIcon,
+  CsharpOriginalIcon,
+  JavaOriginalIcon,
+  KotlinPlainIcon,
+  MongodbOriginalIcon,
+  NextjsOriginalIcon,
+  PostgresqlOriginalIcon,
+  ReactOriginalIcon,
+  TailwindcssOriginalIcon,
+  TypescriptOriginalIcon,
+  UnityOriginalIcon,
+} from "@devicon/react";
 
 const About = () => {
   const funFacts = [
@@ -22,39 +27,59 @@ const About = () => {
 
   const techLogos = [
     {
-      node: <IconBrandReact size={60} />,
+      node: <ReactOriginalIcon size={60} />,
       title: "React",
       href: "https://react.dev",
     },
     {
-      node: <IconBrandNextjs size={60} />,
+      node: <NextjsOriginalIcon size={60} />,
       title: "Next.js",
       href: "https://nextjs.org",
     },
     {
-      node: <IconBrandTypescript size={60} />,
+      node: <TypescriptOriginalIcon size={60} />,
       title: "TypeScript",
       href: "https://www.typescriptlang.org",
     },
     {
-      node: <IconBrandTailwind size={60} />,
+      node: <TailwindcssOriginalIcon size={60} />,
       title: "Tailwind CSS",
       href: "https://tailwindcss.com",
     },
     {
-      node: <IconBrandUnity size={60} />,
+      node: <UnityOriginalIcon size={60} />,
       title: "Unity",
       href: "https://unity.com/",
     },
     {
-      node: <IconBrandCSharp size={60} />,
+      node: <CsharpOriginalIcon size={60} />,
       title: "C#",
       href: "https://en.wikipedia.org/wiki/C_Sharp_(programming_language)",
     },
     {
-      node: <IconBrandMongodb size={60} />,
+      node: <MongodbOriginalIcon size={60} />,
       title: "MongoDB",
       href: "https://www.mongodb.com/",
+    },
+    {
+      node: <PostgresqlOriginalIcon size={60} />,
+      title: "PostgreSQL",
+      href: "https://www.postgresql.org/",
+    },
+    {
+      node: <JavaOriginalIcon size={60} />,
+      title: "Java",
+      href: "https://www.java.com/",
+    },
+    {
+      node: <AndroidOriginalIcon size={60} />,
+      title: "Android",
+      href: "https://developer.android.com/",
+    },
+    {
+      node: <KotlinPlainIcon size={60} />,
+      title: "Kotlin",
+      href: "https://kotlinlang.org/",
     },
   ];
 
@@ -68,7 +93,7 @@ const About = () => {
       "
     >
       <h1 className="text-7xl font-bold">Who Am I?</h1>
-      <Terminal startOnView={true} className="min-w-1/3">
+      <Terminal startOnView={true} className="min-w-1/3 md:h-[65vh]">
         <TypingAnimation>&gt; ~/about-me.info</TypingAnimation>
 
         <AnimatedSpan className="text-muted-foreground">
@@ -76,8 +101,10 @@ const About = () => {
         </AnimatedSpan>
 
         <AnimatedSpan>
-          Bachelor of Computer Science 💻 and Law ⚖️ student @ UNSW. {"\n\n"}
+          Bachelor of Computer Science 💻 and Law ⚖️ student @ UNSW.
         </AnimatedSpan>
+
+        <AnimatedSpan>&nbsp;</AnimatedSpan>
 
         <TypingAnimation>&gt; ~/fun-facts.info</TypingAnimation>
 
@@ -103,8 +130,9 @@ const About = () => {
 
         <AnimatedSpan>
           {"  "}- {funFacts[getRandomInt(0, funFacts.length)]}
-          {"\n\n"}
         </AnimatedSpan>
+
+        <AnimatedSpan>&nbsp;</AnimatedSpan>
 
         <TypingAnimation>
           &gt; cat ~/welcome-message.info || exit
@@ -115,8 +143,10 @@ const About = () => {
         </AnimatedSpan>
 
         <AnimatedSpan className="text-blue-500">
-          I hope you enjoy my little website &lt;3 {"\n\n"}
+          I hope you enjoy my little website &lt;3
         </AnimatedSpan>
+
+        <AnimatedSpan>&nbsp;</AnimatedSpan>
 
         <AnimatedSpan className="text-muted-foreground">
           ℹ Introduction complete.

@@ -2,7 +2,7 @@ import { HeroParallax } from "@/components/ui/hero-parallax";
 
 const Home = () => {
   return (
-    <div>
+    <div id="home">
       <HeroParallax products={featuredProjects} />
     </div>
   );

@@ -3,6 +3,7 @@ import ProjectList from "./ProjectList";
 const Projects = () => {
   return (
     <div
+      id="projects"
       className="
         flex flex-col
         h-fit w-full
@@ -30,8 +31,8 @@ const Projects = () => {
             sticky justify-between top-1/2 h-fit
           "
           >
-            <h3>← Games</h3>
-            <h3 className="text-right">Projects →</h3>
+            <h3>← games</h3>
+            <h3 className="text-right">projects →</h3>
           </div>
         </div>
         <div className="w-1/2">

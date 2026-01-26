@@ -1,16 +1,20 @@
 import { Particles } from "@/components/ui/particles";
 import About from "./components/about/About";
 import Home from "./components/home/Home";
-import NavBar from "./components/NavBar";
+import NavBar from "./components/navbar/NavBar";
 import Projects from "./components/projects/Projects";
+import Contact from "./components/contact/Contact";
 
 const App = () => {
   return (
     <div className="bg-zinc-50 dark:bg-black relative">
-      <NavBar className="flex flex-col gap-48 z-10">
+      <NavBar className="z-10">
         <Home />
-        <About />
-        <Projects />
+        <div className="pt-24 *:p-24">
+          <About />
+          <Projects />
+          <Contact />
+        </div>
       </NavBar>
 
       <Particles
