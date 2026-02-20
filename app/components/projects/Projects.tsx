@@ -16,26 +16,28 @@ const Projects = () => {
         className="
           overflow-visible flex
           w-full
-          justify-around
+          gap-4 justify-around
         "
       >
-        <div className="w-1/2">
+        <div className="w-3/7">
           <ProjectList />
         </div>
 
-        <div className="w-1/4 pt-24 pb-48">
+        <div className="w-1/5 pt-24 pb-48">
           <div
             className="
-            flex
-            text-2xl
-            sticky justify-between top-1/2 h-fit
-          "
+              flex
+              h-fit
+              text-2xl
+              sticky justify-between top-1/2
+            "
           >
-            <h3>← games</h3>
-            <h3 className="text-right">projects →</h3>
+            <p>← games</p>
+            <p className="text-right">projects →</p>
           </div>
         </div>
-        <div className="w-1/2">
+
+        <div className="w-3/7">
           <ProjectList />
         </div>
       </div>

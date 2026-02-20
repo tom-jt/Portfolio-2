@@ -14,6 +14,7 @@ import {
 import { PropsWithChildren, ReactNode, useState } from "react";
 import NavBarIconButton from "./NavBarIconButton";
 import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 interface NavBarProps extends PropsWithChildren {
   children?: ReactNode;
@@ -23,6 +24,10 @@ interface NavBarProps extends PropsWithChildren {
 const NavBar = ({ children, className }: NavBarProps) => {
   const navItems = [
     {
+      name: "Home",
+      link: "#home",
+    },
+    {
       name: "About Me",
       link: "#me",
     },
@@ -30,27 +35,21 @@ const NavBar = ({ children, className }: NavBarProps) => {
       name: "My Creations",
       link: "#projects",
     },
-    {
-      name: "Contact",
-      link: "#contact",
-    },
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={cn("relative w-full", className)}>
       <Navbar>
         {/* Desktop Navigation */}
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-4">
-            <NavBarIconButton icon={<IconBrandGithub />} />
-            <NavBarIconButton icon={<IconBrandLinkedin />} />
+          <div>
             <NavBarIconButton
-              icon={<AnimatedThemeToggler className="cursor-pointer" />}
-              className="ml-16"
+              children={<AnimatedThemeToggler className="cursor-pointer" />}
+              className="absolute"
             />
           </div>
         </NavBody>
@@ -65,7 +64,7 @@ const NavBar = ({ children, className }: NavBarProps) => {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               />
               <NavBarIconButton
-                icon={<AnimatedThemeToggler className="cursor-pointer" />}
+                children={<AnimatedThemeToggler className="cursor-pointer" />}
               />
             </div>
           </MobileNavHeader>
@@ -84,10 +83,6 @@ const NavBar = ({ children, className }: NavBarProps) => {
                 <span className="block">{item.name}</span>
               </a>
             ))}
-            <div className="flex w-full gap-4 justify-center">
-              <NavBarIconButton icon={<IconBrandGithub />} />
-              <NavBarIconButton icon={<IconBrandLinkedin />} />
-            </div>
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
