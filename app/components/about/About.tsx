@@ -171,7 +171,7 @@ const TerminalContainer = () => {
 
       <AnimatedSpan>&nbsp;</AnimatedSpan>
 
-      <TypingAnimation>&gt; cat ~/welcome-message.info || exit</TypingAnimation>
+      <TypingAnimation>&gt; cat ~/welcome-message.info & exit</TypingAnimation>
 
       <AnimatedSpan className="text-blue-500">Nice to e-meet you!</AnimatedSpan>
 

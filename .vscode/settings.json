@@ -1,0 +1,4 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Jme797.prettier-vscode-extension"
+}

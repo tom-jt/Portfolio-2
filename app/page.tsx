@@ -3,6 +3,7 @@ import About from "./components/about/About";
 import Home from "./components/home/Home";
 import NavBar from "./components/navbar/NavBar";
 import Projects from "./components/projects/Projects";
+import Contact from "./components/contact/Contact";
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
         <div className="px-48 pt-24 *:py-24">
           <About />
           <Projects />
+          <Contact />
         </div>
       </NavBar>
 
