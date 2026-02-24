@@ -1,3 +1,6 @@
+"use client";
+
+import { Project, ProjectType } from "@/data/database";
 import ProjectList from "./ProjectList";
 
 const Projects = () => {
@@ -20,7 +23,7 @@ const Projects = () => {
         "
       >
         <div className="w-3/7">
-          <ProjectList />
+          <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
 
         <div className="w-1/5 pt-24 pb-48">
@@ -38,7 +41,9 @@ const Projects = () => {
         </div>
 
         <div className="w-3/7">
-          <ProjectList />
+          <ProjectList
+            filterBy={(p: Project) => p.type === ProjectType.PROJECT}
+          />
         </div>
       </div>
     </div>

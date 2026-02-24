@@ -1,0 +1,13 @@
+{
+  "projects": [
+    {
+      "title": "Example title",
+      "subtitle": "John Doe",
+      "img": "public/temp/placeholder-logo.png",
+      "link": "https://www.google.com",
+      "content": "Example description here.",
+      "type": 0,
+      "featured": true
+    }
+  ]
+}
