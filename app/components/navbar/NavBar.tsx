@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import NavBarIconButton from "./NavBarIconButton";
-import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 
 interface NavBarProps extends PropsWithChildren {
@@ -28,7 +27,7 @@ const NavBar = ({ children, className }: NavBarProps) => {
       link: "#home",
     },
     {
-      name: "About Me",
+      name: "About & Contact",
       link: "#me",
     },
     {
