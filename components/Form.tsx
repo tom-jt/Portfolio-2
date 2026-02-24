@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Input } from "./ui/input";
+import { Input, Textarea } from "./ui/input";
 import { Label } from "./ui/label";
 
 const Form = () => {
@@ -19,14 +19,14 @@ const Form = () => {
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Message</Label>
-          <Input id="msg" placeholder="Type your message here..." type="text" />
+          <Textarea id="msg" placeholder="Type your message here..." rows={5} />
         </LabelInputContainer>
 
         <button
           className="cursor-pointer group/btn relative block h-10 w-full rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
           type="submit"
         >
-          Sign up &rarr;
+          Send &rarr;
           <BottomGradient />
         </button>
       </form>
