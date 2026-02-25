@@ -25,6 +25,7 @@ import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
 import Button from "@/components/Button";
 import { CircleQuestionMarkIcon, LinkIcon } from "lucide-react";
+import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 
 const funFacts = ["Every cow has a best friend they hang out with every day."];
 
@@ -213,7 +214,7 @@ const AboutCard = () => {
         </CardItem>
         <CardItem translateZ={100}>
           <img
-            src="/AboutPhoto.jpg"
+            src="/images/AboutPhoto.jpg"
             height="1000"
             width="1000"
             alt="thumbnail"
@@ -257,15 +258,18 @@ const SocialsCard = () => {
         </CardItem>
         <CardItem translateZ={100}>
           <Link href="https://github.com/tom-jt">
-            <GithubOriginalIcon
+            <IconBrandGithub
               size={60}
-              className="rounded-full dark:bg-zinc-50"
+              className="hover:text-zinc-400 transition-all"
             />
           </Link>
         </CardItem>
         <CardItem translateZ={100}>
           <Link href="https://www.linkedin.com/in/tom-liu-jt">
-            <LinkedinOriginalIcon size={60} />
+            <IconBrandLinkedin
+              size={60}
+              className="hover:text-zinc-400 transition-all"
+            />
           </Link>
         </CardItem>
         <CardItem translateZ={40}>

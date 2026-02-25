@@ -5,6 +5,7 @@ export type Project = {
   subtitle: string;
   img: string;
   link: string;
+  gamelink: string;
   content: string;
   type: ProjectType;
   featured: boolean;
@@ -21,11 +22,11 @@ export const projects: Project[] = (projectsData.projects || []).map((p) => ({
   img: (p.img || "").startsWith("public/")
     ? (p.img || "").replace(/^public\//, "/")
     : p.img,
-  ctaText: "Visit",
   link: p.link ?? "#",
+  gamelink: p.gamelink ?? "#",
   content: p.content ?? "",
   type: p.type ?? ProjectType.PROJECT,
-  featured: p.featured ?? false,
+  featured: projectsData.featured.includes(p.id),
 }));
 
 export const getFilteredProjects = (filterBy: (p: Project) => boolean) =>

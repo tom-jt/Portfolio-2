@@ -1,13 +1,122 @@
 {
   "projects": [
     {
-      "title": "Example title",
-      "subtitle": "John Doe",
-      "img": "public/temp/placeholder-logo.png",
-      "link": "https://www.google.com",
-      "content": "Example description here.",
-      "type": 0,
-      "featured": true
+      "id": "linguae-legend",
+      "title": "Linguae Legend",
+      "subtitle": "Rogue-like Wordle",
+      "img": "/images/projects/linguae-legend.webp",
+      "langs": ["Unity", "C#"],
+      "link": "https://github.com/tom-jt/Linguae-Legend",
+      "gamelink": "https://gamejolt.com/games/linguae_legend/809080",
+      "content": "Wordle-inspired rogue-like with a hint of Dark Souls.",
+      "type": 1
+    },
+    {
+      "id": "con-grazia",
+      "title": "Con Grazia",
+      "subtitle": "Endless shoot 'em up",
+      "img": "/images/projects/con-grazia.webp",
+      "langs": ["Unity", "C#"],
+      "link": "https://github.com/tom-jt/Con-Grazia",
+      "gamelink": "https://gamejolt.com/games/con_grazia/940560",
+      "content": "Endless shoot 'em up with a delectable colouration of slimes.",
+      "type": 1
+    },
+    {
+      "id": "mission-improbable",
+      "title": "Mission Improbable",
+      "subtitle": "First-person shooter",
+      "img": "/images/projects/mission-improbable.webp",
+      "langs": ["Unity", "C#"],
+      "link": "https://github.com/tom-jt/Mission-Improbable",
+      "gamelink": "https://gamejolt.com/games/mission-improbable-challenging/679830",
+      "content": "Challenging first-person shooter with hand-crafted environments.",
+      "type": 1
+    },
+    {
+      "id": "tributary",
+      "title": "Tributary",
+      "subtitle": "Distributed event streaming library",
+      "img": "/images/projects/tributary.png",
+      "langs": ["Java", "Gradle"],
+      "link": "https://github.com/tom-jt/Tributary",
+      "content": "A distributed event streaming platform library and API inspired by Apache Kafka.",
+      "type": 0
+    },
+    {
+      "id": "xchange",
+      "title": "xChange",
+      "subtitle": "UNSW exchange program browser",
+      "img": "/images/projects/xChange.png",
+      "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "TypeScript"],
+      "link": "https://github.com/tom-jt/xChange",
+      "content": "UNSW exchange program offerings finder and browser.",
+      "type": 0
+    },
+    {
+      "id": "diviners-gambit",
+      "title": "Diviners' Gambit",
+      "subtitle": "Multiplayer card game",
+      "img": "/images/projects/diviners-gambit.png",
+      "langs": ["Unity", "C#", "Mirror"],
+      "link": "https://github.com/tom-jt/Diviners-Gambit",
+      "gamelink": "https://gamejolt.com/games/diviners-gambit/978448",
+      "content": "Simple multiplayer card game inspired by RPS.",
+      "type": 1
+    },
+    {
+      "id": "portfolio-2",
+      "title": "My Portfolio",
+      "subtitle": "Up-to-date project archive",
+      "img": "/images/projects/portfolio.png",
+      "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "Bootstrap"],
+      "link": "https://github.com/tom-jt/Portfolio-2",
+      "content": "A collection of all the projects I've made.",
+      "type": 0
+    },
+    {
+      "id": "toohak",
+      "title": "Toohak",
+      "subtitle": "Kahoot-like quiz",
+      "img": "/images/projects/diviners-gambit.png",
+      "langs": ["Javascript"],
+      "link": "https://github.com/tom-jt/Toohak-Deploy",
+      "gamelink": "https://gamejolt.com/games/stranger_danger/1040030",
+      "content": "Kahoot-inspired online interactive quiz game.",
+      "type": 0
+    },
+    {
+      "id": "stranger-danger",
+      "title": "Stranger Danger",
+      "subtitle": "Puzzle horror",
+      "img": "/images/projects/stranger-danger.png",
+      "langs": ["Javascript"],
+      "link": "https://github.com/tom-jt/Stranger-Danger",
+      "gamelink": "https://gamejolt.com/games/stranger_danger/1040030",
+      "content": "First-person horror puzzle game featuring infamous killers from various media.",
+      "type": 1
+    },
+    {
+      "id": "portfolio",
+      "title": "My Portfolio (Legacy)",
+      "subtitle": "Old project archive",
+      "img": "/images/projects/portfolio.png",
+      "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "Shadcn"],
+      "link": "https://github.com/tom-jt/Portfolio",
+      "content": "A collection of all the projects I've made.",
+      "type": 0
     }
+  ],
+  "featured": [
+    "linguae-legend",
+    "con-grazia",
+    "mission-improbable",
+    "tributary",
+    "xchange",
+    "diviners-gambit",
+    "stranger-danger",
+    "toohak",
+    "portfolio",
+    "portfolio-2"
   ]
 }

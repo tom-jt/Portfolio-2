@@ -1,5 +1,5 @@
 import { HeroParallax } from "@/components/ui/hero-parallax";
-import { getFilteredProjects, projects } from "@/data/database";
+import { getFilteredProjects, ProjectType } from "@/data/database";
 
 type FeaturedProject = {
   title: string;
@@ -19,7 +19,7 @@ const featuredProjects: FeaturedProject[] = getFilteredProjects(
   (p) => p.featured === true,
 ).map((p) => ({
   title: p.title,
-  link: p.link,
+  link: p.type === ProjectType.GAME ? p.gamelink : p.link,
   thumbnail: p.img,
 }));
 

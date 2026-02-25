@@ -3,34 +3,21 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useOutsideClick } from "@/hooks/use-outside-click";
-import { getFilteredProjects, Project } from "@/data/database";
-import { JSX } from "react";
-
-type ListedProject = {
-  title: string;
-  description: string;
-  src: string;
-  ctaText: string;
-  ctaLink: string;
-  content: string | (() => JSX.Element);
-};
+import { getFilteredProjects, Project, ProjectType } from "@/data/database";
+import { GithubOriginalIcon } from "@devicon/react";
+import { GamepadIcon } from "lucide-react";
+import { IconBrandGithub } from "@tabler/icons-react";
 
 interface ProjectListProps {
   filterBy: (p: Project) => boolean;
 }
 
 const ProjectList = ({ filterBy }: ProjectListProps) => {
-  const [active, setActive] = useState<ListedProject | boolean | null>(null);
+  const [active, setActive] = useState<Project | boolean | null>(null);
   const id = useId();
   const ref = useRef<HTMLDivElement>(null!);
 
-  const cards: ListedProject[] = getFilteredProjects(filterBy).map((p) => ({
-    description: p.subtitle,
-    ctaText: "Visit",
-    ctaLink: p.link,
-    src: p.img,
-    ...p,
-  }));
+  const cards: Project[] = getFilteredProjects(filterBy);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -119,7 +106,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                 <img
                   width={200}
                   height={200}
-                  src={active.src}
+                  src={active.img}
                   alt={active.title}
                   className="
                     object-cover object-top
@@ -143,32 +130,53 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       {active.title}
                     </motion.h3>
                     <motion.p
-                      layoutId={`description-${active.description}-${id}`}
+                      layoutId={`description-${active.subtitle}-${id}`}
                       className="
                         text-neutral-600 text-base
                         dark:text-neutral-400
                       "
                     >
-                      {active.description}
+                      {active.subtitle}
                     </motion.p>
                   </div>
 
-                  <motion.a
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    href={active.ctaLink}
-                    target="_blank"
-                    className="
-                      px-4 py-3
-                      text-sm font-bold text-zinc-50
-                      bg-green-500
+                  <div className="flex p-3 gap-4">
+                    {active.type === ProjectType.GAME && (
+                      <motion.a
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        href={active.gamelink}
+                        target="_blank"
+                        className="
                       rounded-full
                     "
-                  >
-                    {active.ctaText}
-                  </motion.a>
+                      >
+                        <GamepadIcon
+                          size={30}
+                          className="hover:text-zinc-400 transition-all"
+                        />
+                      </motion.a>
+                    )}
+                    <motion.a
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      href={active.link}
+                      target="_blank"
+                      className="
+                      text-sm font-bold text-zinc-50
+                      rounded-full
+                    "
+                    >
+                      <IconBrandGithub
+                        size={30}
+                        className="rounded-full hover:text-zinc-400 transition-all"
+                      />
+                    </motion.a>
+                  </div>
                 </div>
                 <div className="pt-4 px-4 relative">
                   <motion.div
@@ -186,9 +194,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       lg:text-base
                     "
                   >
-                    {typeof active.content === "function"
-                      ? active.content()
-                      : active.content}
+                    {active.content}
                   </motion.div>
                 </div>
               </div>
@@ -223,7 +229,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                 <img
                   width={100}
                   height={100}
-                  src={card.src}
+                  src={card.img}
                   alt={card.title}
                   className="
                     object-cover object-top
@@ -249,14 +255,13 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                   {card.title}
                 </motion.h3>
                 <motion.p
-                  layoutId={`description-${card.description}-${id}`}
+                  layoutId={`description-${card.subtitle}-${id}`}
                   className="
                     text-neutral-600 text-center text-base
                     dark:text-neutral-400
-                    md:text-left
                   "
                 >
-                  {card.description}
+                  {card.subtitle}
                 </motion.p>
               </div>
             </div>
