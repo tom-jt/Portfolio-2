@@ -208,7 +208,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
           max-w-2xl w-full
           mx-auto
           items-start gap-4
-          md:grid-cols-2
+          2xl:grid-cols-2
         "
       >
         {cards.map((card) => (

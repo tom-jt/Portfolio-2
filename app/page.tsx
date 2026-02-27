@@ -10,7 +10,7 @@ const App = () => {
     <div className="bg-zinc-50 dark:bg-black relative z-0">
       <NavBar>
         <Home />
-        <div className="px-48 pt-24 *:py-24">
+        <div className="px-[15vw] pt-[15vh] *:py-[15vh]">
           <About />
           <Projects />
           <Contact />

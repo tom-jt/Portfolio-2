@@ -33,6 +33,7 @@ const Projects = () => {
               h-fit
               text-2xl
               sticky justify-between top-1/2
+              max-2xl:flex-col
             "
           >
             <p>← games</p>

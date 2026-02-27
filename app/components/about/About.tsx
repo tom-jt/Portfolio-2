@@ -103,7 +103,6 @@ const About = () => {
           flex
           w-full h-full
           justify-center gap-24
-          md:h-[65vh]
         "
       >
         <TerminalContainer />
