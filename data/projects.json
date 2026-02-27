@@ -8,7 +8,7 @@
       "langs": ["Unity", "C#"],
       "link": "https://github.com/tom-jt/Linguae-Legend",
       "gamelink": "https://gamejolt.com/games/linguae_legend/809080",
-      "content": "Wordle-inspired rogue-like with a hint of Dark Souls.",
+      "content": "You awake in a mysterious world with swords, magic, monsters, and... words? This word guessing game adds twists to the classic formula with power-ups, tiles with special effects, and a (cringy) storyline, topped with a RPG fantasy theme inspired by Dark Souls.",
       "type": 1
     },
     {
@@ -19,7 +19,7 @@
       "langs": ["Unity", "C#"],
       "link": "https://github.com/tom-jt/Con-Grazia",
       "gamelink": "https://gamejolt.com/games/con_grazia/940560",
-      "content": "Endless shoot 'em up with a delectable colouration of slimes.",
+      "content": "Con Grazia is an arcade-style endless shooter game full of spell-slinging goodness and pesky slimes. Key features: slimes (comes in multiple flavours!), bigger slimes, cool wizard person.",
       "type": 1
     },
     {
@@ -30,7 +30,7 @@
       "langs": ["Unity", "C#"],
       "link": "https://github.com/tom-jt/Mission-Improbable",
       "gamelink": "https://gamejolt.com/games/mission-improbable-challenging/679830",
-      "content": "Challenging first-person shooter with hand-crafted environments.",
+      "content": "Welcome, Agent 008 (NOT 007). You are on a mission to defeat eeeeeevil alien robots in 5 unique and (very) challenging stages, with a hint of bullet hell ;). It's like frigid outskirts without the reindeers.",
       "type": 1
     },
     {
@@ -50,7 +50,7 @@
       "img": "/images/projects/xChange.png",
       "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "TypeScript"],
       "link": "https://github.com/tom-jt/xChange",
-      "content": "UNSW exchange program offerings finder and browser.",
+      "content": "A browser and search filter for UNSW's exchange program offerings.",
       "type": 0
     },
     {
@@ -61,7 +61,7 @@
       "langs": ["Unity", "C#", "Mirror"],
       "link": "https://github.com/tom-jt/Diviners-Gambit",
       "gamelink": "https://gamejolt.com/games/diviners-gambit/978448",
-      "content": "Simple multiplayer card game inspired by RPS.",
+      "content": "Ever wanted to play rock-paper-scissors, but with over 70 different options? Based on a childhood game I used to play at school, this online multiplayer card game  features intricate mind-games and strategies, character abilities, customisable card presets and game modes, and just pure chaotic fun!",
       "type": 1
     },
     {
@@ -93,7 +93,7 @@
       "langs": ["Javascript"],
       "link": "https://github.com/tom-jt/Stranger-Danger",
       "gamelink": "https://gamejolt.com/games/stranger_danger/1040030",
-      "content": "First-person horror puzzle game featuring infamous killers from various media.",
+      "content": "Trapped forever in a realm of eldritch evil where even death is not an escape, one determined Survivor face a bloodthirsty Killer(s) in a vicious game of nerve and wits. Don't pick a side and step into a world of tension and terror with horror gaming's worst symmetrical singleplayer.",
       "type": 1
     },
     {
