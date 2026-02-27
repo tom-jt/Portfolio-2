@@ -77,7 +77,7 @@ const NavBar = ({ children, className }: NavBarProps) => {
                 key={`mobile-link-${idx}`}
                 href={item.link}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-neutral-600 dark:text-neutral-300"
+                className="relative text-zinc-600 dark:text-zinc-300"
               >
                 <span className="block">{item.name}</span>
               </a>

@@ -102,7 +102,7 @@ const About = () => {
         className="
           flex
           w-full h-full
-          justify-center gap-24
+          justify-center items-start gap-24
         "
       >
         <TerminalContainer />
@@ -110,15 +110,14 @@ const About = () => {
           className="
             flex flex-col
             w-1/3 h-full
-            py-12
             justify-center gap-2
           "
         >
-          <div className="flex h-full w-full gap-2">
+          <div className="flex h-full w-full gap-2 max-2xl:flex-col">
             <AboutCard />
             <SocialsCard />
           </div>
-          <div className="w-full h-1/5">
+          <div className="w-full h-full">
             <ContactCard />
           </div>
         </div>
@@ -190,7 +189,7 @@ const TerminalContainer = () => {
 
 const AboutCard = () => {
   return (
-    <CardContainer containerClassName="w-4/5 h-full" className="w-full h-full">
+    <CardContainer containerClassName="w-full 2xl:w-4/5 h-full" className="w-full h-full">
       <CardBody
         className="
           flex flex-col
@@ -205,7 +204,7 @@ const AboutCard = () => {
           as="h3"
           translateZ={40}
           className="
-              text-xl font-bold text-neutral-600
+              text-xl font-bold text-zinc-600
               dark:text-white
             "
         >
@@ -228,11 +227,11 @@ const AboutCard = () => {
           as="p"
           translateZ={60}
           className="
-              text-neutral-500 text-sm
-              dark:text-neutral-300
+              text-zinc-500 text-sm
+              dark:text-zinc-300
             "
         >
-          PLACEHOLDERPLACEHOLDERPLACEHOLDER
+          Placeholder placeholder placeholder
         </CardItem>
       </CardBody>
     </CardContainer>
@@ -241,10 +240,10 @@ const AboutCard = () => {
 
 const SocialsCard = () => {
   return (
-    <CardContainer containerClassName="w-1/5 h-full" className="w-full h-full">
+    <CardContainer containerClassName="w-full 2xl:w-1/5 h-full" className="w-full h-full">
       <CardBody
         className="
-          flex flex-col
+          flex 2xl:flex-col
           h-full w-full
           p-6
           bg-background
@@ -284,12 +283,12 @@ const ContactCard = () => {
     <CardContainer containerClassName="w-full h-full" className="w-full h-full">
       <CardBody
         className="
-          flex
+          flex max-2xl:flex-col gap-8
           h-full w-full
           p-6
           bg-background
           border-black/10 rounded-xl border
-          justify-between items-center relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          justify-between 2xl:items-center relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
         "
       >
         <div className="flex flex-col gap-2">
@@ -297,7 +296,7 @@ const ContactCard = () => {
             as="h3"
             translateZ={40}
             className="
-              text-xl font-bold text-neutral-600
+              text-xl font-bold text-zinc-600
               dark:text-white
             "
           >
@@ -307,8 +306,8 @@ const ContactCard = () => {
             as="p"
             translateZ={60}
             className="
-              text-neutral-500 text-sm
-              dark:text-neutral-300
+              text-zinc-500 text-sm
+              dark:text-zinc-300
             "
           >
             email: tom.liu.media@gmail.com

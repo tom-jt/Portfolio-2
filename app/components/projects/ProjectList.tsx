@@ -123,8 +123,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                     <motion.h3
                       layoutId={`title-${active.title}-${id}`}
                       className="
-                        font-medium text-neutral-700 text-base
-                        dark:text-neutral-200
+                        font-medium text-zinc-700 text-base
+                        dark:text-zinc-200
                       "
                     >
                       {active.title}
@@ -132,8 +132,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                     <motion.p
                       layoutId={`description-${active.subtitle}-${id}`}
                       className="
-                        text-neutral-600 text-base
-                        dark:text-neutral-400
+                        text-zinc-600 text-base
+                        dark:text-zinc-400
                       "
                     >
                       {active.subtitle}
@@ -188,8 +188,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       flex flex-col overflow-auto
                       h-40
                       pb-10
-                      text-neutral-600 text-xs
-                      items-start gap-4 dark:text-neutral-400 [mask:linear-gradient(to_bottom,zinc-50,zinc-50,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]
+                      text-zinc-600 text-xs
+                      items-start gap-4 dark:text-zinc-400 [mask:linear-gradient(to_bottom,zinc-50,zinc-50,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]
                       md:h-fit md:text-sm
                       lg:text-base
                     "
@@ -247,8 +247,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                 <motion.h3
                   layoutId={`title-${card.title}-${id}`}
                   className="
-                    font-medium text-neutral-800 text-center text-base
-                    dark:text-neutral-200
+                    font-medium text-zinc-800 text-center text-base
+                    dark:text-zinc-200
                     md:text-left
                   "
                 >
@@ -257,8 +257,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                 <motion.p
                   layoutId={`description-${card.subtitle}-${id}`}
                   className="
-                    text-neutral-600 text-center text-base
-                    dark:text-neutral-400
+                    text-zinc-600 text-center text-base
+                    dark:text-zinc-400
                   "
                 >
                   {card.subtitle}

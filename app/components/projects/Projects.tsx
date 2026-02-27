@@ -26,14 +26,15 @@ const Projects = () => {
           <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
 
-        <div className="w-1/5 pt-24 pb-48">
+        <div className="w-1/5 pt-24 pb-36">
           <div
             className="
               flex
               h-fit
               text-2xl
-              sticky justify-between top-1/2
+              sticky top-1/2
               max-2xl:flex-col
+              max-2xl:gap-4
             "
           >
             <p>← games</p>

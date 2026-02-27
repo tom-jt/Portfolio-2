@@ -14,12 +14,12 @@ const Form = () => {
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="email@example.com" type="email" />
+          <Input id="email" placeholder="email@example.com" type="email" required />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Message</Label>
-          <Textarea id="msg" placeholder="Type your message here..." rows={5} />
+          <Textarea id="msg" placeholder="Type your message here..." rows={5} maxLength={1024} required />
         </LabelInputContainer>
 
         <button

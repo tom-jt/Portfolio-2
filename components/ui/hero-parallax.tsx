@@ -94,7 +94,7 @@ export const HeroParallax = ({
 export const Header = () => {
   return (
     <div className="w-full h-screen flex justify-center items-center z-10">
-      <div className="px-[10vw] h-2/5 w-full flex flex-col justify-between gap-8 bg-red-200">
+      <div className="px-[10vw] h-2/5 w-full flex flex-col justify-between gap-8">
         <TextType
           text={[
             "HEY THERE,\nI'M TOM",
@@ -111,7 +111,7 @@ export const Header = () => {
           variableSpeed={{ min: 60, max: 120 }}
           className="text-7xl font-bold"
         />
-        <p className="max-w-2xl text-base md:text-xl">
+        <p className="max-w-2xl text-base md:text-xl text-zinc-600 dark:text-zinc-300">
           A Computer Science and Law student overdosing on boba, making random
           projects, and discovering life the hard way.
         </p>
