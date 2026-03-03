@@ -94,7 +94,7 @@ export const HeroParallax = ({
 export const Header = () => {
   return (
     <div className="w-full h-screen flex justify-center items-center z-10">
-      <div className="px-[10vw] h-2/5 w-full flex flex-col justify-between gap-8">
+      <div className="px-[15vw] h-[30%] w-full flex flex-col justify-between gap-8">
         <TextType
           text={[
             "HEY THERE,\nI'M TOM",

@@ -82,7 +82,7 @@
       "langs": ["Javascript"],
       "link": "https://github.com/tom-jt/Toohak-Deploy",
       "gamelink": "https://gamejolt.com/games/stranger_danger/1040030",
-      "content": "Kahoot-inspired online interactive quiz game.",
+      "content": "Interactive quiz game inspired by Kahoot.",
       "type": 0
     },
     {
@@ -105,6 +105,16 @@
       "link": "https://github.com/tom-jt/Portfolio",
       "content": "A collection of all the projects I've made.",
       "type": 0
+    },
+    {
+      "id": "splicechat",
+      "title": "SpliceChat",
+      "subtitle": "Genetic variant analyser",
+      "img": "/images/projects/splicechat.png",
+      "langs": ["HTML/CSS", "Tailwind", "React", "Docker", "OpenAI", "Vite"],
+      "link": "#private-repo-redirect",
+      "content": "An LLM-powered assistant for evaluating candidate disease-causing splice-altering genetic variants. Completed in a team as my Bachelor of Computer Science degree's captone project at UNSW.",
+      "type": 0
     }
   ],
   "featured": [
@@ -117,6 +127,6 @@
     "stranger-danger",
     "toohak",
     "portfolio",
-    "portfolio-2"
+    "splicechat"
   ]
 }

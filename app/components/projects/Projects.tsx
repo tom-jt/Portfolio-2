@@ -26,7 +26,7 @@ const Projects = () => {
           <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
 
-        <div className="w-1/5 pt-24 pb-36">
+        <div className="w-1/5 py-12">
           <div
             className="
               flex
@@ -34,7 +34,7 @@ const Projects = () => {
               text-2xl
               sticky top-1/2
               max-2xl:flex-col
-              max-2xl:gap-4
+              justify-between
             "
           >
             <p>← games</p>

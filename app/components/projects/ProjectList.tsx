@@ -167,7 +167,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       href={active.link}
                       target="_blank"
                       className="
-                      text-sm font-bold text-zinc-50
+                      text-sm font-bold
                       rounded-full
                     "
                     >
