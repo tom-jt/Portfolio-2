@@ -112,7 +112,7 @@
       "subtitle": "Genetic variant analyser",
       "img": "/images/projects/splicechat.png",
       "langs": ["HTML/CSS", "Tailwind", "React", "Docker", "OpenAI", "Vite"],
-      "link": "#private-repo-redirect",
+      "link": "about:blank",
       "content": "An LLM-powered assistant for evaluating candidate disease-causing splice-altering genetic variants. Completed in a team as my Bachelor of Computer Science degree's captone project at UNSW.",
       "type": 0
     }
