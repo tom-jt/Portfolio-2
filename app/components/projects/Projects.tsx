@@ -10,10 +10,10 @@ const Projects = () => {
       className="
         flex flex-col
         h-fit w-full
-        items-center gap-24
+        items-center max-sm:gap-12 sm:gap-24
       "
     >
-      <div className="text-7xl text-center max-sm:text-5xl font-bold">My Creations</div>
+      <h1 className="c-h1">My Creations</h1>
 
       <div
         className="
@@ -26,7 +26,7 @@ const Projects = () => {
           <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
 
-        <div className="w-1/5 py-12 sm:hidden">
+        <div className="w-1/5 py-12 max-sm:hidden">
           <div
             className="
               flex
@@ -40,10 +40,6 @@ const Projects = () => {
             <p>← games</p>
             <p className="text-right">projects →</p>
           </div>
-        </div>
-
-        <div className="py-12">
-          <p>Projects</p>
         </div>
 
         <div className="sm:w-3/7">

@@ -7,10 +7,16 @@ import Contact from "./components/contact/Contact";
 
 const App = () => {
   return (
-    <div className="bg-zinc-50 dark:bg-black relative z-0">
+    <div className="z-0 bg-zinc-50 dark:bg-black relative">
       <NavBar>
         <Home />
-        <div className="px-[15vw] pt-[15vh] *:py-[15vh]">
+        <div
+          className="
+            max-sm:px-[5vw] max-sm:pt-[12vh] max-sm:*:py-[12vh]
+            px-[15vw] pt-[15vh]
+            *:py-[15vh]
+          "
+        >
           <About />
           <Projects />
           <Contact />
@@ -38,29 +44,18 @@ const App = () => {
       {/*Background Dots */}
       <div
         className="
-          pointer-events-none top-[110vh]
-          -z-10 bg-size-[20px_20px] bg-[radial-gradient(#d4d4d4_1px,transparent_1px)]
-          absolute inset-0 dark:bg-[radial-gradient(#606060_1px,transparent_1px)]
+          bg-size-[20px_20px] bg-[radial-gradient(#d4d4d4_1px,transparent_1px)]
+          pointer-events-none
+          top-[110vh] -z-10 absolute inset-0 dark:bg-[radial-gradient(#606060_1px,transparent_1px)]
         "
       >
-        {/* <div
-          className="
-          flex
-          bg-zinc-50
-          pointer-events-none
-          absolute dark:bg-black inset-0 items-center justify-center
-          mask-[linear-gradient(to_right,black_0_10%,transparent_12.5%_22.5%,black_25%_42.5%,transparent_45%_55%,black_57.5%_75%,transparent_77.5%_87.5%,black_90%)]
-        "
-        /> */}
-
         <div
           className="
-          flex
-          bg-zinc-50
-          pointer-events-none
-          absolute dark:bg-black inset-0 items-center justify-center
-          mask-[linear-gradient(to_right,black_0%,transparent_50%_50%,black_100%)]
-        "
+            flex
+            bg-zinc-50
+            pointer-events-none
+            absolute dark:bg-black inset-0 items-center justify-center mask-[linear-gradient(to_right,black_0%,transparent_50%_50%,black_100%)]
+          "
         />
       </div>
     </div>

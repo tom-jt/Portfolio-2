@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import NavBarIconButton from "./NavBarIconButton";
-import { cn } from "@/lib/utils";
+import { cn, scrollToId } from "@/lib/utils";
 
 interface NavBarProps extends PropsWithChildren {
   children?: ReactNode;
@@ -24,15 +24,15 @@ const NavBar = ({ children, className }: NavBarProps) => {
   const navItems = [
     {
       name: "Home",
-      link: "#home",
+      id: "home",
     },
     {
       name: "About & Contact",
-      link: "#me",
+      id: "me",
     },
     {
       name: "My Creations",
-      link: "#projects",
+      id: "projects",
     },
   ];
 
@@ -61,6 +61,7 @@ const NavBar = ({ children, className }: NavBarProps) => {
               <MobileNavToggle
                 isOpen={isMobileMenuOpen}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="cursor-pointer"
               />
               <NavBarIconButton
                 children={<AnimatedThemeToggler className="cursor-pointer" />}
@@ -75,9 +76,12 @@ const NavBar = ({ children, className }: NavBarProps) => {
             {navItems.map((item, idx) => (
               <a
                 key={`mobile-link-${idx}`}
-                href={item.link}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="relative text-zinc-600 dark:text-zinc-300"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsMobileMenuOpen(false);
+                  scrollToId(item.id);
+                }}
+                className="relative text-zinc-600 dark:text-zinc-300 cursor-pointer w-full py-4 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-lg transition"
               >
                 <span className="block">{item.name}</span>
               </a>

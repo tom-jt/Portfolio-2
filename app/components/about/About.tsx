@@ -97,7 +97,7 @@ const About = () => {
         gap-24 items-center
       "
     >
-      <h1 className="text-7xl font-bold">Who Am I?</h1>
+      <h1 className="c-h1">Who Am I?</h1>
       <div
         className="
           flex
@@ -190,7 +190,10 @@ const TerminalContainer = () => {
 
 const AboutCard = () => {
   return (
-    <CardContainer containerClassName="w-full 2xl:w-4/5 h-full" className="w-full h-full">
+    <CardContainer
+      containerClassName="w-full 2xl:w-4/5 h-full"
+      className="w-full h-full"
+    >
       <CardBody
         className="
           flex flex-col
@@ -241,7 +244,10 @@ const AboutCard = () => {
 
 const SocialsCard = () => {
   return (
-    <CardContainer containerClassName="w-full 2xl:w-1/5 h-full" className="w-full h-full">
+    <CardContainer
+      containerClassName="w-full 2xl:w-1/5 h-full"
+      className="w-full h-full"
+    >
       <CardBody
         className="
           flex 2xl:flex-col
@@ -326,7 +332,7 @@ const ContactCard = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-12">
-      <h3 className="text-2xl">
+      <h3 className="text-2xl max-sm:text-base">
         ↓&nbsp;&nbsp;I like to use these&nbsp;&nbsp;↓
       </h3>
       <LogoLoop
@@ -338,8 +344,22 @@ const Logos = () => {
         hoverSpeed={0}
         scaleOnHover={true}
         fadeOut
+        className="max-sm:hidden"
       />
-      <h3 className="text-2xl">
+
+      {/* Mobile */}
+      <LogoLoop
+        logos={techLogos}
+        speed={100}
+        direction="right"
+        logoHeight={60}
+        gap={20}
+        hoverSpeed={0}
+        scaleOnHover={true}
+        fadeOut
+        className="sm:hidden"
+      />
+      <h3 className="text-2xl max-sm:text-base">
         ↓&nbsp;&nbsp;to make these funky lil things&nbsp;&nbsp;↓
       </h3>
     </div>

@@ -10,16 +10,27 @@ const Form = () => {
     console.log("Form submitted");
   };
   return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+    <div className="shadow-input mx-auto w-full max-w-md rounded-xl bg-white p-4 md:p-8 dark:bg-black">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="email@example.com" type="email" required />
+          <Input
+            id="email"
+            placeholder="email@example.com"
+            type="email"
+            required
+          />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
           <Label htmlFor="email">Message</Label>
-          <Textarea id="msg" placeholder="Type your message here..." rows={5} maxLength={1024} required />
+          <Textarea
+            id="msg"
+            placeholder="Type your message here..."
+            rows={5}
+            maxLength={1024}
+            required
+          />
         </LabelInputContainer>
 
         <button

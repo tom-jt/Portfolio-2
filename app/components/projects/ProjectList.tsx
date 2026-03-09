@@ -80,11 +80,12 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
               }}
               onClick={() => setActive(null)}
               className="
-                flex
+                flex z-100
                 h-6 w-6
                 bg-zinc-50
+                hover:bg-zinc-400
                 rounded-full
-                absolute top-2 right-2 items-center justify-center
+                cursor-pointer absolute top-2 right-2 items-center justify-center
                 lg:hidden
               "
             >
@@ -111,6 +112,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                   className="
                     object-cover object-top
                     w-full h-80
+                    dark:brightness-75
                     sm:rounded-tr-lg sm:rounded-tl-lg
                     lg:h-80
                   "
@@ -123,7 +125,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                     <motion.h3
                       layoutId={`title-${active.title}-${id}`}
                       className="
-                        font-medium text-zinc-700 text-base
+                        font-medium text-zinc-800 text-lg
                         dark:text-zinc-200
                       "
                     >
@@ -149,13 +151,11 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                         exit={{ opacity: 0 }}
                         href={active.gamelink}
                         target="_blank"
-                        className="
-                      rounded-full
-                    "
+                        className="rounded-full"
                       >
                         <GamepadIcon
                           size={30}
-                          className="hover:text-zinc-400 transition-all"
+                          className="transition-all hover:text-zinc-400"
                         />
                       </motion.a>
                     )}
@@ -166,14 +166,15 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       exit={{ opacity: 0 }}
                       href={active.link}
                       target="_blank"
-                      className="
-                      text-sm font-bold
-                      rounded-full
-                    "
+                      className="text-sm font-bold rounded-full"
                     >
                       <IconBrandGithub
                         size={30}
-                        className="rounded-full hover:text-zinc-400 transition-all"
+                        className="
+                          rounded-full
+                          transition-all
+                          hover:text-zinc-400
+                        "
                       />
                     </motion.a>
                   </div>
@@ -188,8 +189,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       flex flex-col overflow-auto
                       h-40
                       pb-10
-                      text-zinc-600 text-xs
-                      items-start gap-4 dark:text-zinc-400 [mask:linear-gradient(to_bottom,zinc-50,zinc-50,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]
+                      text-zinc-800 text-xs
+                      items-start gap-4 dark:text-zinc-200 [mask:linear-gradient(to_bottom,zinc-50,zinc-50,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]
                       md:h-fit md:text-sm
                       lg:text-base
                     "
@@ -234,7 +235,8 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                   className="
                     object-cover object-top
                     h-60 w-full
-                    rounded-lg
+                    rounded-xl
+                    dark:brightness-75
                   "
                 />
               </motion.div>
