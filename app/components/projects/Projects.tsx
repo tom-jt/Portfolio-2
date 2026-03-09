@@ -13,20 +13,20 @@ const Projects = () => {
         items-center gap-24
       "
     >
-      <div className="text-7xl font-bold">My Creations</div>
+      <div className="text-7xl text-center max-sm:text-5xl font-bold">My Creations</div>
 
       <div
         className="
-          overflow-visible flex
+          overflow-visible flex max-sm:flex-col max-sm:items-center
           w-full
           gap-4 justify-around
         "
       >
-        <div className="w-3/7">
+        <div className="sm:w-3/7">
           <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
 
-        <div className="w-1/5 py-12">
+        <div className="w-1/5 py-12 sm:hidden">
           <div
             className="
               flex
@@ -42,7 +42,11 @@ const Projects = () => {
           </div>
         </div>
 
-        <div className="w-3/7">
+        <div className="py-12">
+          <p>Projects</p>
+        </div>
+
+        <div className="sm:w-3/7">
           <ProjectList
             filterBy={(p: Project) => p.type === ProjectType.PROJECT}
           />

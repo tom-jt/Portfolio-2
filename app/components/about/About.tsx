@@ -103,13 +103,14 @@ const About = () => {
           flex
           w-full h-full
           justify-center items-start gap-24
+          max-sm:flex-col max-sm:items-center
         "
       >
         <TerminalContainer />
         <div
           className="
             flex flex-col
-            w-1/3 h-full
+            md:w-1/3 h-full
             justify-center gap-2
           "
         >
