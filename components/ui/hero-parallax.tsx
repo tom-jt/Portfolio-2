@@ -45,7 +45,7 @@ export const HeroParallax = ({ products }: HeroParallaxProps) => {
     springConfig,
   );
   const opacity = useSpring(
-    useTransform(scrollYProgress, [0, 0.2], [0.2, 1]),
+    useTransform(scrollYProgress, [0, 0.4], [0.4, 1]),
     springConfig,
   );
   const rotateZ = useSpring(
@@ -149,9 +149,9 @@ export const Header = () => {
         <p
           className="
             max-w-lg max-sm:hidden
-            text-zinc-700
+            text-zinc-600
             dark:text-zinc-300
-            md:text-xl
+            md:text-xl text-shadow-lg
           "
         >
           {subtitle}
@@ -166,7 +166,7 @@ export const Header = () => {
       <div
         className="
           px-8
-          text-center
+          text-center text-sm
           absolute bottom-1/6
           sm:hidden
         "

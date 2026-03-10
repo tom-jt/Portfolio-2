@@ -9,10 +9,8 @@ import {
 import {
   AndroidOriginalIcon,
   CsharpOriginalIcon,
-  GithubOriginalIcon,
   JavaOriginalIcon,
   KotlinPlainIcon,
-  LinkedinOriginalIcon,
   MongodbOriginalIcon,
   NextjsOriginalIcon,
   PostgresqlOriginalIcon,
@@ -24,10 +22,23 @@ import {
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
 import Button from "@/components/Button";
-import { CircleQuestionMarkIcon, LinkIcon } from "lucide-react";
+import { LinkIcon } from "lucide-react";
 import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { scrollToId } from "@/lib/utils";
 
-const funFacts = ["Every cow has a best friend they hang out with every day."];
+const funFacts = [
+  "Every cow has a best friend they hang out with every day.",
+  "Otters sometime hold hands while sleeping to not drift apart.",
+  "A cloud weighs around a million tonnes.",
+  "The fear of long words is called Hippopotomonstrosesquippedaliophobia.",
+  "It's almost impossible to get too much sugar from fresh fruit.",
+  "You inhale 50 potentially harmful bacteria every time you breathe.",
+  "You can see stars as they were 4,000 years ago with the naked eye.",
+  "Bats aren’t blind.",
+  "You can make friends with a cat by blinking slowly.",
+  "The devil's number might have been 616, not 666.",
+];
 
 const techLogos = [
   {
@@ -101,20 +112,26 @@ const About = () => {
       <div
         className="
           flex
-          w-full h-full
+          w-full h-full max-sm:flex-col max-sm:items-center
           justify-center items-start gap-24
-          max-sm:flex-col max-sm:items-center
         "
       >
         <TerminalContainer />
         <div
           className="
             flex flex-col
-            md:w-1/3 h-full
+            h-full
             justify-center gap-2
+            md:w-1/3
           "
         >
-          <div className="flex h-full w-full gap-2 max-2xl:flex-col">
+          <div
+            className="
+              flex
+              h-full w-full max-2xl:flex-col
+              gap-2
+            "
+          >
             <AboutCard />
             <SocialsCard />
           </div>
@@ -129,6 +146,13 @@ const About = () => {
 };
 
 const TerminalContainer = () => {
+  const [rand, setRand] = useState(0);
+  useEffect(() => {
+    setRand(getRandomInt(0, funFacts.length));
+  }, []);
+
+  const funFact = funFacts[rand];
+
   return (
     <Terminal startOnView={true} className="min-w-1/3">
       <TypingAnimation>&gt; ~/about-me.info</TypingAnimation>
@@ -141,7 +165,9 @@ const TerminalContainer = () => {
         Bachelor of Computer Science 💻 and Law ⚖️ student @ UNSW.
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <TypingAnimation>&gt; ~/fun-facts.info</TypingAnimation>
 
@@ -166,10 +192,12 @@ const TerminalContainer = () => {
       </AnimatedSpan>
 
       <AnimatedSpan>
-        {"  "}- {funFacts[getRandomInt(0, funFacts.length)]}
+        {"  "}- {funFact}
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <TypingAnimation>&gt; cat ~/welcome-message.info & exit</TypingAnimation>
 
@@ -179,7 +207,9 @@ const TerminalContainer = () => {
         I hope you enjoy my little website &lt;3
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <AnimatedSpan className="text-muted-foreground">
         ℹ Introduction complete.
@@ -191,7 +221,7 @@ const TerminalContainer = () => {
 const AboutCard = () => {
   return (
     <CardContainer
-      containerClassName="w-full 2xl:w-4/5 h-full"
+      containerClassName="w-full 2xl:w-4/5"
       className="w-full h-full"
     >
       <CardBody
@@ -208,11 +238,11 @@ const AboutCard = () => {
           as="h3"
           translateZ={40}
           className="
-              text-xl font-bold text-zinc-600
-              dark:text-white
-            "
+            text-xl font-bold text-zinc-600
+            dark:text-white
+          "
         >
-          PLACEHOLDER
+          Rock Bottom Frequenter
         </CardItem>
         <CardItem translateZ={100}>
           <img
@@ -230,12 +260,13 @@ const AboutCard = () => {
         <CardItem
           as="p"
           translateZ={60}
-          className="
-              text-zinc-500 text-sm
-              dark:text-zinc-300
-            "
+          className="text-zinc-500 text-sm dark:text-zinc-300"
         >
-          Placeholder placeholder placeholder
+          Soft grass in dusk rain,
+          <br />
+          Beneath silken breeze, your eyes
+          <br />
+          Glimmer with moonlight.
         </CardItem>
       </CardBody>
     </CardContainer>
@@ -245,17 +276,18 @@ const AboutCard = () => {
 const SocialsCard = () => {
   return (
     <CardContainer
-      containerClassName="w-full 2xl:w-1/5 h-full"
+      containerClassName="w-full 2xl:w-1/5"
       className="w-full h-full"
     >
       <CardBody
         className="
-          flex 2xl:flex-col
+          flex
           h-full w-full
           p-6
           bg-background
           border-black/10 rounded-xl border
           items-center justify-center gap-8 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          2xl:flex-col
         "
       >
         <CardItem translateZ={40}>
@@ -265,7 +297,7 @@ const SocialsCard = () => {
           <Link href="https://github.com/tom-jt">
             <IconBrandGithub
               size={60}
-              className="hover:text-zinc-400 transition-all"
+              className="transition-all hover:text-zinc-400"
             />
           </Link>
         </CardItem>
@@ -273,7 +305,7 @@ const SocialsCard = () => {
           <Link href="https://www.linkedin.com/in/tom-liu-jt">
             <IconBrandLinkedin
               size={60}
-              className="hover:text-zinc-400 transition-all"
+              className="transition-all hover:text-zinc-400"
             />
           </Link>
         </CardItem>
@@ -290,12 +322,13 @@ const ContactCard = () => {
     <CardContainer containerClassName="w-full h-full" className="w-full h-full">
       <CardBody
         className="
-          flex max-2xl:flex-col gap-8
-          h-full w-full
+          flex
+          max-2xl:flex-col h-full w-full
           p-6
           bg-background
           border-black/10 rounded-xl border
-          justify-between 2xl:items-center relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          gap-8 justify-between relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          2xl:items-center
         "
       >
         <div className="flex flex-col gap-2">
@@ -312,17 +345,14 @@ const ContactCard = () => {
           <CardItem
             as="p"
             translateZ={60}
-            className="
-              text-zinc-500 text-sm
-              dark:text-zinc-300
-            "
+            className="text-zinc-500 text-sm dark:text-zinc-300"
           >
             email: tom.liu.media@gmail.com
           </CardItem>
         </div>
 
         <CardItem translateZ={70}>
-          <Button href="#contact">Chuck me a msg!</Button>
+          <Button onClick={() => scrollToId("contact")}>Chuck me a msg!</Button>
         </CardItem>
       </CardBody>
     </CardContainer>
@@ -332,7 +362,7 @@ const ContactCard = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-12">
-      <h3 className="text-2xl max-sm:text-base">
+      <h3 className="max-sm:text-base text-2xl">
         ↓&nbsp;&nbsp;I like to use these&nbsp;&nbsp;↓
       </h3>
       <LogoLoop
@@ -350,16 +380,15 @@ const Logos = () => {
       {/* Mobile */}
       <LogoLoop
         logos={techLogos}
-        speed={100}
+        speed={50}
         direction="right"
         logoHeight={60}
         gap={20}
         hoverSpeed={0}
-        scaleOnHover={true}
         fadeOut
         className="sm:hidden"
       />
-      <h3 className="text-2xl max-sm:text-base">
+      <h3 className="max-sm:text-base text-2xl">
         ↓&nbsp;&nbsp;to make these funky lil things&nbsp;&nbsp;↓
       </h3>
     </div>

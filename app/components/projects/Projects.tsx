@@ -37,8 +37,8 @@ const Projects = () => {
               justify-between
             "
           >
-            <p>← games</p>
-            <p className="text-right">projects →</p>
+            <p>GAMES</p>
+            <p className="text-right">PROJECTS</p>
           </div>
         </div>
 

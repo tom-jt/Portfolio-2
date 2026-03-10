@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useOutsideClick } from "@/hooks/use-outside-click";
 import { getFilteredProjects, Project, ProjectType } from "@/data/database";
-import { GithubOriginalIcon } from "@devicon/react";
 import { GamepadIcon } from "lucide-react";
 import { IconBrandGithub } from "@tabler/icons-react";
 
@@ -59,7 +58,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
         {active && typeof active === "object" ? (
           <div
             className="
-              grid z-100
+              grid z-90
               fixed inset-0 place-items-center
             "
           >
@@ -80,12 +79,12 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
               }}
               onClick={() => setActive(null)}
               className="
-                flex z-100
-                h-6 w-6
-                bg-zinc-50
-                hover:bg-zinc-400
+                flex z-90
+                h-12 w-12
+                dark:bg-zinc-50
+                dark:hover:bg-zinc-400
                 rounded-full
-                cursor-pointer absolute top-2 right-2 items-center justify-center
+                cursor-pointer absolute bottom-12 items-center justify-center
                 lg:hidden
               "
             >
@@ -189,9 +188,9 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                       flex flex-col overflow-auto
                       h-40
                       pb-10
-                      text-zinc-800 text-xs
+                      text-zinc-800 text-sm
                       items-start gap-4 dark:text-zinc-200 [mask:linear-gradient(to_bottom,zinc-50,zinc-50,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]
-                      md:h-fit md:text-sm
+                      md:h-fit
                       lg:text-base
                     "
                   >
