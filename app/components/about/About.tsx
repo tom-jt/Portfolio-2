@@ -21,11 +21,11 @@ import {
 } from "@devicon/react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
-import Button from "@/components/Button";
 import { LinkIcon } from "lucide-react";
 import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { scrollToId } from "@/lib/utils";
+import SectionTitle from "@/components/SectionTitle";
 
 const funFacts = [
   "Every cow has a best friend they hang out with every day.",
@@ -98,6 +98,9 @@ const techLogos = [
   },
 ];
 
+const cardShell =
+  "flex flex-col h-full w-full p-5 bg-background/80 border-zinc-200/70 rounded-xl border gap-4 relative group/card dark:bg-black/60 dark:border-white/10";
+
 const About = () => {
   return (
     <div
@@ -105,15 +108,15 @@ const About = () => {
       className="
         flex flex-col
         h-fit w-full
-        gap-24 items-center
+        gap-14 sm:gap-16 items-center
       "
     >
-      <h1 className="c-h1">Who Am I?</h1>
+      <SectionTitle eyebrow="About" title="Who Am I?" />
       <div
         className="
           flex
           w-full h-full max-sm:flex-col max-sm:items-center
-          justify-center items-start gap-24
+          justify-center items-start gap-12 sm:gap-16
         "
       >
         <TerminalContainer />
@@ -121,7 +124,7 @@ const About = () => {
           className="
             flex flex-col
             h-full
-            justify-center gap-2
+            justify-center gap-3
             md:w-1/3
           "
         >
@@ -129,15 +132,13 @@ const About = () => {
             className="
               flex
               h-full w-full max-2xl:flex-col
-              gap-2
+              gap-3
             "
           >
             <AboutCard />
             <SocialsCard />
           </div>
-          <div className="w-full h-full">
-            <ContactCard />
-          </div>
+          <ContactTeaser />
         </div>
       </div>
       <Logos />
@@ -224,16 +225,7 @@ const AboutCard = () => {
       containerClassName="w-full 2xl:w-4/5"
       className="w-full h-full"
     >
-      <CardBody
-        className="
-          flex flex-col
-          h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          gap-4 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
-        "
-      >
+      <CardBody className={cardShell}>
         <CardItem
           as="h3"
           translateZ={40}
@@ -253,7 +245,7 @@ const AboutCard = () => {
             className="
               object-cover
               rounded-xl
-              group-hover/card:shadow-xl
+              group-hover/card:shadow-md
             "
           />
         </CardItem>
@@ -283,20 +275,20 @@ const SocialsCard = () => {
         className="
           flex
           h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          items-center justify-center gap-8 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          p-5
+          bg-background/80
+          border-zinc-200/70 rounded-xl border
+          items-center justify-center gap-6 relative group/card dark:bg-black/60 dark:border-white/10
           2xl:flex-col
         "
       >
         <CardItem translateZ={40}>
-          <LinkIcon size={30} />
+          <LinkIcon size={24} className="text-zinc-400" />
         </CardItem>
         <CardItem translateZ={100}>
           <Link href="https://github.com/tom-jt">
             <IconBrandGithub
-              size={60}
+              size={48}
               className="transition-all hover:text-zinc-400"
             />
           </Link>
@@ -304,77 +296,63 @@ const SocialsCard = () => {
         <CardItem translateZ={100}>
           <Link href="https://www.linkedin.com/in/tom-liu-jt">
             <IconBrandLinkedin
-              size={60}
+              size={48}
               className="transition-all hover:text-zinc-400"
             />
           </Link>
         </CardItem>
         <CardItem translateZ={40}>
-          <LinkIcon size={30} />
+          <LinkIcon size={24} className="text-zinc-400" />
         </CardItem>
       </CardBody>
     </CardContainer>
   );
 };
 
-const ContactCard = () => {
+const ContactTeaser = () => {
   return (
-    <CardContainer containerClassName="w-full h-full" className="w-full h-full">
-      <CardBody
-        className="
-          flex
-          max-2xl:flex-col h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          gap-8 justify-between relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
-          2xl:items-center
-        "
-      >
-        <div className="flex flex-col gap-2">
-          <CardItem
-            as="h3"
-            translateZ={40}
-            className="
-              text-xl font-bold text-zinc-600
-              dark:text-white
-            "
-          >
-            Get In Touch
-          </CardItem>
-          <CardItem
-            as="p"
-            translateZ={60}
-            className="text-zinc-500 text-sm dark:text-zinc-300"
-          >
-            email: tom.liu.media@gmail.com
-          </CardItem>
-        </div>
-
-        <CardItem translateZ={70}>
-          <Button onClick={() => scrollToId("contact")}>Chuck me a msg!</Button>
-        </CardItem>
-      </CardBody>
-    </CardContainer>
+    <button
+      type="button"
+      onClick={() => scrollToId("contact")}
+      className="
+        group flex w-full items-center justify-between gap-4
+        rounded-xl border border-zinc-200/70 bg-background/50 px-5 py-4
+        text-left transition-colors
+        hover:border-zinc-300 hover:bg-zinc-100/60
+        dark:border-white/10 dark:bg-black/40
+        dark:hover:border-white/20 dark:hover:bg-zinc-900/60
+        cursor-pointer
+      "
+    >
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          Want to chat?
+        </span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          Jump to the message form →
+        </span>
+      </div>
+      <span className="text-zinc-400 transition-transform group-hover:translate-x-0.5">
+        ↓
+      </span>
+    </button>
   );
 };
 
 const Logos = () => {
   return (
-    <div className="flex flex-col w-full items-center gap-12">
-      <h3 className="max-sm:text-base text-2xl">
-        ↓&nbsp;&nbsp;I like to use these&nbsp;&nbsp;↓
-      </h3>
+    <div className="flex flex-col w-full items-center gap-8">
+      <p className="c-eyebrow mb-0">Tools I reach for</p>
       <LogoLoop
         logos={techLogos}
         speed={100}
         direction="right"
-        logoHeight={60}
-        gap={60}
+        logoHeight={48}
+        gap={48}
         hoverSpeed={0}
         scaleOnHover={true}
         fadeOut
-        className="max-sm:hidden"
+        className="max-sm:hidden opacity-80"
       />
 
       {/* Mobile */}
@@ -382,15 +360,15 @@ const Logos = () => {
         logos={techLogos}
         speed={50}
         direction="right"
-        logoHeight={60}
+        logoHeight={48}
         gap={20}
         hoverSpeed={0}
         fadeOut
-        className="sm:hidden"
+        className="sm:hidden opacity-80"
       />
-      <h3 className="max-sm:text-base text-2xl">
-        ↓&nbsp;&nbsp;to make these funky lil things&nbsp;&nbsp;↓
-      </h3>
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        …to make the things below
+      </p>
     </div>
   );
 };

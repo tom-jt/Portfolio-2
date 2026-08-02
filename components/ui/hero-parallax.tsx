@@ -9,6 +9,8 @@ import {
 } from "motion/react";
 import TextType from "../TextType";
 import ScrollDownIndicator from "../ScrollDownIndicator";
+import SectionTitle from "../SectionTitle";
+import { scrollToId } from "@/lib/utils";
 
 export interface Product {
   title: string;
@@ -119,15 +121,17 @@ export const Header = () => {
       className="
         flex z-10
         w-full h-screen
-        relative justify-center items-center
+        bg-zinc-50/30
+        relative justify-center items-center dark:bg-transparent
       "
     >
       <div
         className="
           flex flex-col
-          h-[30%] w-full
-          px-[15vw]
-          justify-between gap-8
+          w-full
+          px-[15vw] max-sm:px-8
+          justify-center gap-5 sm:gap-6
+          -mt-16 sm:-mt-8
         "
       >
         <TextType
@@ -144,34 +148,22 @@ export const Header = () => {
           deletingSpeed={50}
           cursorBlinkDuration={0.5}
           variableSpeed={{ min: 60, max: 120 }}
-          className="max-sm:text-4xl text-7xl font-bold"
+          className="max-sm:text-4xl text-7xl font-bold font-display"
         />
         <p
           className="
-            max-w-lg max-sm:hidden
-            text-zinc-600
+            max-w-lg
+            text-zinc-600 text-sm sm:text-base
             dark:text-zinc-300
-            md:text-xl text-shadow-lg
+            md:text-xl
           "
         >
           {subtitle}
         </p>
       </div>
 
-      <div className="absolute bottom-1/8">
+      <div className="absolute bottom-10 sm:bottom-1/8">
         <ScrollDownIndicator />
-      </div>
-
-      {/* Mobile */}
-      <div
-        className="
-          px-8
-          text-center text-sm
-          absolute bottom-1/6
-          sm:hidden
-        "
-      >
-        <p>{subtitle}</p>
       </div>
     </div>
   );
@@ -179,8 +171,21 @@ export const Header = () => {
 
 export const ProductTitle = () => {
   return (
-    <div className="flex z-10 w-full justify-center">
-      <h1 className="pt-4 c-h1">Featured Projects</h1>
+    <div className="flex z-10 w-full flex-col items-center gap-3 pt-4">
+      <SectionTitle eyebrow="Featured" title="My Creations" />
+      <button
+        type="button"
+        onClick={() => scrollToId("projects")}
+        className="
+          cursor-pointer
+          text-sm text-zinc-500
+          transition-colors
+          hover:text-zinc-800
+          dark:text-zinc-400 dark:hover:text-zinc-200
+        "
+      >
+        Explore the full archive below ↓
+      </button>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-import { Particles } from "@/components/ui/particles";
 import About from "./components/about/About";
 import Home from "./components/home/Home";
 import NavBar from "./components/navbar/NavBar";
@@ -12,9 +11,9 @@ const App = () => {
         <Home />
         <div
           className="
-            max-sm:px-[5vw] max-sm:pt-[12vh] max-sm:*:py-[12vh]
-            px-[15vw] pt-[15vh]
-            *:py-[15vh]
+            max-sm:px-[5vw] max-sm:pt-[10vh] max-sm:*:py-[10vh]
+            px-[15vw] pt-[12vh]
+            *:py-[12vh]
           "
         >
           <About />
@@ -23,30 +22,14 @@ const App = () => {
         </div>
       </NavBar>
 
-      {/* <Particles
-        quantity={250}
-        color="#000000"
-        vx={0.1}
-        vy={0.2}
-        refresh
-        className="absolute inset-0"
-      />
-
-      <Particles
-        quantity={250}
-        color="#000000"
-        vx={0.1}
-        vy={0.2}
-        refresh
-        className="absolute inset-0"
-      /> */}
-
-      {/*Background Dots */}
+      {/* Background dots — fade out toward contact footer */}
       <div
         className="
           bg-size-[20px_20px] bg-[radial-gradient(#d4d4d4_1px,transparent_1px)]
           pointer-events-none
-          top-[110vh] -z-10 absolute inset-0 dark:bg-[radial-gradient(#606060_1px,transparent_1px)]
+          top-[110vh] -z-10 absolute inset-0
+          mask-[linear-gradient(to_bottom,black_0%,black_70%,transparent_100%)]
+          dark:bg-[radial-gradient(#606060_1px,transparent_1px)]
         "
       >
         <div

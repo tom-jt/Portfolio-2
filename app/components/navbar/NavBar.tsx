@@ -27,12 +27,16 @@ const NavBar = ({ children, className }: NavBarProps) => {
       id: "home",
     },
     {
-      name: "About & Contact",
+      name: "About",
       id: "me",
     },
     {
-      name: "My Creations",
+      name: "Projects",
       id: "projects",
+    },
+    {
+      name: "Contact",
+      id: "contact",
     },
   ];
 

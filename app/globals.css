@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-tinos);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -133,6 +134,10 @@
   mix-blend-mode: normal;
 }
 
+.c-eyebrow {
+  @apply mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400;
+}
+
 .c-h1 {
-  @apply text-center text-7xl max-sm:text-5xl font-bold;
+  @apply text-center font-display text-5xl font-bold tracking-tight max-sm:text-4xl sm:text-6xl;
 }

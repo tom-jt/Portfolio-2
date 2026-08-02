@@ -36,7 +36,7 @@
     {
       "id": "tributary",
       "title": "Tributary",
-      "subtitle": "Distributed event streaming library",
+      "subtitle": "Event streaming library",
       "img": "/images/projects/tributary.png",
       "langs": ["Java", "Gradle"],
       "link": "https://github.com/tom-jt/Tributary",
@@ -46,7 +46,7 @@
     {
       "id": "xchange",
       "title": "xChange",
-      "subtitle": "UNSW exchange program browser",
+      "subtitle": "UNSW exchange browser",
       "img": "/images/projects/xChange.png",
       "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "TypeScript"],
       "link": "https://github.com/tom-jt/xChange",
