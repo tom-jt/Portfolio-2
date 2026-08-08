@@ -7,19 +7,41 @@ import { Label } from "./ui/label";
 const Form = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted");
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const subject = String(data.get("subject") || "");
+    const msg = String(data.get("msg") || "");
+
+    const mailto = `mailto:tom.liu.media@gmail.com?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(msg)}`;
+
+    window.location.href = mailto;
+    form.reset();
   };
   return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+    <div className="shadow-input mx-auto w-full max-w-md rounded-xl bg-white p-4 md:p-8 dark:bg-black">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Email Address</Label>
-          <Input id="email" placeholder="email@example.com" type="email" required />
+          <Label>Subject</Label>
+          <Input
+            id="subject"
+            name="subject"
+            placeholder="New Message"
+            required
+          />
         </LabelInputContainer>
 
         <LabelInputContainer className="mb-4">
-          <Label htmlFor="email">Message</Label>
-          <Textarea id="msg" placeholder="Type your message here..." rows={5} maxLength={1024} required />
+          <Label>Message</Label>
+          <Textarea
+            id="msg"
+            name="msg"
+            placeholder="Type your message here..."
+            rows={5}
+            maxLength={1024}
+            required
+          />
         </LabelInputContainer>
 
         <button

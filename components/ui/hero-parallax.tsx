@@ -8,16 +8,22 @@ import {
   MotionValue,
 } from "motion/react";
 import TextType from "../TextType";
+import ScrollDownIndicator from "../ScrollDownIndicator";
+import SectionTitle from "../SectionTitle";
+import { scrollToId } from "@/lib/utils";
 
-export const HeroParallax = ({
-  products,
-}: {
-  products: {
-    title: string;
-    link: string;
-    thumbnail: string;
-  }[];
-}) => {
+export interface Product {
+  title: string;
+  subtitle: string;
+  link: string;
+  thumbnail: string;
+}
+
+export interface HeroParallaxProps {
+  products: Product[];
+}
+
+export const HeroParallax = ({ products }: HeroParallaxProps) => {
   const firstRow = products.slice(0, 5);
   const secondRow = products.slice(5, 10);
   const ref = React.useRef(null);
@@ -41,7 +47,7 @@ export const HeroParallax = ({
     springConfig,
   );
   const opacity = useSpring(
-    useTransform(scrollYProgress, [0, 0.2], [0.2, 1]),
+    useTransform(scrollYProgress, [0, 0.4], [0.4, 1]),
     springConfig,
   );
   const rotateZ = useSpring(
@@ -55,7 +61,11 @@ export const HeroParallax = ({
   return (
     <div
       ref={ref}
-      className="overflow-hidden antialiased relative flex flex-col self-auto [perspective:1000px] [transform-style:preserve-3d]"
+      className="
+        overflow-hidden flex flex-col
+        transform-3d
+        antialiased relative self-auto perspective-[1000px]
+      "
     >
       <Header />
       <ProductTitle />
@@ -68,7 +78,13 @@ export const HeroParallax = ({
         }}
         className=""
       >
-        <motion.div className="flex flex-row-reverse space-x-reverse space-x-20 mb-20">
+        <motion.div
+          className="
+            flex flex-row-reverse
+            max-sm:space-x-10
+            space-x-reverse space-x-20 pb-20
+          "
+        >
           {firstRow.map((product) => (
             <ProductCard
               product={product}
@@ -77,7 +93,13 @@ export const HeroParallax = ({
             />
           ))}
         </motion.div>
-        <motion.div className="flex flex-row  mb-20 space-x-20">
+        <motion.div
+          className="
+            flex flex-row
+            max-sm:space-x-10
+            pb-26 space-x-20
+          "
+        >
           {secondRow.map((product) => (
             <ProductCard
               product={product}
@@ -92,9 +114,26 @@ export const HeroParallax = ({
 };
 
 export const Header = () => {
+  const subtitle =
+    "A Computer Science and Law student overdosing on boba and discovering life the hard way.";
   return (
-    <div className="w-full h-screen flex justify-center items-center z-10">
-      <div className="px-[15vw] h-[30%] w-full flex flex-col justify-between gap-8">
+    <div
+      className="
+        flex z-10
+        w-full h-screen
+        bg-zinc-50/30
+        relative justify-center items-center dark:bg-transparent
+      "
+    >
+      <div
+        className="
+          flex flex-col
+          w-full
+          px-[15vw] max-sm:px-8
+          justify-center gap-5 sm:gap-6
+          -mt-16 sm:-mt-8
+        "
+      >
         <TextType
           text={[
             "HEY THERE,\nI'M TOM",
@@ -109,12 +148,22 @@ export const Header = () => {
           deletingSpeed={50}
           cursorBlinkDuration={0.5}
           variableSpeed={{ min: 60, max: 120 }}
-          className="text-7xl font-bold"
+          className="max-sm:text-4xl text-7xl font-bold font-display"
         />
-        <p className="max-w-2xl text-base md:text-xl text-zinc-600 dark:text-zinc-300">
-          A Computer Science and Law student overdosing on boba, making random
-          projects, and discovering life the hard way.
+        <p
+          className="
+            max-w-lg
+            text-zinc-600 text-sm sm:text-base
+            dark:text-zinc-300
+            md:text-xl
+          "
+        >
+          {subtitle}
         </p>
+      </div>
+
+      <div className="absolute bottom-10 sm:bottom-1/8">
+        <ScrollDownIndicator />
       </div>
     </div>
   );
@@ -122,8 +171,21 @@ export const Header = () => {
 
 export const ProductTitle = () => {
   return (
-    <div className="w-full flex justify-center z-10">
-      <h1 className="text-center text-7xl font-bold">Featured Projects</h1>
+    <div className="flex z-10 w-full flex-col items-center gap-3 pt-4">
+      <SectionTitle eyebrow="Featured" title="My Creations" />
+      <button
+        type="button"
+        onClick={() => scrollToId("projects")}
+        className="
+          cursor-pointer
+          text-sm text-zinc-500
+          transition-colors
+          hover:text-zinc-800
+          dark:text-zinc-400 dark:hover:text-zinc-200
+        "
+      >
+        Explore the full archive below ↓
+      </button>
     </div>
   );
 };
@@ -132,11 +194,7 @@ export const ProductCard = ({
   product,
   translate,
 }: {
-  product: {
-    title: string;
-    link: string;
-    thumbnail: string;
-  };
+  product: Product;
   translate: MotionValue<number>;
 }) => {
   return (
@@ -148,20 +206,43 @@ export const ProductCard = ({
         y: -20,
       }}
       key={product.title}
-      className="group/product h-96 w-[30rem] relative shrink-0"
+      className="
+        h-96 w-120 max-sm:h-48 max-sm:w-60
+        group/product relative shrink-0
+      "
     >
-      <a href={product.link} className="block group-hover/product:shadow-2xl ">
+      <a href={product.link} className="block group-hover/product:shadow-2xl">
         <img
           src={product.thumbnail}
           height="600"
           width="600"
-          className="object-cover object-left-top absolute h-full w-full inset-0"
           alt={product.title}
+          className="
+            object-cover object-top-left
+            h-full w-full
+            rounded-xl
+            shadow-2xs
+            absolute inset-0 dark:brightness-75
+          "
         />
       </a>
-      <div className="absolute inset-0 h-full w-full opacity-0 group-hover/product:opacity-80 bg-black pointer-events-none"></div>
-      <h2 className="absolute bottom-4 left-4 opacity-0 group-hover/product:opacity-100 text-white">
-        {product.title}
+      <div
+        className="
+          h-full w-full
+          bg-black
+          rounded-xl
+          opacity-0 pointer-events-none
+          absolute inset-0 group-hover/product:opacity-80
+        "
+      ></div>
+      <h2
+        className="
+          opacity-0
+          absolute bottom-4 left-4 group-hover/product:opacity-100
+        "
+      >
+        <p className="text-zinc-50">{product.title}</p>
+        <p className="text-zinc-300">{product.subtitle}</p>
       </h2>
     </motion.div>
   );

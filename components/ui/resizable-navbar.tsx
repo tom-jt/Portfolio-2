@@ -1,5 +1,5 @@
 "use client";
-import { cn } from "@/lib/utils";
+import { cn, scrollToId } from "@/lib/utils";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import {
   motion,
@@ -8,7 +8,6 @@ import {
   useMotionValueEvent,
 } from "motion/react";
 import Image from "next/image";
-import Link from "next/link";
 
 import React, { useRef, useState } from "react";
 
@@ -26,10 +25,9 @@ interface NavBodyProps {
 interface NavItemsProps {
   items: {
     name: string;
-    link: string;
+    id: string;
   }[];
   className?: string;
-  onItemClick?: () => void;
 }
 
 interface MobileNavProps {
@@ -69,8 +67,7 @@ export const Navbar = ({ children, className }: NavbarProps) => {
   return (
     <motion.div
       ref={ref}
-      // IMPORTANT: Change this to class of `fixed` if you want the navbar to be fixed
-      className={cn("fixed inset-x-0 top-1 z-40 w-full", className)}
+      className={cn("fixed inset-x-0 top-1 z-[100] w-full select-none", className)}
     >
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
@@ -114,7 +111,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
+export const NavItems = ({ items, className }: NavItemsProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
@@ -128,10 +125,12 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
       {items.map((item, idx) => (
         <a
           onMouseEnter={() => setHovered(idx)}
-          onClick={onItemClick}
-          className="relative px-4 py-2 text-zinc-600 dark:text-zinc-300"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToId(item.id);
+          }}
+          className="relative px-4 py-2 text-zinc-600 dark:text-zinc-300 cursor-pointer"
           key={`link-${idx}`}
-          href={item.link}
         >
           {hovered === idx && (
             <motion.div
@@ -166,7 +165,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
         damping: 50,
       }}
       className={cn(
-        "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-transparent px-0 py-2 lg:hidden",
+        "relative z-50 mx-auto flex w-full max-w-[calc(100vw-2rem)] flex-col items-center justify-between bg-transparent px-0 py-2 lg:hidden select-none",
         visible && "bg-white/80 dark:bg-neutral-950/80",
         className,
       )}
@@ -206,7 +205,7 @@ export const MobileNavMenu = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={cn(
-            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-white px-4 py-8 shadow-[0_0_24px_rgba(34,42,53,0.06),0_1px_1px_rgba(0,0,0,0.05),0_0_0_1px_rgba(34,42,53,0.04),0_0_4px_rgba(34,42,53,0.08),0_16px_68px_rgba(47,48,55,0.05),0_1px_0_rgba(255,255,255,0.1)_inset] dark:bg-neutral-950",
+            "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start rounded-lg bg-white px-4 py-8 shadow-[0_0_24px_rgba(34,42,53,0.06),0_1px_1px_rgba(0,0,0,0.05),0_0_0_1px_rgba(34,42,53,0.04),0_0_4px_rgba(34,42,53,0.08),0_16px_68px_rgba(47,48,55,0.05),0_1px_0_rgba(255,255,255,0.1)_inset] dark:bg-neutral-950",
             className,
           )}
         >
@@ -218,33 +217,51 @@ export const MobileNavMenu = ({
 };
 
 export const MobileNavToggle = ({
+  className,
   isOpen,
   onClick,
 }: {
+  className?: string;
   isOpen: boolean;
   onClick: () => void;
 }) => {
   return isOpen ? (
-    <IconX className="text-black dark:text-white" onClick={onClick} />
+    <IconX
+      className={cn("text-black dark:text-white", className)}
+      onClick={onClick}
+    />
   ) : (
-    <IconMenu2 className="text-black dark:text-white" onClick={onClick} />
+    <IconMenu2
+      className={cn("text-black dark:text-white", className)}
+      onClick={onClick}
+    />
   );
 };
 
 export const NavbarLogo = () => {
   return (
-    <Link
-      href="#home"
-      className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
+    <a
+      className="relative z-20 px-2 py-1 cursor-pointer"
+      onClick={(e) => {
+        e.preventDefault();
+        scrollToId("home");
+      }}
     >
       <Image
-        src="/images/temp/placeholder-logo.png"
+        src="/images/logos/LogoSimpleTrans.png"
         alt="logo"
         width={30}
         height={30}
+        className="dark:hidden"
       />
-      <span className="font-medium text-black dark:text-white">Tom</span>
-    </Link>
+      <Image
+        src="/images/logos/LogoSimpleDarkTrans.png"
+        alt="logo"
+        width={30}
+        height={30}
+        className="hidden dark:block"
+      />
+    </a>
   );
 };
 

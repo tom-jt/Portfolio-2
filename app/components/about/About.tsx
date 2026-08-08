@@ -9,10 +9,8 @@ import {
 import {
   AndroidOriginalIcon,
   CsharpOriginalIcon,
-  GithubOriginalIcon,
   JavaOriginalIcon,
   KotlinPlainIcon,
-  LinkedinOriginalIcon,
   MongodbOriginalIcon,
   NextjsOriginalIcon,
   PostgresqlOriginalIcon,
@@ -23,11 +21,24 @@ import {
 } from "@devicon/react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
-import Button from "@/components/Button";
-import { CircleQuestionMarkIcon, LinkIcon } from "lucide-react";
+import { LinkIcon } from "lucide-react";
 import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { scrollToId } from "@/lib/utils";
+import SectionTitle from "@/components/SectionTitle";
 
-const funFacts = ["Every cow has a best friend they hang out with every day."];
+const funFacts = [
+  "Every cow has a best friend they hang out with every day.",
+  "Otters sometime hold hands while sleeping to not drift apart.",
+  "A cloud weighs around a million tonnes.",
+  "The fear of long words is called Hippopotomonstrosesquippedaliophobia.",
+  "It's almost impossible to get too much sugar from fresh fruit.",
+  "You inhale 50 potentially harmful bacteria every time you breathe.",
+  "You can see stars as they were 4,000 years ago with the naked eye.",
+  "Bats aren’t blind.",
+  "You can make friends with a cat by blinking slowly.",
+  "The devil's number might have been 616, not 666.",
+];
 
 const techLogos = [
   {
@@ -87,6 +98,9 @@ const techLogos = [
   },
 ];
 
+const cardShell =
+  "flex flex-col h-full w-full p-5 bg-background/80 border-zinc-200/70 rounded-xl border gap-4 relative group/card dark:bg-black/60 dark:border-white/10";
+
 const About = () => {
   return (
     <div
@@ -94,32 +108,37 @@ const About = () => {
       className="
         flex flex-col
         h-fit w-full
-        gap-24 items-center
+        gap-14 sm:gap-16 items-center
       "
     >
-      <h1 className="text-7xl font-bold">Who Am I?</h1>
+      <SectionTitle eyebrow="About" title="Who Am I?" />
       <div
         className="
           flex
-          w-full h-full
-          justify-center items-start gap-24
+          w-full h-full max-sm:flex-col max-sm:items-center
+          justify-center items-start gap-12 sm:gap-16
         "
       >
         <TerminalContainer />
         <div
           className="
             flex flex-col
-            w-1/3 h-full
-            justify-center gap-2
+            h-full
+            justify-center gap-3
+            md:w-1/3
           "
         >
-          <div className="flex h-full w-full gap-2 max-2xl:flex-col">
+          <div
+            className="
+              flex
+              h-full w-full max-2xl:flex-col
+              gap-3
+            "
+          >
             <AboutCard />
             <SocialsCard />
           </div>
-          <div className="w-full h-full">
-            <ContactCard />
-          </div>
+          <ContactTeaser />
         </div>
       </div>
       <Logos />
@@ -128,6 +147,13 @@ const About = () => {
 };
 
 const TerminalContainer = () => {
+  const [rand, setRand] = useState(0);
+  useEffect(() => {
+    setRand(getRandomInt(0, funFacts.length));
+  }, []);
+
+  const funFact = funFacts[rand];
+
   return (
     <Terminal startOnView={true} className="min-w-1/3">
       <TypingAnimation>&gt; ~/about-me.info</TypingAnimation>
@@ -140,7 +166,9 @@ const TerminalContainer = () => {
         Bachelor of Computer Science 💻 and Law ⚖️ student @ UNSW.
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <TypingAnimation>&gt; ~/fun-facts.info</TypingAnimation>
 
@@ -165,10 +193,12 @@ const TerminalContainer = () => {
       </AnimatedSpan>
 
       <AnimatedSpan>
-        {"  "}- {funFacts[getRandomInt(0, funFacts.length)]}
+        {"  "}- {funFact}
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <TypingAnimation>&gt; cat ~/welcome-message.info & exit</TypingAnimation>
 
@@ -178,7 +208,9 @@ const TerminalContainer = () => {
         I hope you enjoy my little website &lt;3
       </AnimatedSpan>
 
-      <AnimatedSpan>&nbsp;</AnimatedSpan>
+      <TypingAnimation>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </TypingAnimation>
 
       <AnimatedSpan className="text-muted-foreground">
         ℹ Introduction complete.
@@ -189,26 +221,20 @@ const TerminalContainer = () => {
 
 const AboutCard = () => {
   return (
-    <CardContainer containerClassName="w-full 2xl:w-4/5 h-full" className="w-full h-full">
-      <CardBody
-        className="
-          flex flex-col
-          h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          gap-4 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
-        "
-      >
+    <CardContainer
+      containerClassName="w-full 2xl:w-4/5"
+      className="w-full h-full"
+    >
+      <CardBody className={cardShell}>
         <CardItem
           as="h3"
           translateZ={40}
           className="
-              text-xl font-bold text-zinc-600
-              dark:text-white
-            "
+            text-xl font-bold text-zinc-600
+            dark:text-white
+          "
         >
-          PLACEHOLDER
+          Rock Bottom Frequenter
         </CardItem>
         <CardItem translateZ={100}>
           <img
@@ -219,19 +245,20 @@ const AboutCard = () => {
             className="
               object-cover
               rounded-xl
-              group-hover/card:shadow-xl
+              group-hover/card:shadow-md
             "
           />
         </CardItem>
         <CardItem
           as="p"
           translateZ={60}
-          className="
-              text-zinc-500 text-sm
-              dark:text-zinc-300
-            "
+          className="text-zinc-500 text-sm dark:text-zinc-300"
         >
-          Placeholder placeholder placeholder
+          Soft grass in dusk rain,
+          <br />
+          Beneath silken breeze, your eyes
+          <br />
+          Glimmer with moonlight.
         </CardItem>
       </CardBody>
     </CardContainer>
@@ -240,107 +267,108 @@ const AboutCard = () => {
 
 const SocialsCard = () => {
   return (
-    <CardContainer containerClassName="w-full 2xl:w-1/5 h-full" className="w-full h-full">
+    <CardContainer
+      containerClassName="w-full 2xl:w-1/5"
+      className="w-full h-full"
+    >
       <CardBody
         className="
-          flex 2xl:flex-col
+          flex
           h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          items-center justify-center gap-8 relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
+          p-5
+          bg-background/80
+          border-zinc-200/70 rounded-xl border
+          items-center justify-center gap-6 relative group/card dark:bg-black/60 dark:border-white/10
+          2xl:flex-col
         "
       >
         <CardItem translateZ={40}>
-          <LinkIcon size={30} />
+          <LinkIcon size={24} className="text-zinc-400" />
         </CardItem>
         <CardItem translateZ={100}>
           <Link href="https://github.com/tom-jt">
             <IconBrandGithub
-              size={60}
-              className="hover:text-zinc-400 transition-all"
+              size={48}
+              className="transition-all hover:text-zinc-400"
             />
           </Link>
         </CardItem>
         <CardItem translateZ={100}>
           <Link href="https://www.linkedin.com/in/tom-liu-jt">
             <IconBrandLinkedin
-              size={60}
-              className="hover:text-zinc-400 transition-all"
+              size={48}
+              className="transition-all hover:text-zinc-400"
             />
           </Link>
         </CardItem>
         <CardItem translateZ={40}>
-          <LinkIcon size={30} />
+          <LinkIcon size={24} className="text-zinc-400" />
         </CardItem>
       </CardBody>
     </CardContainer>
   );
 };
 
-const ContactCard = () => {
+const ContactTeaser = () => {
   return (
-    <CardContainer containerClassName="w-full h-full" className="w-full h-full">
-      <CardBody
-        className="
-          flex max-2xl:flex-col gap-8
-          h-full w-full
-          p-6
-          bg-background
-          border-black/10 rounded-xl border
-          justify-between 2xl:items-center relative group/card dark:hover:shadow-2xl dark:hover:shadow-emerald-500/10 dark:bg-black dark:border-white/20
-        "
-      >
-        <div className="flex flex-col gap-2">
-          <CardItem
-            as="h3"
-            translateZ={40}
-            className="
-              text-xl font-bold text-zinc-600
-              dark:text-white
-            "
-          >
-            Get In Touch
-          </CardItem>
-          <CardItem
-            as="p"
-            translateZ={60}
-            className="
-              text-zinc-500 text-sm
-              dark:text-zinc-300
-            "
-          >
-            email: tom.liu.media@gmail.com
-          </CardItem>
-        </div>
-
-        <CardItem translateZ={70}>
-          <Button href="#contact">Chuck me a msg!</Button>
-        </CardItem>
-      </CardBody>
-    </CardContainer>
+    <button
+      type="button"
+      onClick={() => scrollToId("contact")}
+      className="
+        group flex w-full items-center justify-between gap-4
+        rounded-xl border border-zinc-200/70 bg-background/50 px-5 py-4
+        text-left transition-colors
+        hover:border-zinc-300 hover:bg-zinc-100/60
+        dark:border-white/10 dark:bg-black/40
+        dark:hover:border-white/20 dark:hover:bg-zinc-900/60
+        cursor-pointer
+      "
+    >
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          Want to chat?
+        </span>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          Jump to the message form →
+        </span>
+      </div>
+      <span className="text-zinc-400 transition-transform group-hover:translate-x-0.5">
+        ↓
+      </span>
+    </button>
   );
 };
 
 const Logos = () => {
   return (
-    <div className="flex flex-col w-full items-center gap-12">
-      <h3 className="text-2xl">
-        ↓&nbsp;&nbsp;I like to use these&nbsp;&nbsp;↓
-      </h3>
+    <div className="flex flex-col w-full items-center gap-8">
+      <p className="c-eyebrow mb-0">Tools I reach for</p>
       <LogoLoop
         logos={techLogos}
         speed={100}
         direction="right"
-        logoHeight={60}
-        gap={60}
+        logoHeight={48}
+        gap={48}
         hoverSpeed={0}
         scaleOnHover={true}
         fadeOut
+        className="max-sm:hidden opacity-80"
       />
-      <h3 className="text-2xl">
-        ↓&nbsp;&nbsp;to make these funky lil things&nbsp;&nbsp;↓
-      </h3>
+
+      {/* Mobile */}
+      <LogoLoop
+        logos={techLogos}
+        speed={50}
+        direction="right"
+        logoHeight={48}
+        gap={20}
+        hoverSpeed={0}
+        fadeOut
+        className="sm:hidden opacity-80"
+      />
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        …to make the things below
+      </p>
     </div>
   );
 };
