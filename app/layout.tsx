@@ -19,7 +19,7 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "Tom Liu — Portfolio",
+  title: "Tom Liu | Portfolio",
   description:
     "Computer Science and Law student at UNSW. Games, apps, and other creations by Tom Liu.",
 };

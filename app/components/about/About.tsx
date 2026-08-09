@@ -18,6 +18,7 @@ import {
   TailwindcssOriginalIcon,
   TypescriptOriginalIcon,
   UnityOriginalIcon,
+  GoOriginalIcon,
 } from "@devicon/react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
@@ -95,6 +96,11 @@ const techLogos = [
     node: <KotlinPlainIcon size={60} />,
     title: "Kotlin",
     href: "https://kotlinlang.org/",
+  },
+  {
+    node: <GoOriginalIcon size={60} />,
+    title: "Go",
+    href: "https://go.dev/",
   },
 ];
 
@@ -342,7 +348,7 @@ const ContactTeaser = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-8">
-      <p className="c-eyebrow mb-0">Tools I reach for</p>
+      <p className="c-eyebrow mb-0">Tools I grab</p>
       <LogoLoop
         logos={techLogos}
         speed={100}
@@ -367,7 +373,7 @@ const Logos = () => {
         className="sm:hidden opacity-80"
       />
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        …to make the things below
+        … to make the random things below
       </p>
     </div>
   );

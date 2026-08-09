@@ -121,7 +121,7 @@ export const Header = () => {
       className="
         flex z-10
         w-full h-screen
-        bg-zinc-50/30
+        bg-linear-to-b from-zinc-100 to-transparent
         relative justify-center items-center dark:bg-transparent
       "
     >
