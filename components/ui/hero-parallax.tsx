@@ -7,9 +7,10 @@ import {
   useSpring,
   MotionValue,
 } from "motion/react";
-import TextType from "../TextType";
-import ScrollDownIndicator from "../ScrollDownIndicator";
-import SectionTitle from "../SectionTitle";
+import TextType from "../shared/TextType";
+import ScrollDownIndicator from "../shared/ScrollDownIndicator";
+import SectionTitle from "../shared/SectionTitle";
+import Image from "next/image";
 import { scrollToId } from "@/lib/utils";
 
 export interface Product {
@@ -121,8 +122,8 @@ export const Header = () => {
       className="
         flex z-10
         w-full h-screen
-        bg-linear-to-b from-zinc-100 to-transparent
-        relative justify-center items-center dark:bg-transparent
+        bg-linear-to-b from-zinc-50/35 from-55% to-transparent
+        relative justify-center items-center dark:bg-none
       "
     >
       <div
@@ -148,7 +149,11 @@ export const Header = () => {
           deletingSpeed={50}
           cursorBlinkDuration={0.5}
           variableSpeed={{ min: 60, max: 120 }}
-          className="max-sm:text-4xl text-7xl font-bold font-display"
+          as="h1"
+          // 2 x line-height: 144px at text-7xl, 80px at text-4xl. Without
+          // it the heading starts one line tall and shoves the page down
+          // as soon as the second line is typed.
+          className="max-sm:text-4xl max-sm:min-h-20 text-7xl min-h-36 font-bold font-display"
         />
         <p
           className="
@@ -172,7 +177,7 @@ export const Header = () => {
 export const ProductTitle = () => {
   return (
     <div className="flex z-10 w-full flex-col items-center gap-3 pt-4">
-      <SectionTitle eyebrow="Featured" title="My Creations" />
+      <SectionTitle eyebrow="Featured" title="My Creations" as="h2" />
       <button
         type="button"
         onClick={() => scrollToId("projects")}
@@ -212,17 +217,16 @@ export const ProductCard = ({
       "
     >
       <a href={product.link} className="block group-hover/product:shadow-2xl">
-        <img
+        <Image
           src={product.thumbnail}
-          height="600"
-          width="600"
           alt={product.title}
+          fill
+          sizes="(max-width: 640px) 240px, 480px"
           className="
             object-cover object-top-left
-            h-full w-full
             rounded-xl
             shadow-2xs
-            absolute inset-0 dark:brightness-75
+            dark:brightness-75
           "
         />
       </a>
@@ -235,7 +239,7 @@ export const ProductCard = ({
           absolute inset-0 group-hover/product:opacity-80
         "
       ></div>
-      <h2
+      <div
         className="
           opacity-0
           absolute bottom-4 left-4 group-hover/product:opacity-100
@@ -243,7 +247,7 @@ export const ProductCard = ({
       >
         <p className="text-zinc-50">{product.title}</p>
         <p className="text-zinc-300">{product.subtitle}</p>
-      </h2>
+      </div>
     </motion.div>
   );
 };

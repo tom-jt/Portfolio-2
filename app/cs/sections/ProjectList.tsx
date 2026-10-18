@@ -1,9 +1,10 @@
 "use client";
+import Image from "next/image";
 
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useOutsideClick } from "@/hooks/use-outside-click";
-import { getFilteredProjects, Project, ProjectType } from "@/data/database";
+import { getFilteredProjects, Project, ProjectType } from "@/data/cs/projects";
 import { GamepadIcon } from "lucide-react";
 import { IconBrandGithub } from "@tabler/icons-react";
 
@@ -102,9 +103,9 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
               </motion.button>
 
               <motion.div layoutId={`image-${active.title}-${id}`}>
-                <img
-                  width={200}
-                  height={200}
+                <Image
+                  width={800}
+                  height={640}
                   src={active.img}
                   alt={active.title}
                   className="
@@ -244,9 +245,9 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                   layoutId={`image-${card.title}-${id}`}
                   className="relative overflow-hidden rounded-xl"
                 >
-                  <img
-                    width={100}
-                    height={100}
+                  <Image
+                    width={640}
+                    height={480}
                     src={card.img}
                     alt=""
                     className="

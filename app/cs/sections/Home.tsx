@@ -1,5 +1,5 @@
 import { HeroParallax, Product } from "@/components/ui/hero-parallax";
-import { getFilteredProjects, ProjectType } from "@/data/database";
+import { getFilteredProjects, ProjectType } from "@/data/cs/projects";
 
 type FeaturedProject = Product;
 

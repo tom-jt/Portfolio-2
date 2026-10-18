@@ -1,8 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Input, Textarea } from "./ui/input";
-import { Label } from "./ui/label";
+import { Input, Textarea } from "../ui/input";
+import { Label } from "../ui/label";
+import { profile } from "@/data/shared/profile";
 
 const Form = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -12,7 +13,7 @@ const Form = () => {
     const subject = String(data.get("subject") || "");
     const msg = String(data.get("msg") || "");
 
-    const mailto = `mailto:tom.liu.media@gmail.com?subject=${encodeURIComponent(
+    const mailto = `mailto:${profile.email}?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(msg)}`;
 
@@ -20,7 +21,7 @@ const Form = () => {
     form.reset();
   };
   return (
-    <div className="shadow-input mx-auto w-full max-w-md rounded-xl bg-white p-4 md:p-8 dark:bg-black">
+    <div className="shadow-input bg-card mx-auto w-full max-w-md rounded-xl p-4 md:p-8">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <LabelInputContainer className="mb-4">
           <Label>Subject</Label>
@@ -45,7 +46,7 @@ const Form = () => {
         </LabelInputContainer>
 
         <button
-          className="cursor-pointer group/btn relative block h-10 w-full rounded-md bg-linear-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+          className="cursor-pointer group/btn from-action to-action-2 text-action-foreground relative block h-10 w-full rounded-md bg-linear-to-br font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
           type="submit"
         >
           Send &rarr;
@@ -59,8 +60,8 @@ const Form = () => {
 const BottomGradient = () => {
   return (
     <>
-      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-linear-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
-      <span className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-linear-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
+      <span className="via-btn-glow absolute inset-x-0 -bottom-px block h-px w-full bg-linear-to-r from-transparent to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
+      <span className="via-btn-glow-soft absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-linear-to-r from-transparent to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
     </>
   );
 };

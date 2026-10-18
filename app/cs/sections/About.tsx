@@ -1,32 +1,32 @@
 "use client";
 
-import LogoLoop from "@/components/LogoLoop";
+import LogoLoop from "@/components/shared/LogoLoop";
 import {
   Terminal,
   AnimatedSpan,
   TypingAnimation,
 } from "@/components/ui/terminal";
 import {
-  AndroidOriginalIcon,
+  AndroidPlainIcon,
   CsharpOriginalIcon,
   JavaOriginalIcon,
   KotlinPlainIcon,
   MongodbOriginalIcon,
   NextjsOriginalIcon,
-  PostgresqlOriginalIcon,
+  PostgresqlPlainIcon,
   ReactOriginalIcon,
   TailwindcssOriginalIcon,
   TypescriptOriginalIcon,
   UnityOriginalIcon,
-  GoOriginalIcon,
 } from "@devicon/react";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Link from "next/link";
+import Image from "next/image";
 import { LinkIcon } from "lucide-react";
 import { IconBrandGithub, IconBrandLinkedin } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { scrollToId } from "@/lib/utils";
-import SectionTitle from "@/components/SectionTitle";
+import SectionTitle from "@/components/shared/SectionTitle";
 
 const funFacts = [
   "Every cow has a best friend they hang out with every day.",
@@ -78,7 +78,7 @@ const techLogos = [
     href: "https://www.mongodb.com/",
   },
   {
-    node: <PostgresqlOriginalIcon size={60} />,
+    node: <PostgresqlPlainIcon size={60} />,
     title: "PostgreSQL",
     href: "https://www.postgresql.org/",
   },
@@ -88,7 +88,7 @@ const techLogos = [
     href: "https://www.java.com/",
   },
   {
-    node: <AndroidOriginalIcon size={60} />,
+    node: <AndroidPlainIcon size={60} />,
     title: "Android",
     href: "https://developer.android.com/",
   },
@@ -96,11 +96,6 @@ const techLogos = [
     node: <KotlinPlainIcon size={60} />,
     title: "Kotlin",
     href: "https://kotlinlang.org/",
-  },
-  {
-    node: <GoOriginalIcon size={60} />,
-    title: "Go",
-    href: "https://go.dev/",
   },
 ];
 
@@ -117,7 +112,7 @@ const About = () => {
         gap-14 sm:gap-16 items-center
       "
     >
-      <SectionTitle eyebrow="About" title="Who Am I?" />
+      <SectionTitle eyebrow="About" title="Who Am I?" as="h2" />
       <div
         className="
           flex
@@ -240,14 +235,15 @@ const AboutCard = () => {
             dark:text-white
           "
         >
-          Rock Bottom Frequenter
+          Profession: Rock Bottom Frequenter
         </CardItem>
         <CardItem translateZ={100}>
-          <img
-            src="/images/AboutPhoto.jpg"
-            height="1000"
-            width="1000"
-            alt="thumbnail"
+          <Image
+            src="/images/AboutPhotoCS.jpg"
+            height={1000}
+            width={1000}
+            sizes="(max-width: 640px) 90vw, 420px"
+            alt="Tom Liu"
             className="
               object-cover
               rounded-xl
@@ -292,7 +288,7 @@ const SocialsCard = () => {
           <LinkIcon size={24} className="text-zinc-400" />
         </CardItem>
         <CardItem translateZ={100}>
-          <Link href="https://github.com/tom-jt">
+          <Link href="https://github.com/tom-jt" aria-label="GitHub">
             <IconBrandGithub
               size={48}
               className="transition-all hover:text-zinc-400"
@@ -300,7 +296,10 @@ const SocialsCard = () => {
           </Link>
         </CardItem>
         <CardItem translateZ={100}>
-          <Link href="https://www.linkedin.com/in/tom-liu-jt">
+          <Link
+            href="https://www.linkedin.com/in/tom-liu-jt"
+            aria-label="LinkedIn"
+          >
             <IconBrandLinkedin
               size={48}
               className="transition-all hover:text-zinc-400"
@@ -348,7 +347,7 @@ const ContactTeaser = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-8">
-      <p className="c-eyebrow mb-0">Tools I grab</p>
+      <p className="c-eyebrow mb-0">Tools I reach for</p>
       <LogoLoop
         logos={techLogos}
         speed={100}
@@ -373,7 +372,7 @@ const Logos = () => {
         className="sm:hidden opacity-80"
       />
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        … to make the random things below
+        …to make the things below
       </p>
     </div>
   );

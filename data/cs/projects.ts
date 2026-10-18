@@ -1,4 +1,4 @@
-import projectsData from "@/data/projects.json";
+import projectsData from "@/data/cs/projects.json";
 
 export type Project = {
   title: string;

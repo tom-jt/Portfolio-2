@@ -1,5 +1,5 @@
-import Form from "@/components/Form";
-import SectionTitle from "@/components/SectionTitle";
+import Form from "@/components/shared/Form";
+import SectionTitle from "@/components/shared/SectionTitle";
 
 const Contact = () => {
   return (
@@ -21,7 +21,7 @@ const Contact = () => {
         />
         <p className="text-base text-zinc-600 dark:text-zinc-300 2xl:text-xl max-sm:text-center">
           If you'd like to chat about anything business, social, nerdy etc,
-          chuck me a message! :)
+          chuck me a message :)
         </p>
       </div>
       <div className="sm:w-1/2 2xl:w-1/3">

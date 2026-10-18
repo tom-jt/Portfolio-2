@@ -8,7 +8,41 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-tinos);
+  --font-display: var(--font-display-family);
+
+  /* Solid call-to-action surface (Form submit, law CTAs).
+     Distinct from --primary, which inverts between themes. */
+  --color-action: var(--action);
+  --color-action-2: var(--action-2);
+  --color-action-foreground: var(--action-foreground);
+
+  /* Navbar chrome, so each site can restyle the shared resizable-navbar. */
+  --color-nav-surface: var(--nav-surface);
+  --color-nav-fg: var(--nav-fg);
+  --color-nav-fg-hover: var(--nav-fg-hover);
+  --color-nav-pill: var(--nav-pill);
+
+  /* Form field surface. Kept separate from --muted so each site can
+     tune input chrome without distorting shadcn's muted semantics. */
+  --color-field: var(--field);
+
+  /* Decorative underglow on the Form submit button. */
+  --color-btn-glow: var(--btn-glow);
+  --color-btn-glow-soft: var(--btn-glow-soft);
+
+  /* The accent that is legible AS TEXT on the current ground. Gold reads as
+     mustard on ivory, and royal red goes muddy on near-black, so the two
+     themes swap which colour carries type. --gold stays reserved for
+     hairlines, rules and marks, where it works on either ground. */
+  --color-accent-text: var(--accent-text);
+
+  /* Metallics. Only the law site uses these; the CS values are neutral
+     fallbacks so a stray gold utility degrades instead of rendering
+     an invalid colour. */
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-hair: var(--gold-hair);
+  --color-gold-highlight: var(--gold-highlight);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,8 +84,13 @@
     0px 0px 0px 1px rgba(25, 28, 33, 0.08);
 }
 
+/* ---------------------------------------------------------------
+   CS site (default). Bare :root so these are also the safe fallback
+   before any [data-site] wrapper is reached.
+   --------------------------------------------------------------- */
 :root {
   --radius: 0.625rem;
+  --font-display-family: var(--font-syne);
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
@@ -83,12 +122,33 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* CS chrome — values chosen to match the colours these components
+     hardcoded before tokenisation, so the CS site is unchanged. */
+  --action: oklch(0 0 0); /* black */
+  --action-2: oklch(0.437 0 0); /* neutral-600 */
+  --action-foreground: oklch(1 0 0);
+  --field: oklch(0.985 0 0); /* zinc-50 */
+  --field-glow: #3b82f6; /* blue-500 */
+  --nav-surface: oklch(1 0 0); /* white */
+  --nav-fg: oklch(0.442 0.017 285.786); /* zinc-600 */
+  --nav-fg-hover: oklch(0.274 0.006 286.033); /* zinc-800 */
+  --nav-pill: oklch(0.967 0.003 264.542); /* gray-100 */
+  --btn-glow: #06b6d4; /* cyan-500 */
+  --btn-glow-soft: #6366f1; /* indigo-500 */
+  --accent-text: oklch(0.552 0.016 285.938);
+  --gold: oklch(0.552 0.016 285.938);
+  --gold-soft: oklch(0.552 0.016 285.938 / 25%);
+  --gold-hair: oklch(0.552 0.016 285.938 / 35%);
+  --gold-highlight: oklch(0.705 0.015 286.067);
 }
 
 .dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
+  /* Pure black: on the CS site cards sit flush with the black page ground
+     and are separated by border/shadow rather than by lightness. */
+  --card: oklch(0 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
@@ -117,9 +177,229 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+
+  --action: oklch(0.21 0.006 285.885); /* zinc-900 */
+  --action-2: oklch(0.21 0.006 285.885); /* flat in dark, matching the old style */
+  --action-foreground: oklch(0.985 0 0);
+  --field: oklch(0.274 0.006 286.033); /* zinc-800 */
+  --field-glow: #3b82f6;
+  --nav-surface: oklch(0.145 0 0); /* neutral-950 */
+  --nav-fg: oklch(0.871 0.006 286.286); /* zinc-300 */
+  --nav-fg-hover: oklch(0.967 0.001 286.375); /* zinc-100 */
+  --nav-pill: oklch(0.269 0 0); /* neutral-800 */
+  --btn-glow: #06b6d4;
+  --btn-glow-soft: #6366f1;
+  --accent-text: oklch(0.705 0.015 286.067);
+  --gold: oklch(0.705 0.015 286.067);
+  --gold-soft: oklch(0.705 0.015 286.067 / 25%);
+  --gold-hair: oklch(0.705 0.015 286.067 / 35%);
+  --gold-highlight: oklch(0.871 0.006 286.286);
+}
+
+/* ---------------------------------------------------------------
+   Law site. Scoped to the [data-site="law"] wrapper rendered by
+   app/law/layout.tsx, so both palettes coexist in one stylesheet.
+
+   Cascade note: [data-site="law"] and .dark have equal specificity,
+   so the law-light block must come after .dark to win, and the
+   law-dark block below relies on being (0,2,0) to beat it. Every
+   token set in law-light must also be set in law-dark, or a light
+   value leaks through in dark mode.
+   --------------------------------------------------------------- */
+[data-site="law"] {
+  --radius: 2px; /* sharp corners read as formal */
+  --font-display-family: var(--font-cormorant);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --background: #faf8f3; /* ivory, not white — gold needs a warm ground */
+  --foreground: #14110f;
+  --card: #ffffff;
+  --card-foreground: #14110f;
+  --popover: #ffffff;
+  --popover-foreground: #14110f;
+  --primary: #7a1220; /* royal burgundy */
+  --primary-foreground: #faf8f3;
+  --secondary: #f0ebe0;
+  --secondary-foreground: #14110f;
+  --muted: #f0ebe0;
+  --muted-foreground: #6b625a;
+  --accent: #a67c0b;
+  --accent-foreground: #faf8f3;
+  --destructive: #a8202f;
+  --border: #d8ccb6;
+  --input: #e4dcce;
+  --ring: #a67c0b;
+
+  /* Bronze rather than yellow: true gold reads as mustard on a light
+     ground, so on light it is restricted to hairlines and small marks. */
+  --accent-text: #7a1220; /* royal red: gold-as-text goes mustard on ivory */
+  --gold: #a67c0b;
+  --gold-soft: rgb(166 124 11 / 22%);
+  --gold-hair: rgb(166 124 11 / 78%);
+  --gold-highlight: #c9a227;
+
+  --action: #7a1220;
+  --action-2: #5c0d18;
+  --action-foreground: #faf8f3;
+  --field: #ffffff;
+  --field-glow: #a67c0b;
+  --nav-surface: #faf8f3;
+  --nav-fg: #4a423b;
+  --nav-fg-hover: #7a1220;
+  --nav-pill: #f0ebe0;
+  --btn-glow: #a67c0b;
+  --btn-glow-soft: #7a1220;
+}
+
+.dark [data-site="law"] {
+  --background: #0b0a0c;
+  --foreground: #f5f1e8; /* warm white, never pure #fff */
+  --card: #141216;
+  --card-foreground: #f5f1e8;
+  --popover: #141216;
+  --popover-foreground: #f5f1e8;
+  --primary: #a8202f; /* lifted so it holds against black */
+  --primary-foreground: #f5f1e8;
+  --secondary: #1c1a1f;
+  --secondary-foreground: #f5f1e8;
+  --muted: #1c1a1f;
+  --muted-foreground: #a29a8e;
+  --accent: #d4af37;
+  --accent-foreground: #0b0a0c;
+  --destructive: #c2313f;
+  --border: rgb(212 175 55 / 24%); /* gold-tinted hairline */
+  --input: rgb(212 175 55 / 18%);
+  --ring: #d4af37;
+
+  /* On a dark ground gold can carry real weight. */
+  --accent-text: #d4af37; /* gold reads as real metal on near-black */
+  --gold: #d4af37;
+  --gold-soft: rgb(212 175 55 / 22%);
+  --gold-hair: rgb(212 175 55 / 68%);
+  --gold-highlight: #f0dc82;
+
+  --action: #a8202f;
+  --action-2: #7a1220;
+  --action-foreground: #f5f1e8;
+  --field: #1c1a1f;
+  --field-glow: #d4af37;
+  --nav-surface: #0b0a0c;
+  --nav-fg: #c9c1b5;
+  --nav-fg-hover: #d4af37;
+  --nav-pill: #1c1a1f;
+  --btn-glow: #d4af37;
+  --btn-glow-soft: #a8202f;
+}
+
+/* ---------------------------------------------------------------
+   Scrollbar tokens. The document scrollbar belongs to <html>, which sits
+   outside the [data-site] wrappers, so :has() lifts each site's values up
+   to the root; the plain selectors cover scrollables inside the wrapper.
+   Specificity: html:has() is (0,1,1) and beats .dark on its own, and the
+   law-dark pair is (0,2,1), so order between them does not matter.
+
+   --scrollbar-thumb must stay a plain colour: Firefox's scrollbar-color
+   rejects gradients. The sheen only reaches WebKit, where the thumb face
+   is drawn as edge -> sheen -> edge along its length.
+   --------------------------------------------------------------- */
+:root {
+  --scrollbar-track: var(--background);
+  --scrollbar-line: oklch(0.87 0.006 286.286); /* zinc-300: the rail track */
+  --scrollbar-thumb: oklch(0.37 0.013 285.805); /* zinc-700: the rail fill */
+  --scrollbar-thumb-sheen: var(--scrollbar-thumb);
+  --scrollbar-thumb-hover: oklch(0.141 0.005 285.823); /* zinc-900 */
+  --scrollbar-radius: 999px;
+}
+
+.dark {
+  --scrollbar-line: oklch(0.37 0.013 285.805); /* zinc-700 */
+  --scrollbar-thumb: oklch(0.92 0.004 286.32); /* zinc-200 */
+  --scrollbar-thumb-hover: oklch(1 0 0);
+}
+
+[data-site="law"],
+html:has([data-site="law"]) {
+  --scrollbar-track: #faf8f3;
+  --scrollbar-line: rgb(166 124 11 / 45%); /* a gold hairline down the gutter */
+  --scrollbar-thumb: #a67c0b;
+  --scrollbar-thumb-sheen: #c9a227; /* bronze bar catching the light */
+  --scrollbar-thumb-hover: #7a1220; /* burgundy, like the nav hover */
+  --scrollbar-radius: 0; /* sharp, like the rest of the law chrome */
+}
+
+.dark [data-site="law"],
+html.dark:has([data-site="law"]) {
+  --scrollbar-track: #0b0a0c;
+  --scrollbar-line: rgb(212 175 55 / 40%);
+  --scrollbar-thumb: #d4af37;
+  --scrollbar-thumb-sheen: #f0dc82;
+  --scrollbar-thumb-hover: #f0dc82;
 }
 
 @layer base {
+  /* Reserve the scrollbar gutter permanently. The project modal sets
+     body{overflow:hidden} while open; without a stable gutter the scrollbar
+     vanishes, the viewport widens, and every card behind the modal shifts. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /* Custom scrollbar, styled after the CS side rail: a 1px line down the
+     centre of the gutter with a narrow bar riding on it. The scrollbar is
+     11px so that line lands on a whole pixel (5px in), and the 3px
+     transparent borders leave a 5px thumb while keeping the full 11px hit
+     area. :horizontal flips both axes for inner scrollers.
+
+     Chrome ignores ::-webkit-scrollbar once scrollbar-color is set on the
+     same element, so the standard properties are gated to engines without
+     the WebKit pseudo-elements (Firefox). Elements that hide their scrollbar
+     with scrollbar-width: none still do: that utility outranks the * rule
+     and Chrome honours it over the pseudos. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+  ::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-track {
+    --scrollbar-line-size: 1px 100%;
+    background: linear-gradient(var(--scrollbar-line), var(--scrollbar-line))
+      center / var(--scrollbar-line-size) no-repeat var(--scrollbar-track);
+  }
+  ::-webkit-scrollbar-track:horizontal {
+    --scrollbar-line-size: 100% 1px;
+  }
+  ::-webkit-scrollbar-thumb {
+    --scrollbar-axis: to bottom;
+    background: linear-gradient(
+        var(--scrollbar-axis),
+        var(--scrollbar-thumb),
+        var(--scrollbar-thumb-sheen) 50%,
+        var(--scrollbar-thumb)
+      )
+      padding-box;
+    border: 3px solid transparent;
+    border-radius: var(--scrollbar-radius);
+  }
+  ::-webkit-scrollbar-thumb:horizontal {
+    --scrollbar-axis: to right;
+  }
+  ::-webkit-scrollbar-thumb:hover,
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--scrollbar-thumb-hover) padding-box;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -140,4 +420,107 @@
 
 .c-h1 {
   @apply text-center font-display text-5xl font-bold tracking-tight max-sm:text-4xl sm:text-6xl;
+}
+
+/* Law reuses the shared SectionTitle, but Cormorant at display size wants
+   light weight and open tracking — bold + negative tracking is a grotesque
+   setting and makes a high-contrast serif look cramped. */
+[data-site="law"] .c-h1 {
+  font-weight: 500;
+  letter-spacing: 0;
+  /* Cormorant has a much smaller x-height than Syne, so matching CS on pixel
+     size renders optically smaller. These are ~1.2x the CS sizes, which is
+     what it takes to read as the same size on screen. */
+  font-size: 3rem;
+}
+
+@media (min-width: 640px) {
+  [data-site="law"] .c-h1 {
+    font-size: 4.5rem;
+  }
+}
+
+[data-site="law"] .c-eyebrow {
+  color: var(--accent-text);
+  letter-spacing: 0.28em;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* The whole of the "gold glitter" brief: one highlight travelling across
+   the letterforms, once. Restraint is what separates gold from novelty. */
+/* Drives the law background filaments.
+
+   The distance must be an exact whole number of wavelengths or the loop
+   point does not match and strands appear to jump. translateX(-50%) was
+   wrong twice over: with transform-box: view-box a percentage resolves
+   against the viewBox (1200), giving 600 — one and a half wavelengths — and
+   without it, against the stroke bounding box, which is a fraction wider
+   than the path itself. So the distance is passed explicitly in user units
+   instead, from the component that owns the geometry. */
+@keyframes law-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-1 * var(--law-drift-distance)));
+  }
+}
+
+@keyframes seal-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gold-sweep {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+
+.c-gold-sweep {
+  /* Base is --accent-text, not --gold, so the sweep obeys the same rule as
+     every other piece of type: gold on dark, royal red on light. The peak
+     stays metallic either way, so on light this reads as a gold glint
+     travelling across burgundy rather than a mustard headline. */
+  background-image: linear-gradient(
+    100deg,
+    var(--accent-text) 0%,
+    var(--accent-text) 42%,
+    var(--gold-highlight) 50%,
+    var(--accent-text) 58%,
+    var(--accent-text) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gold-sweep 2.8s ease-in-out 0.3s 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-gold-sweep {
+    animation: none;
+    background-position: 50% 0;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Reduced motion. Covers CSS animations and transitions site-wide;
+   JS-driven motion is handled separately by <MotionConfig
+   reducedMotion="user"> in the curtain provider.
+   --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -348,8 +348,13 @@ export const LogoLoop = React.memo<LogoLoopProps>(
       if (effectiveHoverSpeed !== undefined) setIsHovered(false);
     }, [effectiveHoverSpeed]);
 
+    // `isDuplicate` marks the cloned copies. They stay aria-hidden so screen
+    // readers do not announce every logo copyCount times, and their links are
+    // taken out of the tab order — which is what the aria-hidden-focus rule
+    // actually asks for. They must remain mouse-interactive: the marquee
+    // scrolls, so these clones are most of what anyone actually clicks.
     const renderLogoItem = useCallback(
-      (item: LogoItem, key: React.Key) => {
+      (item: LogoItem, key: React.Key, isDuplicate = false) => {
         if (renderItem) {
           return (
             <li
@@ -419,6 +424,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
             aria-label={itemAriaLabel || "logo link"}
             target="_blank"
             rel="noreferrer noopener"
+            tabIndex={isDuplicate ? -1 : undefined}
           >
             {content}
           </a>
@@ -454,7 +460,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
             ref={copyIndex === 0 ? seqRef : undefined}
           >
             {logos.map((item, itemIndex) =>
-              renderLogoItem(item, `${copyIndex}-${itemIndex}`),
+              renderLogoItem(item, `${copyIndex}-${itemIndex}`, copyIndex > 0),
             )}
           </ul>
         )),

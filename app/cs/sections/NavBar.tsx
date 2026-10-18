@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { PropsWithChildren, ReactNode, useState } from "react";
 import NavBarIconButton from "./NavBarIconButton";
+import SiteSwitcher from "@/components/shared/SiteSwitcher";
 import { cn, scrollToId } from "@/lib/utils";
 
 interface NavBarProps extends PropsWithChildren {
@@ -49,11 +50,9 @@ const NavBar = ({ children, className }: NavBarProps) => {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div>
-            <NavBarIconButton
-              children={<AnimatedThemeToggler className="cursor-pointer" />}
-              className="absolute"
-            />
+          <div className="text-nav-fg relative z-20 flex items-center gap-5">
+            <SiteSwitcher to="law" className="hover:text-nav-fg-hover" />
+            <AnimatedThemeToggler className="hover:text-nav-fg-hover cursor-pointer transition-colors" />
           </div>
         </NavBody>
 
@@ -61,14 +60,15 @@ const NavBar = ({ children, className }: NavBarProps) => {
         <MobileNav>
           <MobileNavHeader>
             <NavbarLogo />
-            <div className="flex gap-4">
+            <div className="text-nav-fg flex items-center gap-4">
+              <SiteSwitcher to="law" />
+              <NavBarIconButton>
+                <AnimatedThemeToggler className="cursor-pointer" />
+              </NavBarIconButton>
               <MobileNavToggle
                 isOpen={isMobileMenuOpen}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="cursor-pointer"
-              />
-              <NavBarIconButton
-                children={<AnimatedThemeToggler className="cursor-pointer" />}
               />
             </div>
           </MobileNavHeader>
@@ -90,6 +90,9 @@ const NavBar = ({ children, className }: NavBarProps) => {
                 <span className="block">{item.name}</span>
               </a>
             ))}
+            <div className="border-border text-nav-fg mt-2 w-full border-t px-4 pt-4">
+              <SiteSwitcher to="law" withLabel className="text-sm" />
+            </div>
           </MobileNavMenu>
         </MobileNav>
       </Navbar>

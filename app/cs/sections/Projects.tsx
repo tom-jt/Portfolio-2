@@ -1,7 +1,7 @@
 "use client";
 
-import SectionTitle from "@/components/SectionTitle";
-import { Project, ProjectType } from "@/data/database";
+import SectionTitle from "@/components/shared/SectionTitle";
+import { Project, ProjectType } from "@/data/cs/projects";
 import { Code2, Gamepad2, type LucideIcon } from "lucide-react";
 import ProjectList from "./ProjectList";
 
@@ -52,7 +52,7 @@ const Projects = () => {
         items-center max-sm:gap-12 sm:gap-24
       "
     >
-      <SectionTitle eyebrow="Archive" title="My Creations" />
+      <SectionTitle eyebrow="Archive" title="My Creations" as="h2" />
 
       <div
         className="
@@ -65,7 +65,7 @@ const Projects = () => {
           <ColumnHeader
             icon={Gamepad2}
             label="Games"
-            microcopy="Playable builds"
+            microcopy="Try them out :D"
           />
           <ProjectList filterBy={(p: Project) => p.type === ProjectType.GAME} />
         </div>
@@ -74,7 +74,7 @@ const Projects = () => {
           <ColumnHeader
             icon={Code2}
             label="Projects"
-            microcopy="Apps & tools"
+            microcopy="Apps and tools"
           />
           <ProjectList
             filterBy={(p: Project) => p.type === ProjectType.PROJECT}
