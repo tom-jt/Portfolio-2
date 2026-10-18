@@ -176,7 +176,11 @@ export const TypingAnimation = ({
       className={cn("text-base text-wrap font-normal tracking-tight", className)}
       {...props}
     >
-      {displayedText}
+      {/* A zero-width space holds the line box open before typing starts.
+          An empty inline span is zero-height, so without this every
+          TypingAnimation line pops the terminal taller as it begins, and the
+          whole page below it jumps down one line at a time. */}
+      {displayedText || "​"}
     </MotionComponent>
   );
 };
