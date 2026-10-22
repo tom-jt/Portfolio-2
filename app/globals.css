@@ -43,6 +43,17 @@
   --color-gold-soft: var(--gold-soft);
   --color-gold-hair: var(--gold-hair);
   --color-gold-highlight: var(--gold-highlight);
+
+  /* /home scene chrome: frosted glass over the live background, plus three
+     glows taken from the scene (lamplight, rain, neon on the rainy window).
+     Only the [data-site="home"] blocks define these. */
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-glass-edge: var(--glass-edge);
+  --color-glow: var(--glow);
+  --color-glow-2: var(--glow-2);
+  --color-glow-3: var(--glow-3);
+  --font-pixel: var(--font-pixel-face);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -336,6 +347,136 @@ html.dark:has([data-site="law"]) {
   --scrollbar-thumb-hover: #f0dc82;
 }
 
+/* ---------------------------------------------------------------
+   Home. One palette per scene rather than per light/dark theme: /home
+   ignores the theme toggle, because every scene is already its own mood.
+
+   The scene is chosen on the client, so it lives on <html> as
+   data-home-scene, set before paint by the boot script in app/layout.tsx
+   and kept current by HomeShell. Rain needs no attribute, so it is also
+   what first-time visitors and server renders get.
+   --------------------------------------------------------------- */
+[data-site="home"] {
+  color-scheme: dark;
+  --radius: 0.875rem;
+  --font-display-family: var(--font-instrument);
+
+  --background: #0a0f1f;
+  --foreground: #ede7da; /* lamplit paper, never pure white */
+  --card: rgb(16 22 42 / 60%);
+  --card-foreground: #ede7da;
+  --popover: #111832;
+  --popover-foreground: #ede7da;
+  --primary: #f2b46d;
+  --primary-foreground: #1d1408;
+  --secondary: rgb(255 255 255 / 6%);
+  --secondary-foreground: #ede7da;
+  --muted: rgb(255 255 255 / 5%);
+  --muted-foreground: #a3acc0;
+  --accent: rgb(255 255 255 / 8%);
+  --accent-foreground: #ede7da;
+  --destructive: #f08a80;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #f2b46d;
+  --accent-text: #f2b46d;
+
+  --glass: rgb(12 18 36 / 54%);
+  --glass-strong: rgb(10 15 30 / 90%);
+  --glass-edge: rgb(255 255 255 / 10%);
+  --glass-highlight: rgb(255 255 255 / 7%);
+  --glow: #f2b46d; /* the desk lamp */
+  --glow-2: #86cde0; /* rain catching the street light */
+  --glow-3: #ec97bb; /* a neon sign across the road */
+
+  --nav-fg: #b9c0d0;
+  --nav-fg-hover: #f2b46d;
+}
+
+html[data-home-scene="sunset"] [data-site="home"] {
+  --background: #2a1533;
+  --foreground: #fff1e4;
+  --card: rgb(48 20 46 / 56%);
+  --card-foreground: #fff1e4;
+  --popover: #3a1a3c;
+  --popover-foreground: #fff1e4;
+  --primary: #ffb06a;
+  --primary-foreground: #2a1206;
+  --secondary: rgb(255 236 220 / 8%);
+  --secondary-foreground: #fff1e4;
+  --muted: rgb(255 236 220 / 6%);
+  --muted-foreground: #e9c3b6;
+  --accent: rgb(255 236 220 / 10%);
+  --accent-foreground: #fff1e4;
+  --destructive: #ff8f86;
+  --border: rgb(255 230 210 / 14%);
+  --input: rgb(255 230 210 / 18%);
+  --ring: #ffb06a;
+  --accent-text: #ffb06a;
+
+  --glass: rgb(44 16 44 / 46%);
+  --glass-strong: rgb(40 14 40 / 92%);
+  --glass-edge: rgb(255 226 200 / 14%);
+  --glass-highlight: rgb(255 240 225 / 9%);
+  --glow: #ffb06a; /* the sun */
+  --glow-2: #ffd98a; /* glitter on the water */
+  --glow-3: #ff8f9e; /* the clouds' undersides */
+
+  --nav-fg: #f1d2c6;
+  --nav-fg-hover: #ffb06a;
+}
+
+/* Overscroll and the document scrollbar sit outside the wrapper, so the
+   ground colour has to be lifted to <html> to avoid a white edge. */
+html:has([data-site="home"]) {
+  color-scheme: dark;
+  background: #0a0f1f;
+  --scrollbar-track: #0a0f1f;
+  --scrollbar-line: rgb(255 255 255 / 10%);
+  --scrollbar-thumb: rgb(242 180 109 / 70%);
+  --scrollbar-thumb-sheen: #f2b46d;
+  --scrollbar-thumb-hover: #f2b46d;
+}
+
+html[data-home-scene="sunset"]:has([data-site="home"]) {
+  background: #2a1533;
+  --scrollbar-track: #2a1533;
+  --scrollbar-line: rgb(255 230 210 / 14%);
+  --scrollbar-thumb: rgb(255 176 106 / 75%);
+  --scrollbar-thumb-sheen: #ffd98a;
+  --scrollbar-thumb-hover: #ffb06a;
+}
+
+html:has([data-site="home"]) body {
+  background: transparent;
+}
+
+/* Browsers give form controls text-transform: none, so buttons would skip
+   the page's lowercase. Inputs holding the visitor's own text opt out with
+   normal-case. (A zero-specificity :where() version of this rule was
+   silently dropped from the build, hence the explicit :not.) */
+[data-site="home"] :is(button, input, select, textarea):not(.normal-case) {
+  text-transform: inherit;
+}
+
+/* /home is one screen that never scrolls (cards scroll inside), so the
+   permanent scrollbar gutter the portfolio sites reserve is just a strip. */
+html:has([data-site="home"]) {
+  scrollbar-gutter: auto;
+  overflow: hidden;
+}
+
+/* Frosted panel over the moving scene. */
+@utility home-glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 30px 60px -30px rgb(0 0 0 / 0.7);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+}
+
 @layer base {
   /* Reserve the scrollbar gutter permanently. The project modal sets
      body{overflow:hidden} while open; without a stable gutter the scrollbar
@@ -464,6 +605,38 @@ html.dark:has([data-site="law"]) {
   }
   to {
     transform: translateX(calc(-1 * var(--law-drift-distance)));
+  }
+}
+
+/* /home: TV static on an arcade cartridge with no game in it yet. */
+@keyframes home-static {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-12px, 8px);
+  }
+  40% {
+    transform: translate(10px, -14px);
+  }
+  60% {
+    transform: translate(-6px, -4px);
+  }
+  80% {
+    transform: translate(14px, 10px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* /home: the equaliser bars beside ambience while it plays. */
+@keyframes home-eq {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
 

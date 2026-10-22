@@ -16,10 +16,11 @@ import {
   MotionConfig,
   useAnimationControls,
 } from "motion/react";
+import { CloudRain } from "lucide-react";
 import SealMark from "@/components/law/SealMark";
 import { useIsDark } from "@/hooks/use-is-dark";
 
-type Site = "cs" | "law";
+export type Site = "cs" | "law" | "home";
 
 interface CurtainContextValue {
   switchTo: (site: Site) => void;
@@ -36,7 +37,11 @@ export const useSiteCurtain = () => {
   return ctx;
 };
 
-const HREF: Record<Site, string> = { cs: "/cs", law: "/law" };
+export const SITE_HREF: Record<Site, string> = {
+  cs: "/cs",
+  law: "/law",
+  home: "/home",
+};
 
 /**
  * The curtain sits outside both [data-site] wrappers, so it cannot inherit
@@ -46,6 +51,9 @@ const HREF: Record<Site, string> = { cs: "/cs", law: "/law" };
  * in dark is zinc-900 rather than the site's near-black: it sweeps across the
  * law site, whose dark ground is #0b0a0c, and two near-identical blacks make
  * the sweep invisible.
+ *
+ * Home has one skin for both themes, since /home ignores the theme toggle:
+ * the rainy night's navy with its lamplight amber.
  */
 const CURTAIN = {
   law: {
@@ -64,7 +72,18 @@ const CURTAIN = {
       logo: "/images/logos/LogoSimpleDarkTrans.png",
     },
   },
+  home: { panel: "#0d1428", ink: "#f2b46d" },
 } as const;
+
+/**
+ * Law sweeps left-to-right and CS comes back right-to-left, so those two
+ * read as opposites. Home falls from the top, like the rain it leads to.
+ */
+const SWEEP: Record<Site, { axis: "x" | "y"; from: string; exit: string }> = {
+  law: { axis: "x", from: "-100%", exit: "100%" },
+  cs: { axis: "x", from: "100%", exit: "-100%" },
+  home: { axis: "y", from: "-100%", exit: "100%" },
+};
 
 /** Panel is fully across the screen for at least this long, even on an
  *  instant navigation — otherwise the sweep reads as a flicker. */
@@ -103,7 +122,7 @@ export const SiteCurtainProvider = ({
   const switchTo = useCallback(
     async (site: Site) => {
       if (busy) return;
-      const href = HREF[site];
+      const href = SITE_HREF[site];
       if (pathname.startsWith(href)) return;
 
       const reduced =
@@ -145,14 +164,20 @@ export const SiteCurtainProvider = ({
     [busy, controls, pathname, router],
   );
 
-  // Sweeps left-to-right on the way to law, right-to-left coming back, so the
-  // two directions read as opposites rather than a repeat.
-  const toLaw = target === "law";
-  const from = toLaw ? "-100%" : "100%";
-  const exit = toLaw ? "100%" : "-100%";
+  const { axis, from, exit } = SWEEP[target];
+  const at = (offset: string) => (axis === "x" ? { x: offset } : { y: offset });
 
   const mode = isDark ? "dark" : "light";
-  const skin = toLaw ? CURTAIN.law[mode] : CURTAIN.cs[mode];
+  const skin =
+    target === "home"
+      ? CURTAIN.home
+      : target === "law"
+        ? CURTAIN.law[mode]
+        : CURTAIN.cs[mode];
+
+  // Which edge of the panel leads the sweep, for the hairline.
+  const leadingEdge =
+    axis === "y" ? "bottom" : from === "-100%" ? "right" : "left";
 
   return (
     <CurtainContext.Provider value={{ switchTo, busy }}>
@@ -169,17 +194,16 @@ export const SiteCurtainProvider = ({
             aria-hidden="true"
           >
             <motion.div
-              custom={{ from, exit }}
               animate={controls}
               initial="hidden"
               variants={{
-                hidden: { x: from },
+                hidden: at(from),
                 cover: {
-                  x: "0%",
+                  ...at("0%"),
                   transition: { duration: 0.52, ease: [0.76, 0, 0.24, 1] },
                 },
                 uncover: {
-                  x: exit,
+                  ...at(exit),
                   transition: { duration: 0.52, ease: [0.76, 0, 0.24, 1] },
                 },
               }}
@@ -193,11 +217,12 @@ export const SiteCurtainProvider = ({
             >
               {/* Hairline riding the leading edge of the sweep. */}
               <div
-                className="absolute inset-y-0 w-0.75"
-                style={{
-                  background: skin.ink,
-                  [toLaw ? "right" : "left"]: 0,
-                }}
+                className={
+                  axis === "y"
+                    ? "absolute inset-x-0 h-0.75"
+                    : "absolute inset-y-0 w-0.75"
+                }
+                style={{ background: skin.ink, [leadingEdge]: 0 }}
               />
 
               <motion.div
@@ -206,7 +231,13 @@ export const SiteCurtainProvider = ({
                 transition={{ duration: 0.45, delay: 0.18 }}
                 className="flex flex-col items-center gap-5"
               >
-                {toLaw ? (
+                {target === "home" ? (
+                  <CloudRain
+                    size={84}
+                    strokeWidth={1.2}
+                    style={{ color: skin.ink }}
+                  />
+                ) : target === "law" ? (
                   <SealMark
                     size={132}
                     animate
@@ -222,10 +253,18 @@ export const SiteCurtainProvider = ({
                   />
                 )}
                 <span
-                  className="text-xs font-semibold tracking-[0.42em] uppercase"
+                  className={
+                    target === "home"
+                      ? "text-sm font-medium tracking-[0.2em]"
+                      : "text-xs font-semibold tracking-[0.42em] uppercase"
+                  }
                   style={{ color: skin.ink }}
                 >
-                  {toLaw ? "Law" : "Computer Science"}
+                  {target === "home"
+                    ? "home"
+                    : target === "law"
+                      ? "Law"
+                      : "Computer Science"}
                 </span>
               </motion.div>
             </motion.div>

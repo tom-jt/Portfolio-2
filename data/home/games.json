@@ -1,0 +1,37 @@
+{
+  "games": [
+    {
+      "id": "cartridge-01",
+      "title": "cartridge 01",
+      "tagline": "",
+      "description": "",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#7fc8dc",
+      "aspect": "16/9",
+      "status": "soon"
+    },
+    {
+      "id": "cartridge-02",
+      "title": "cartridge 02",
+      "tagline": "",
+      "description": "",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#f2b46d",
+      "aspect": "16/9",
+      "status": "soon"
+    },
+    {
+      "id": "cartridge-03",
+      "title": "cartridge 03",
+      "tagline": "",
+      "description": "",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#e58fb4",
+      "aspect": "16/9",
+      "status": "soon"
+    }
+  ]
+}
