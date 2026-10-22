@@ -38,6 +38,7 @@ const NavBar = ({
           </NavbarLogo>
           <NavItems items={navItems} />
           <div className="text-nav-fg relative z-20 flex items-center gap-5">
+            <SiteSwitcher to="home" className="hover:text-nav-fg-hover" />
             <SiteSwitcher to="cs" className="hover:text-nav-fg-hover" />
             <AnimatedThemeToggler className="hover:text-nav-fg-hover cursor-pointer transition-colors" />
           </div>
@@ -76,8 +77,9 @@ const NavBar = ({
                 {item.name}
               </a>
             ))}
-            <div className="border-border text-nav-fg mt-2 w-full border-t px-4 pt-4">
+            <div className="border-border text-nav-fg mt-2 flex w-full flex-col gap-4 border-t px-4 pt-4">
               <SiteSwitcher to="cs" withLabel className="text-sm" />
+              <SiteSwitcher to="home" withLabel className="text-sm" />
             </div>
           </MobileNavMenu>
         </MobileNav>

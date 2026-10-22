@@ -1,0 +1,49 @@
+"use client";
+
+import type { ComponentType } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import type { SceneId } from "@/lib/home/scenes";
+import { useHydrated } from "@/lib/home/store";
+import RainScene from "./RainScene";
+import SunsetScene from "./SunsetScene";
+
+/** Each scene's live background. Metadata lives in lib/home/scenes.ts. */
+const BACKGROUNDS: Record<SceneId, ComponentType> = {
+  rain: RainScene,
+  sunset: SunsetScene,
+};
+
+/**
+ * Fixed behind the page. Renders nothing until hydrated: the stored scene is
+ * only known on the client, and mounting the wrong canvas first would mean
+ * starting and tearing down a whole animation for nothing. The wrapper's
+ * ground colour already matches the scene, so the canvas fades in over it.
+ */
+const SceneBackground = ({ scene }: { scene: SceneId }) => {
+  const hydrated = useHydrated();
+  const Background = BACKGROUNDS[scene];
+
+  return (
+    <div
+      aria-hidden="true"
+      className="bg-background pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
+      <AnimatePresence>
+        {hydrated && (
+          <motion.div
+            key={scene}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+          >
+            <Background />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default SceneBackground;

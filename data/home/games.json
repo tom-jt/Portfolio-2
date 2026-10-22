@@ -1,0 +1,37 @@
+{
+  "games": [
+    {
+      "id": "cartridge-01",
+      "title": "Cartridge 01",
+      "tagline": "Something's brewing",
+      "description": "The first of three small web games. Check back soon.",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#7fc8dc",
+      "aspect": "16/9",
+      "status": "soon"
+    },
+    {
+      "id": "cartridge-02",
+      "title": "Cartridge 02",
+      "tagline": "Waiting out the rain",
+      "description": "The second of three small web games. Check back soon.",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#f2b46d",
+      "aspect": "16/9",
+      "status": "soon"
+    },
+    {
+      "id": "cartridge-03",
+      "title": "Cartridge 03",
+      "tagline": "Still in the oven",
+      "description": "The third of three small web games. Check back soon.",
+      "url": "",
+      "thumbnail": "",
+      "accent": "#e58fb4",
+      "aspect": "16/9",
+      "status": "soon"
+    }
+  ]
+}
