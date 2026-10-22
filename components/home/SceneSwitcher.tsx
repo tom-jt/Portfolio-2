@@ -50,8 +50,8 @@ const SceneSwitcher = () => {
             transition={{ duration: 0.16 }}
             className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 w-72 origin-top-right rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] backdrop-blur-xl"
           >
-            <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-[0.68rem] font-semibold tracking-[0.22em] uppercase">
-              Scene
+            <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
+              scene
             </p>
             <ul className="flex flex-col gap-1">
               {SCENES.map((s) => {
@@ -91,9 +91,7 @@ const SceneSwitcher = () => {
                           {s.name}
                         </span>
                         <span className="text-muted-foreground block text-xs">
-                          {locked
-                            ? `Reach garden level ${s.unlockLevel}`
-                            : s.ambienceLabel}
+                          {locked ? `level ${s.unlockLevel}` : s.ambienceLabel}
                         </span>
                       </span>
                       {locked ? (
@@ -106,9 +104,6 @@ const SceneSwitcher = () => {
                 );
               })}
             </ul>
-            <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
-              More scenes open up as your garden grows.
-            </p>
           </motion.div>
         )}
       </AnimatePresence>

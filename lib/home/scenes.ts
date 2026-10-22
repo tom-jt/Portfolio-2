@@ -16,8 +16,6 @@ export type AmbienceKind = "rain" | "waves";
 export interface SceneMeta {
   id: SceneId;
   name: string;
-  /** One line under the greeting. */
-  tagline: string;
   /** Garden level that unlocks it. 1 means available from the start. */
   unlockLevel: number;
   ambience: AmbienceKind;
@@ -29,20 +27,18 @@ export interface SceneMeta {
 export const SCENES: SceneMeta[] = [
   {
     id: "rain",
-    name: "Rainy window",
-    tagline: "Rain on the glass. City lights going soft. Kettle's on.",
+    name: "rainy window",
     unlockLevel: 1,
     ambience: "rain",
-    ambienceLabel: "Rain on glass",
+    ambienceLabel: "rain on glass",
     swatch: ["#0b1124", "#f2b46d"],
   },
   {
     id: "sunset",
-    name: "Sunset over the sea",
-    tagline: "The tide's out and the whole sea has gone gold.",
+    name: "sunset over the sea",
     unlockLevel: 3,
     ambience: "waves",
-    ambienceLabel: "Waves on the shore",
+    ambienceLabel: "waves",
     swatch: ["#5a2a5e", "#ffb36b"],
   },
 ];

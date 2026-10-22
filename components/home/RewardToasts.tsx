@@ -14,8 +14,8 @@ const ICON: Record<ToastKind, typeof Droplet> = {
 };
 
 /**
- * Rewards land here, top right under the HUD chip they add to. The list is
- * a polite live region so screen readers hear what was earned too.
+ * Rewards land top centre, the one edge of the scene the controls leave
+ * free. The list is a polite live region so screen readers hear them too.
  */
 const RewardToasts = () => {
   const toasts = useToasts();
@@ -23,7 +23,7 @@ const RewardToasts = () => {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed top-20 right-4 z-90 flex w-[min(22rem,calc(100vw-2rem))] flex-col items-end gap-2"
+      className="pointer-events-none fixed top-4 left-1/2 z-90 flex w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 flex-col items-center gap-2"
     >
       <AnimatePresence initial={false}>
         {toasts.map((t) => {
@@ -35,7 +35,7 @@ const RewardToasts = () => {
               layout
               initial={{ opacity: 0, y: -12, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 24, transition: { duration: 0.2 } }}
+              exit={{ opacity: 0, y: -12, transition: { duration: 0.2 } }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
               className={cn(
                 "bg-glass-strong border-glass-edge pointer-events-auto flex w-full items-start gap-3 rounded-2xl border p-3.5 shadow-[0_18px_40px_-18px_rgb(0_0_0/0.8)] backdrop-blur-xl",
@@ -56,7 +56,7 @@ const RewardToasts = () => {
                 <p
                   className={cn(
                     "leading-tight font-semibold",
-                    big ? "font-display text-xl italic" : "text-sm",
+                    big ? "font-display text-xl" : "text-sm",
                   )}
                 >
                   {t.title}

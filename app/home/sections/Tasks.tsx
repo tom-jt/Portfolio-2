@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Droplet, ListTodo, Pencil, Plus, X } from "lucide-react";
-import { IconButton, Panel } from "@/components/home/ui";
+import { IconButton, Panel, type PanelChrome } from "@/components/home/ui";
 import { dayKey, formatNumber } from "@/lib/home/format";
 import { TASK_DAILY_CAP, taskReward, useGarden } from "@/lib/home/garden";
 import { useHydrated } from "@/lib/home/store";
@@ -62,13 +62,13 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
             if (e.key === "Enter") e.currentTarget.blur();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="border-glass-edge focus:border-glow min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0.5 text-sm outline-none"
+          className="border-glass-edge focus:border-glow min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0.5 text-sm normal-case outline-none"
         />
       ) : (
         <span
           onDoubleClick={() => setEditing(true)}
           className={cn(
-            "min-w-0 flex-1 text-sm leading-snug break-words transition-colors",
+            "min-w-0 flex-1 text-sm leading-snug break-words normal-case transition-colors",
             todo.done && "text-muted-foreground line-through decoration-white/30",
           )}
         >
@@ -102,7 +102,7 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
   );
 };
 
-const Tasks = ({ className }: { className?: string }) => {
+const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const todos = useTodos();
   const garden = useGarden();
   const hydrated = useHydrated();
@@ -117,9 +117,10 @@ const Tasks = ({ className }: { className?: string }) => {
   return (
     <Panel
       id="tasks"
-      title="Tasks"
+      title="tasks"
       icon={ListTodo}
       className={className}
+      chrome={chrome}
       actions={
         <span className="text-muted-foreground text-xs">
           {open ? `${open} to go` : todos.length ? "All done" : ""}
@@ -137,16 +138,16 @@ const Tasks = ({ className }: { className?: string }) => {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={TODO_MAX_LENGTH}
-          placeholder="Add a task…"
+          placeholder="add a task…"
           aria-label="New task"
-          className="border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 focus:ring-glow/20 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm transition outline-none focus:ring-4"
+          className="border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 focus:ring-glow/20 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case transition outline-none focus:ring-4"
         />
         <IconButton type="submit" label="Add task" disabled={!draft.trim()}>
           <Plus className="size-4" />
         </IconButton>
       </form>
 
-      <ul className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1 max-lg:max-h-96">
+      <ul className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1">
         <AnimatePresence initial={false}>
           {sorted.map((t) => (
             <TodoItem key={t.id} todo={t} />
@@ -154,9 +155,7 @@ const Tasks = ({ className }: { className?: string }) => {
         </AnimatePresence>
         {hydrated && todos.length === 0 && (
           <li className="text-muted-foreground px-2 py-8 text-center text-sm">
-            Nothing on the list.
-            <br />
-            Listen to the rain for a bit.
+            no tasks yet
           </li>
         )}
       </ul>

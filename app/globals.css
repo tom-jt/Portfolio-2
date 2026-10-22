@@ -451,6 +451,21 @@ html:has([data-site="home"]) body {
   background: transparent;
 }
 
+/* Browsers give form controls text-transform: none, so buttons would skip
+   the page's lowercase. Inputs holding the visitor's own text opt out with
+   normal-case. (A zero-specificity :where() version of this rule was
+   silently dropped from the build, hence the explicit :not.) */
+[data-site="home"] :is(button, input, select, textarea):not(.normal-case) {
+  text-transform: inherit;
+}
+
+/* /home is one screen that never scrolls (cards scroll inside), so the
+   permanent scrollbar gutter the portfolio sites reserve is just a strip. */
+html:has([data-site="home"]) {
+  scrollbar-gutter: auto;
+  overflow: hidden;
+}
+
 /* Frosted panel over the moving scene. */
 @utility home-glass {
   background: var(--glass);

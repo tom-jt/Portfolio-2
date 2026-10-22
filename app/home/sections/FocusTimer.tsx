@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Droplet,
@@ -15,8 +15,8 @@ import {
   Timer as TimerIcon,
   X,
 } from "lucide-react";
-import { Eyebrow, IconButton, Panel, PrimaryButton, Segmented, Switch } from "@/components/home/ui";
-import { playChime, primeAudio } from "@/lib/home/ambience";
+import { Eyebrow, IconButton, Panel, PrimaryButton, Segmented, Switch, type PanelChrome } from "@/components/home/ui";
+import { primeAudio } from "@/lib/home/ambience";
 import { formatClock, formatMinutes, formatNumber } from "@/lib/home/format";
 import { currentStreak, focusReward, useGarden } from "@/lib/home/garden";
 import { useNow } from "@/lib/home/store";
@@ -27,18 +27,15 @@ import {
   reset,
   setMode,
   skip,
+  notificationsSupported,
   start,
   timeLeft,
-  timerStore,
   todayStats,
   updateSettings,
   useTimer,
-  useTimerEngine,
-  type Completion,
   type TimerMode,
   type TimerSettings,
 } from "@/lib/home/timer";
-import { pushToast } from "@/lib/home/toasts";
 import { cn } from "@/lib/utils";
 
 const MODES: { value: TimerMode; label: string }[] = [
@@ -107,8 +104,6 @@ const Stepper = ({
   </div>
 );
 
-const notificationsSupported = () => typeof window !== "undefined" && "Notification" in window;
-
 const Settings = ({ settings, onClose }: { settings: TimerSettings; onClose: () => void }) => {
   const [blocked, setBlocked] = useState(false);
 
@@ -151,56 +146,27 @@ const Settings = ({ settings, onClose }: { settings: TimerSettings; onClose: () 
         />
       )}
       <p className="text-muted-foreground mt-auto pt-3 text-xs">
-        Changes apply to the next session. Everything saves to this browser.
+        applies to the next session
       </p>
     </motion.div>
   );
 };
 
-const FocusTimer = ({ className }: { className?: string }) => {
+/**
+ * The timer's controls. What keeps time, chimes and pays out lives in
+ * TimerEngine, which stays mounted while this card is tucked away.
+ */
+const FocusTimer = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const timer = useTimer();
   const garden = useGarden();
   const running = timer.status === "running";
   // Quarter-second resolution keeps the seconds digit turning over on time.
   const now = useNow(250, running);
   const [showSettings, setShowSettings] = useState(false);
-  const [announcement, setAnnouncement] = useState("");
-
-  const onComplete = useCallback((c: Completion) => {
-    const { settings } = timerStore.get();
-    if (settings.chime) playChime();
-    const message =
-      c.finished === "focus"
-        ? `Focus session done. Time for a ${c.next === "long" ? "long" : "short"} break.`
-        : "Break's over. Ready when you are.";
-    setAnnouncement(message);
-    if (c.finished !== "focus") pushToast({ kind: "info", title: "Break's over", detail: "Ready when you are." });
-    if (settings.notify && notificationsSupported() && Notification.permission === "granted" && document.hidden) {
-      new Notification(c.finished === "focus" ? "Focus session done" : "Break's over", {
-        body: message,
-        icon: "/images/logos/LogoSimpleDarkTrans.png",
-      });
-    }
-  }, []);
-
-  useTimerEngine(onComplete);
 
   const left = running && now ? timeLeft(timer, now) : timeLeft(timer);
   const clock = formatClock(left);
   const progress = timer.duration ? 1 - left / timer.duration : 0;
-
-  // Countdown in the tab title, so it can be watched from other tabs.
-  useEffect(() => {
-    if (timer.status === "idle") return;
-    const previous = document.title;
-    return () => {
-      document.title = previous;
-    };
-  }, [timer.status]);
-  useEffect(() => {
-    if (timer.status === "idle") return;
-    document.title = `${timer.status === "paused" ? "❚❚ " : ""}${clock} · ${MODE_LABEL[timer.mode]}`;
-  }, [clock, timer.status, timer.mode]);
 
   const today = todayStats(timer);
   const streak = currentStreak(garden);
@@ -211,9 +177,10 @@ const FocusTimer = ({ className }: { className?: string }) => {
   return (
     <Panel
       id="focus"
-      title="Focus"
+      title="focus"
       icon={TimerIcon}
       className={className}
+      chrome={chrome}
       actions={
         <IconButton
           label={showSettings ? "Close timer settings" : "Timer settings"}
@@ -224,9 +191,6 @@ const FocusTimer = ({ className }: { className?: string }) => {
         </IconButton>
       }
     >
-      <p className="sr-only" aria-live="assertive">
-        {announcement}
-      </p>
       <AnimatePresence mode="wait" initial={false}>
         {showSettings ? (
           <Settings key="settings" settings={timer.settings} onClose={() => setShowSettings(false)} />
@@ -275,12 +239,12 @@ const FocusTimer = ({ className }: { className?: string }) => {
                 <p className="font-display text-[4.6rem] leading-none sm:text-[5.2rem]" role="timer" aria-label={`${clock} left`}>
                   <Digits value={clock} />
                 </p>
-                <p className="text-muted-foreground mt-2 text-xs">
+                <p className="text-muted-foreground mt-2 min-h-4 text-xs">
                   {timer.status === "paused"
-                    ? "Paused"
+                    ? "paused"
                     : isFocus
-                      ? `Session ${sessionNo} of ${timer.settings.longEvery}`
-                      : "Stretch, refill, look outside."}
+                      ? `session ${sessionNo} of ${timer.settings.longEvery}`
+                      : null}
                 </p>
               </div>
             </div>
@@ -324,14 +288,13 @@ const FocusTimer = ({ className }: { className?: string }) => {
                 </p>
               </div>
             </div>
-            <p className="text-muted-foreground mt-3 flex flex-wrap items-center justify-center gap-x-1 text-center text-xs">
-              A {timer.settings.focus}-minute session pays
+            <p className="text-muted-foreground mt-3 flex flex-wrap items-center justify-center gap-x-1.5 text-center text-xs">
+              reward
               <span className="text-glow-2 font-pixel inline-flex items-center gap-0.5">
                 <Droplet className="size-3" />
                 {formatNumber(reward.drops)}
               </span>
-              and
-              <span className="text-glow font-pixel">{reward.xp} xp</span>
+              <span className="text-glow font-pixel">+{reward.xp} xp</span>
             </p>
           </motion.div>
         )}

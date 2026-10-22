@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Headphones, Music2, Pause, Play, Volume1, Volume2 } from "lucide-react";
-import { Eyebrow, Panel, PrimaryButton } from "@/components/home/ui";
+import { Eyebrow, Panel, PrimaryButton, type PanelChrome } from "@/components/home/ui";
 import { DEFAULT_SPOTIFY_URL } from "@/data/home/config";
 import { playAmbience, primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
@@ -11,7 +11,7 @@ import { spotifyEmbedUrl } from "@/lib/home/spotify";
 import { cn } from "@/lib/utils";
 
 /** Three bars bouncing while ambience plays. */
-const Equaliser = ({ on }: { on: boolean }) => (
+export const Equaliser = ({ on }: { on: boolean }) => (
   <span aria-hidden="true" className="flex h-3.5 items-end gap-0.5">
     {[0, 0.25, 0.5].map((delay) => (
       <span
@@ -23,7 +23,7 @@ const Equaliser = ({ on }: { on: boolean }) => (
   </span>
 );
 
-const Sound = ({ className }: { className?: string }) => {
+const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const prefs = usePrefs();
   const scene = getScene(prefs.scene);
   const embed = spotifyEmbedUrl(prefs.spotifyUrl ?? DEFAULT_SPOTIFY_URL);
@@ -43,7 +43,7 @@ const Sound = ({ className }: { className?: string }) => {
   };
 
   return (
-    <Panel id="sound" title="Sound" icon={Headphones} className={className}>
+    <Panel id="sound" title="sound" icon={Headphones} className={className} chrome={chrome}>
       <div className="border-glass-edge flex items-center gap-3 rounded-2xl border bg-white/3 p-3">
         <button
           type="button"
@@ -66,13 +66,7 @@ const Sound = ({ className }: { className?: string }) => {
             {scene.ambienceLabel}
             <Equaliser on={playing} />
           </p>
-          <p className="text-muted-foreground truncate text-xs">
-            {playing
-              ? "Playing. It follows the scene."
-              : waiting
-                ? "Picks up again when you click anywhere."
-                : "Synthesised live in your browser."}
-          </p>
+          {waiting && <p className="text-muted-foreground truncate text-xs">click anywhere to resume</p>}
         </div>
         <label className="text-muted-foreground flex items-center gap-2">
           <span className="sr-only">Ambience volume</span>
@@ -119,11 +113,11 @@ const Sound = ({ className }: { className?: string }) => {
                 setDraft(e.target.value);
                 setError(false);
               }}
-              placeholder="Paste a Spotify link…"
+              placeholder="paste a spotify link…"
               aria-label="Spotify playlist, album or track link"
               aria-invalid={error}
               className={cn(
-                "border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm outline-none",
+                "border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case outline-none",
                 error && "border-destructive",
               )}
             />
@@ -134,7 +128,7 @@ const Sound = ({ className }: { className?: string }) => {
           <p className={cn("mt-1.5 text-xs", error ? "text-destructive" : "text-muted-foreground")}>
             {error
               ? "That doesn't look like a Spotify link."
-              : "Any playlist, album or track. Saved in this browser only."}
+              : "any playlist, album or track"}
             {prefs.spotifyUrl && !error && (
               <>
                 {" "}
@@ -174,16 +168,14 @@ const Sound = ({ className }: { className?: string }) => {
               <Music2 className="size-7 sm:size-9" />
             </span>
             <div className="min-w-0">
-              <p className="font-display text-xl italic">Something to study to</p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Loads Spotify&rsquo;s player. Full tracks if you&rsquo;re signed in to Spotify, previews if not.
-              </p>
+              <p className="font-display text-xl">spotify</p>
+              <p className="text-muted-foreground mt-1 text-xs">previews unless you&rsquo;re signed in</p>
               <button
                 type="button"
                 onClick={() => setPrefs({ spotifyLoaded: true })}
                 className="text-glow hover:text-foreground mt-2 cursor-pointer text-sm font-medium underline-offset-2 hover:underline"
               >
-                Load the player →
+                load player →
               </button>
             </div>
           </div>

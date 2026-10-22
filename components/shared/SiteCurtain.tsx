@@ -253,11 +253,15 @@ export const SiteCurtainProvider = ({
                   />
                 )}
                 <span
-                  className="text-xs font-semibold tracking-[0.42em] uppercase"
+                  className={
+                    target === "home"
+                      ? "text-sm font-medium tracking-[0.2em]"
+                      : "text-xs font-semibold tracking-[0.42em] uppercase"
+                  }
                   style={{ color: skin.ink }}
                 >
                   {target === "home"
-                    ? "Home"
+                    ? "home"
                     : target === "law"
                       ? "Law"
                       : "Computer Science"}

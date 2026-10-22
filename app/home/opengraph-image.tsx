@@ -6,8 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "tom's room";
-const EYEBROW = "FOCUS · TASKS · A LITTLE GARDEN · GAMES";
-const TAGLINE = "Rain on the glass. Kettle's on.";
+const EYEBROW = "focus · tasks · garden · games";
 
 const GROUND = "#0a0f1f";
 const INK = "#ede7da";
@@ -29,7 +28,7 @@ const BOKEH = [
 ];
 
 export default async function Image() {
-  const display = await loadGoogleFont("Instrument Serif", 400, TITLE + TAGLINE);
+  const display = await loadGoogleFont("Instrument Serif", 400, TITLE);
 
   return new ImageResponse(
     (
@@ -78,8 +77,8 @@ export default async function Image() {
           style={{
             display: "flex",
             color: MUTED,
-            fontSize: 20,
-            letterSpacing: 6,
+            fontSize: 24,
+            letterSpacing: 2,
             marginBottom: 20,
           }}
         >
@@ -96,8 +95,7 @@ export default async function Image() {
         >
           {TITLE}
         </div>
-        <div style={{ display: "flex", width: 120, height: 3, background: LAMP, margin: "34px 0" }} />
-        <div style={{ display: "flex", color: MUTED, fontSize: 30 }}>{TAGLINE}</div>
+        <div style={{ display: "flex", width: 120, height: 3, background: LAMP, marginTop: 34 }} />
       </div>
     ),
     {

@@ -6,7 +6,6 @@ const instrument = Instrument_Serif({
   variable: "--font-instrument",
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
 });
 
 /** Pixel face for game numbers. Chosen over Pixelify Sans, whose 2 and 5

@@ -2,36 +2,31 @@
 
 import { useCallback, useState } from "react";
 import Image from "next/image";
-import { Droplet, Gamepad2 } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import GameModal from "@/components/home/GameModal";
 import { GRAIN } from "@/components/home/scenes/canvas";
-import { Eyebrow } from "@/components/home/ui";
+import { Panel, type PanelChrome } from "@/components/home/ui";
 import { games, type ArcadeGame } from "@/data/home/games";
 import { rewardGamePlay } from "@/lib/home/garden";
 import { cn } from "@/lib/utils";
 
-/** A game cartridge: a little CRT screen over a label. */
-const Cartridge = ({ game, index, onPlay }: { game: ArcadeGame; index: number; onPlay: () => void }) => {
+/** A game cartridge: a little CRT screen over its name. Live ones are buttons. */
+const Cartridge = ({ game, onPlay }: { game: ArcadeGame; onPlay: () => void }) => {
   const live = game.status === "live";
+  const Root = live ? "button" : "div";
 
   return (
-    <article
+    <Root
+      {...(live ? { type: "button" as const, onClick: onPlay, "aria-label": `play ${game.title}` } : {})}
       className={cn(
-        "home-glass group relative flex flex-col overflow-hidden rounded-[1.6rem] transition duration-300",
-        live && "hover:-translate-y-1",
+        "border-glass-edge group flex flex-col gap-2.5 rounded-2xl border border-t-2 bg-white/3 p-2 pb-3 text-left",
+        live && "focus-visible:ring-ring cursor-pointer transition hover:-translate-y-0.5 hover:bg-white/6 focus-visible:ring-2 focus-visible:outline-none",
       )}
+      style={{ borderTopColor: game.accent }}
     >
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 opacity-80" style={{ background: game.accent }} />
-
-      <div className="relative m-3 aspect-[16/10] overflow-hidden rounded-[1.1rem] border border-white/8 bg-[#05070d]">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-[0.65rem] bg-[#05070d]">
         {live && game.thumbnail ? (
-          <Image
-            src={game.thumbnail}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
-            className="object-cover transition duration-500 group-hover:scale-105"
-          />
+          <Image src={game.thumbnail} alt="" fill sizes="12rem" className="object-cover transition duration-500 group-hover:scale-105" />
         ) : (
           // No signal: drifting static, tinted with the game's colour.
           <div
@@ -47,74 +42,35 @@ const Cartridge = ({ game, index, onPlay }: { game: ArcadeGame; index: number; o
           className="absolute inset-0 mix-blend-screen"
           style={{ background: `radial-gradient(ellipse at 30% 20%, ${game.accent}33, transparent 65%)` }}
         />
-        {/* Scanlines and a curved-glass sheen. */}
         <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgb(255_255_255/0.04)_0_1px,transparent_1px_3px)]" />
-        <div className="absolute inset-0 rounded-[inherit] shadow-[inset_0_0_40px_rgb(0_0_0/0.8)]" />
-        <p
-          className="font-pixel absolute inset-0 grid place-items-center text-sm tracking-[0.3em] uppercase"
-          style={{ color: game.accent, textShadow: `0 0 12px ${game.accent}` }}
-        >
-          {live ? (game.thumbnail ? "" : "Press start") : "Coming soon"}
-        </p>
+        <div className="absolute inset-0 shadow-[inset_0_0_30px_rgb(0_0_0/0.8)]" />
+        {!(live && game.thumbnail) && (
+          <span
+            className="font-pixel absolute inset-0 grid place-items-center text-[0.7rem] tracking-[0.15em]"
+            style={{ color: game.accent, textShadow: `0 0 10px ${game.accent}` }}
+          >
+            {live ? <Gamepad2 className="size-5" /> : "coming soon"}
+          </span>
+        )}
       </div>
-
-      <div className="flex flex-1 flex-col px-5 pt-1 pb-5">
-        <p className="font-pixel text-xs" style={{ color: game.accent }}>
-          No. {String(index + 1).padStart(2, "0")}
-        </p>
-        <h3 className="font-pixel mt-1 text-xl">{game.title}</h3>
-        <p className="text-muted-foreground mt-1 text-sm">{game.tagline}</p>
-        <div className="mt-auto flex items-center justify-between pt-4">
-          {live ? (
-            <button
-              type="button"
-              onClick={onPlay}
-              className="text-primary-foreground focus-visible:ring-ring inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-5 text-sm font-semibold transition hover:brightness-110 focus-visible:ring-2 focus-visible:outline-none"
-              style={{ background: game.accent, boxShadow: `0 8px 26px -10px ${game.accent}` }}
-            >
-              <Gamepad2 className="size-4" />
-              Play
-            </button>
-          ) : (
-            <span className="text-muted-foreground border-glass-edge rounded-full border px-3 py-1.5 text-xs">
-              In the workshop
-            </span>
-          )}
-          {live && (
-            <span className="text-muted-foreground flex items-center gap-1 text-xs" title="The first play each day waters the garden">
-              <Droplet className="text-glow-2 size-3" />
-              daily bonus
-            </span>
-          )}
-        </div>
-      </div>
-    </article>
+      <span className="font-pixel px-1 text-[0.95rem] leading-tight">{game.title}</span>
+      {game.tagline && <span className="text-muted-foreground px-1 text-xs">{game.tagline}</span>}
+    </Root>
   );
 };
 
-const Arcade = () => {
+/** The games, as a card. The first play of each one each day waters the garden. */
+const Arcade = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const [active, setActive] = useState<ArcadeGame | null>(null);
   const close = useCallback(() => setActive(null), []);
 
   return (
-    <section id="arcade" aria-labelledby="arcade-title" className="mt-16 scroll-mt-24 sm:mt-24">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Eyebrow>Arcade</Eyebrow>
-          <h2 id="arcade-title" className="font-display mt-2 text-4xl tracking-tight italic sm:text-5xl">
-            Little games, made here.
-          </h2>
-        </div>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Small things I&rsquo;ve built for the browser. The first play of each one every day waters the garden.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {games.map((g, i) => (
+    <Panel id="arcade" title="arcade" icon={Gamepad2} className={className} chrome={chrome}>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {games.map((g) => (
           <Cartridge
             key={g.id}
             game={g}
-            index={i}
             onPlay={() => {
               setActive(g);
               rewardGamePlay(g.id, g.title);
@@ -123,7 +79,7 @@ const Arcade = () => {
         ))}
       </div>
       <GameModal game={active} onClose={close} />
-    </section>
+    </Panel>
   );
 };
 

@@ -5,7 +5,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { Droplet, Lock, Sprout, Trophy } from "lucide-react";
 import CatchGame from "@/components/home/CatchGame";
 import PlantSprite, { stageFor } from "@/components/home/PlantSprite";
-import { Eyebrow, Panel, Segmented } from "@/components/home/ui";
+import { Eyebrow, Panel, Segmented, type PanelChrome } from "@/components/home/ui";
 import { formatMinutes, formatNumber } from "@/lib/home/format";
 import {
   ACHIEVEMENTS,
@@ -102,10 +102,9 @@ const PlantsTab = ({ garden, level }: { garden: GardenState; level: number }) =>
                   <span className="text-sm font-medium">{locked ? "???" : p.name}</span>
                   {have > 0 && <span className="font-pixel text-muted-foreground text-xs">×{have}</span>}
                 </p>
-                <p className="text-muted-foreground truncate text-xs">
-                  {locked ? `Unlocks at garden level ${p.unlockLevel}` : p.blurb}
-                </p>
-                {!locked && (
+                {locked ? (
+                  <p className="text-muted-foreground text-xs">unlocks at level {p.unlockLevel}</p>
+                ) : (
                   <p className="font-pixel text-glow-2/90 text-xs">+{formatNumber(p.rate * mult)}/s each</p>
                 )}
               </div>
@@ -143,7 +142,6 @@ const UpgradesTab = ({ garden, level }: { garden: GardenState; level: number }) 
                 {lvl}/{u.max}
               </span>
             </p>
-            <p className="text-muted-foreground text-xs">{u.blurb}</p>
             {!locked && (
               <p className="font-pixel text-glow/90 text-xs">
                 {maxed ? u.effect(lvl) : lvl === 0 ? u.effect(1) : `${u.effect(lvl)} → ${u.effect(lvl + 1)}`}
@@ -230,7 +228,7 @@ const JournalTab = ({ garden }: { garden: GardenState }) => {
 const TAB_TRIGGER =
   "text-muted-foreground data-[state=active]:text-foreground data-[state=active]:border-glow focus-visible:ring-ring -mb-px cursor-pointer border-b-2 border-transparent px-1 pb-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:outline-none";
 
-const Garden = ({ className }: { className?: string }) => {
+const Garden = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const garden = useGarden();
   const hydrated = useHydrated();
   const { level, into, span } = levelProgress(garden.xp);
@@ -241,9 +239,10 @@ const Garden = ({ className }: { className?: string }) => {
   return (
     <Panel
       id="garden"
-      title="Rain Garden"
+      title="rain garden"
       icon={Sprout}
       className={className}
+      chrome={chrome}
       actions={
         <span className="font-pixel border-glow/40 text-glow rounded-full border px-2.5 py-0.5 text-xs">
           Lv {level}
@@ -292,7 +291,7 @@ const Garden = ({ className }: { className?: string }) => {
       </div>
 
       {/* The window. Drops run down it and the plants sit on its sill. */}
-      <div className="border-glass-edge relative mt-4 h-52 shrink-0 overflow-hidden rounded-2xl border bg-[linear-gradient(to_bottom,rgb(255_255_255/0.04),rgb(0_0_0/0.18))] sm:h-56">
+      <div className="border-glass-edge relative mt-4 h-[min(14rem,22dvh)] min-h-28 shrink-0 overflow-hidden rounded-2xl border bg-[linear-gradient(to_bottom,rgb(255_255_255/0.04),rgb(0_0_0/0.18))]">
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/6" />
         <div className="absolute inset-x-0 top-0 bottom-3.5">
           <CatchGame label="Rain on the garden window. Click or tap the drops to catch them, or press Space to catch the lowest one." />
@@ -315,12 +314,7 @@ const Garden = ({ className }: { className?: string }) => {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3.5 bg-[linear-gradient(to_bottom,#4a352c,#2a1d19)] shadow-[0_-1px_0_rgb(255_255_255/0.12)]" />
         {hydrated && garden.stats.caught === 0 && (
           <p className="text-muted-foreground pointer-events-none absolute inset-x-0 top-1/3 text-center text-xs">
-            Tap the drops as they run down the glass.
-          </p>
-        )}
-        {hydrated && sill.length === 0 && garden.stats.caught > 0 && (
-          <p className="text-muted-foreground pointer-events-none absolute inset-x-0 bottom-7 text-center text-xs">
-            The sill is bare. Plant some moss below.
+            tap the drops
           </p>
         )}
       </div>
@@ -337,7 +331,7 @@ const Garden = ({ className }: { className?: string }) => {
             Journal
           </Tabs.Trigger>
         </Tabs.List>
-        <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pt-3 pr-2 max-lg:max-h-[28rem]">
+        <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pt-3 pr-2">
           <Tabs.Content value="plants" className="focus-visible:outline-none">
             <PlantsTab garden={garden} level={level} />
           </Tabs.Content>
@@ -350,10 +344,6 @@ const Garden = ({ className }: { className?: string }) => {
         </div>
       </Tabs.Root>
 
-      <p className="text-muted-foreground border-glass-edge mt-3 border-t pt-3 text-[0.7rem] leading-relaxed">
-        Catch rain and grow plants for drops. Finishing tasks and focus sessions earns XP, and levels open up new
-        plants, upgrades and scenes.
-      </p>
     </Panel>
   );
 };

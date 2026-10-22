@@ -98,10 +98,12 @@ const HomeShell = ({
   useAmbience();
 
   return (
+    // Everything on /home is lowercase, set once here so labels, dates and
+    // data all follow. Text people type themselves opts out with normal-case.
     <div
       data-site="home"
       className={cn(
-        "bg-background text-foreground relative z-0 min-h-dvh overflow-x-clip font-sans antialiased",
+        "bg-background text-foreground relative z-0 min-h-dvh overflow-x-clip font-sans lowercase antialiased",
         className,
       )}
     >

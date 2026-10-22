@@ -29,7 +29,6 @@ export type PlantId =
 export interface PlantDef {
   id: PlantId;
   name: string;
-  blurb: string;
   baseCost: number;
   /** Drops per second, per plant owned. */
   rate: number;
@@ -40,7 +39,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "moss",
     name: "Moss",
-    blurb: "Drinks the drizzle nobody else wants.",
     baseCost: 15,
     rate: 0.2,
     unlockLevel: 1,
@@ -48,7 +46,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "fern",
     name: "Fern",
-    blurb: "Fronds that funnel the rain inward.",
     baseCost: 120,
     rate: 1.5,
     unlockLevel: 1,
@@ -56,7 +53,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "mint",
     name: "Mint",
-    blurb: "Grows like it's being paid to.",
     baseCost: 900,
     rate: 9,
     unlockLevel: 2,
@@ -64,7 +60,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "monstera",
     name: "Monstera",
-    blurb: "Big split leaves, bigger appetite.",
     baseCost: 6500,
     rate: 55,
     unlockLevel: 3,
@@ -72,7 +67,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "bonsai",
     name: "Bonsai",
-    blurb: "Patience, pruned into a shape.",
     baseCost: 48_000,
     rate: 340,
     unlockLevel: 5,
@@ -80,7 +74,6 @@ export const PLANTS: PlantDef[] = [
   {
     id: "moonflower",
     name: "Moonflower",
-    blurb: "Only opens after midnight.",
     baseCost: 400_000,
     rate: 2200,
     unlockLevel: 8,
@@ -103,7 +96,6 @@ export type UpgradeId =
 export interface UpgradeDef {
   id: UpgradeId;
   name: string;
-  blurb: string;
   baseCost: number;
   growth: number;
   max: number;
@@ -119,7 +111,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "jar",
     name: "Wider jar",
-    blurb: "Every drop you catch is worth more.",
     baseCost: 40,
     growth: 2.6,
     max: 15,
@@ -129,7 +120,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "rainmaker",
     name: "Rain dance",
-    blurb: "Drops run down the glass more often.",
     baseCost: 80,
     growth: 3,
     max: 6,
@@ -139,7 +129,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "goldleaf",
     name: "Gold leaf",
-    blurb: "Golden drops turn up more often.",
     baseCost: 250,
     growth: 3.5,
     max: 6,
@@ -149,7 +138,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "deepfocus",
     name: "Deep focus",
-    blurb: "Focus sessions pay out more drops.",
     baseCost: 300,
     growth: 3,
     max: 5,
@@ -159,7 +147,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "nightshift",
     name: "Night shift",
-    blurb: "The garden keeps collecting while you're away.",
     baseCost: 1000,
     growth: 4,
     max: 4,
@@ -170,7 +157,6 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "greenhouse",
     name: "Greenhouse",
-    blurb: "Every plant produces more.",
     baseCost: 2000,
     growth: 4,
     max: 8,
@@ -526,8 +512,8 @@ function commit(
     for (let l = before + 1; l <= after; l++) items.push(...unlocksAt(l));
     pushToast({
       kind: "level",
-      title: `Level ${after}`,
-      detail: items.length ? `Unlocked: ${items.join(", ")}` : "The garden grows.",
+      title: `level ${after}`,
+      detail: items.length ? `unlocked: ${items.join(", ")}` : undefined,
       drops: bonus,
     });
   }
@@ -584,8 +570,8 @@ export function rewardTask() {
   if (s.daily.tasks >= TASK_DAILY_CAP) {
     pushToast({
       kind: "info",
-      title: "Task done",
-      detail: `That's ${TASK_DAILY_CAP} rewarded today, so this one's just for you.`,
+      title: "task done",
+      detail: `daily task rewards used up (${TASK_DAILY_CAP})`,
     });
     return false;
   }
@@ -597,7 +583,7 @@ export function rewardTask() {
       stats: { ...g.stats, tasks: g.stats.tasks + 1 },
       daily: { ...g.daily, tasks: g.daily.tasks + 1 },
     }),
-    { kind: "reward", title: "Task done", drops, xp },
+    { kind: "reward", title: "task done", drops, xp },
   );
   return true;
 }
@@ -628,8 +614,7 @@ export function rewardFocus(minutes: number) {
     },
     {
       kind: "reward",
-      title: "Focus session complete",
-      detail: `${minutes} minutes well spent.`,
+      title: "focus session complete",
       drops,
       xp,
     },
@@ -650,7 +635,7 @@ export function rewardGamePlay(id: string, title: string) {
         : [...g.gamesPlayed, id],
       daily: { ...g.daily, games: [...g.daily.games, id] },
     }),
-    { kind: "reward", title: `First play today: ${title}`, drops, xp },
+    { kind: "reward", title: `first play today: ${title}`, drops, xp },
   );
 }
 
@@ -691,7 +676,7 @@ export function awayToast(gain: number, awaySeconds: number) {
       : `${Math.round(awaySeconds / 60)}m`;
   pushToast({
     kind: "info",
-    title: "While you were away",
-    detail: `The garden collected ${formatNumber(gain)} drops over ${span}.`,
+    title: "while you were away",
+    detail: `+${formatNumber(gain)} drops over ${span}`,
   });
 }

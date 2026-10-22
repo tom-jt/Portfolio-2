@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { ExternalLink, Maximize2, X } from "lucide-react";
 import type { ArcadeGame } from "@/data/home/games";
@@ -12,7 +13,14 @@ function ratio(aspect: string) {
   return w > 0 && h > 0 ? w / h : 16 / 9;
 }
 
-/** A game played in a frame over the page, sized to fit the viewport. */
+/**
+ * A game played in a frame over the page, sized to fit the viewport.
+ *
+ * Portalled to the /home root: it is opened from inside a card, and the
+ * card's backdrop-filter and transform would otherwise make it the
+ * containing block, pinning this "fixed" overlay to the card instead of the
+ * window. The root still carries the scene's palette tokens.
+ */
 const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => void }) => {
   const frame = useRef<HTMLIFrameElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -32,7 +40,10 @@ const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => 
     };
   }, [game, onClose]);
 
-  return (
+  const root = typeof document === "undefined" ? null : document.querySelector('[data-site="home"]');
+  if (!root) return null;
+
+  return createPortal(
     <AnimatePresence>
       {game && (
         <motion.div
@@ -95,7 +106,8 @@ const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => 
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    root,
   );
 };
 

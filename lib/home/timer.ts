@@ -38,9 +38,9 @@ export interface TimerState {
 }
 
 export const MODE_LABEL: Record<TimerMode, string> = {
-  focus: "Focus",
-  short: "Short break",
-  long: "Long break",
+  focus: "focus",
+  short: "short break",
+  long: "long break",
 };
 
 export const LIMITS = {
@@ -61,6 +61,9 @@ const defaultSettings: TimerSettings = {
 };
 
 const minutesFor = (mode: TimerMode, s: TimerSettings) => s[mode] * 60_000;
+
+export const notificationsSupported = () =>
+  typeof window !== "undefined" && "Notification" in window;
 
 const initial: TimerState = {
   mode: "focus",

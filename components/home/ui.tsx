@@ -3,13 +3,30 @@
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** A frosted-glass card over the scene. */
+/**
+ * Glass for the small controls that sit straight on the scene (chips, the
+ * tab bar). Built from separate utilities rather than home-glass so that
+ * an open state can swap the border colour and focus rings still show.
+ */
+export const chipGlass =
+  "bg-glass border border-glass-edge text-foreground shadow-[inset_0_1px_0_var(--glass-highlight),0_18px_40px_-24px_rgb(0_0_0/0.7)] backdrop-blur-[14px] backdrop-saturate-[1.15]";
+
+/** Interactive chip: chipGlass plus hover and focus states. */
+export const chipButton = `${chipGlass} cursor-pointer transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`;
+
+/**
+ * "card" is a frosted-glass card floating over the scene. "bare" drops the
+ * glass for when the container already is glass, like the phone's sheet.
+ */
+export type PanelChrome = "card" | "bare";
+
 export const Panel = ({
   id,
   title,
   icon: Icon,
   actions,
   className,
+  chrome = "card",
   children,
 }: {
   id: string;
@@ -17,13 +34,15 @@ export const Panel = ({
   icon: ComponentType<{ className?: string }>;
   actions?: ReactNode;
   className?: string;
+  chrome?: PanelChrome;
   children: ReactNode;
 }) => (
   <section
     id={id}
     aria-labelledby={`${id}-title`}
     className={cn(
-      "home-glass relative flex scroll-mt-24 flex-col rounded-[1.75rem] p-5 sm:p-6",
+      "relative flex flex-col",
+      chrome === "card" && "home-glass rounded-[1.75rem] p-5",
       className,
     )}
   >
@@ -32,7 +51,7 @@ export const Panel = ({
         <Icon className="text-glow size-4 shrink-0" />
         <h2
           id={`${id}-title`}
-          className="font-display text-[1.65rem] leading-none tracking-tight italic"
+          className="font-display text-[1.65rem] leading-none tracking-tight"
         >
           {title}
         </h2>
@@ -162,7 +181,7 @@ export const Switch = ({
   </label>
 );
 
-/** Small uppercase label used above groups inside panels. */
+/** Small muted label used above groups inside panels. */
 export const Eyebrow = ({
   className,
   children,
@@ -172,7 +191,7 @@ export const Eyebrow = ({
 }) => (
   <p
     className={cn(
-      "text-muted-foreground text-[0.68rem] font-semibold tracking-[0.22em] uppercase",
+      "text-muted-foreground text-xs font-medium",
       className,
     )}
   >
