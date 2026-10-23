@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: "Tom Liu",
-    template: "%s — Tom Liu",
+    template: "%s | Tom Liu",
   },
   description: "Computer Science and Law student at UNSW.",
   authors: [{ name: "Tom Liu" }],
@@ -51,6 +51,10 @@ export const metadata: Metadata = {
  *
  * Falls back to the OS preference when nothing has been stored yet. To make
  * light the default for new visitors instead, drop the matchMedia branch.
+ *
+ * It also applies the /home scene and colour theme for the same reason: a
+ * visitor who picked the sunset would otherwise see the rainy palette flash
+ * first. The key must match PREFS_KEY in lib/home/scenes.ts.
  */
 const themeBootScript = `
 (function () {
@@ -60,6 +64,15 @@ const themeBootScript = `
       ? stored === "dark"
       : window.matchMedia("(prefers-color-scheme: dark)").matches;
     if (dark) document.documentElement.classList.add("dark");
+  } catch (e) {}
+  try {
+    var prefs = JSON.parse(localStorage.getItem("home:prefs:v1") || "null");
+    if (prefs && typeof prefs.scene === "string") {
+      document.documentElement.setAttribute("data-home-scene", prefs.scene);
+    }
+    if (prefs && typeof prefs.theme === "string") {
+      document.documentElement.setAttribute("data-home-theme", prefs.theme);
+    }
   } catch (e) {}
 })();
 `;
