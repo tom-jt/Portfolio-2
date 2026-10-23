@@ -333,9 +333,10 @@ const Room = () => {
             >
               <AnimatePresence>
                 {isOpen("garden") && (
-                  // Gives way first when the column runs out of room; its
-                  // shop list scrolls well at any height.
-                  <Card key="garden" className="min-h-48 shrink-[100]">
+                  // Takes only the room the cards below leave, up to its own
+                  // height, so they never scroll while it can still give
+                  // way. Its shop list scrolls well at any height.
+                  <Card key="garden" className="max-h-fit min-h-48 flex-1 basis-0">
                     <Garden className={CARD_PANEL} />
                   </Card>
                 )}

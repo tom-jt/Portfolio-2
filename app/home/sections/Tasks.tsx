@@ -1,12 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
-import { Check, Cloud, CloudOff, Droplet, GripVertical, ListTodo, Pencil, Plus, X } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  Reorder,
+  useDragControls,
+} from "motion/react";
+import {
+  Check,
+  ChevronDown,
+  Cloud,
+  CloudOff,
+  Droplet,
+  GripVertical,
+  ListTodo,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
 import TaskSync from "@/components/home/TaskSync";
-import { IconButton, Panel, textButton, type PanelChrome } from "@/components/home/ui";
+import {
+  IconButton,
+  Panel,
+  textButton,
+  type PanelChrome,
+} from "@/components/home/ui";
 import { dayKey, formatNumber } from "@/lib/home/format";
 import { TASK_DAILY_CAP, taskReward, useGarden } from "@/lib/home/garden";
+import { setPrefs, usePrefs } from "@/lib/home/prefs";
 import { useHydrated } from "@/lib/home/store";
 import { useSync, useSyncStatus } from "@/lib/home/sync";
 import {
@@ -31,7 +53,17 @@ const ITEM_MOTION = {
   transition: { type: "spring", stiffness: 500, damping: 40 },
 } as const;
 
-const ROW = "group flex items-start gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-white/4";
+// Everything in a row sits on a 20px line, so a one-line task centres on
+// its checkbox and a longer one hangs from the first line.
+const ROW =
+  "group flex items-start gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-white/4";
+
+/** The grip's footprint. Finished tasks can't be dragged, and keep an
+ *  empty slot this size so ticking one off doesn't shift it sideways. */
+const GRIP_SLOT = "-ml-1 grid size-5 shrink-0 place-items-center";
+
+const ACTION =
+  "grid size-5 cursor-pointer place-items-center rounded text-muted-foreground";
 
 /** Checkbox, text (double-click to edit) and actions: everything but the grip. */
 const TodoRow = ({ todo }: { todo: Todo }) => {
@@ -46,13 +78,19 @@ const TodoRow = ({ todo }: { todo: Todo }) => {
         aria-label={todo.text}
         onClick={() => toggleTodo(todo.id)}
         className={cn(
-          "focus-visible:ring-ring mt-0.5 grid size-5 shrink-0 cursor-pointer place-items-center rounded-full border transition focus-visible:ring-2 focus-visible:outline-none",
+          "focus-visible:ring-ring grid size-5 shrink-0 cursor-pointer place-items-center rounded-full border transition focus-visible:ring-2 focus-visible:outline-none",
           todo.done
             ? "border-glow bg-glow text-primary-foreground"
             : "border-foreground/30 hover:border-glow",
         )}
       >
-        <Check className={cn("size-3 transition", todo.done ? "scale-100" : "scale-0")} strokeWidth={3} />
+        <Check
+          className={cn(
+            "size-3 transition",
+            todo.done ? "scale-100" : "scale-0",
+          )}
+          strokeWidth={3}
+        />
       </button>
 
       {editing ? (
@@ -69,14 +107,15 @@ const TodoRow = ({ todo }: { todo: Todo }) => {
             if (e.key === "Enter") e.currentTarget.blur();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="border-glass-edge focus:border-glow ml-1 min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0.5 text-sm normal-case outline-none"
+          className="border-glass-edge focus:border-glow -my-0.5 ml-1 h-6 min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0 text-sm leading-5 normal-case outline-none"
         />
       ) : (
         <span
           onDoubleClick={() => setEditing(true)}
           className={cn(
-            "ml-1 min-w-0 flex-1 text-sm leading-snug break-words normal-case transition-colors",
-            todo.done && "text-muted-foreground line-through decoration-white/30",
+            "ml-1 min-w-0 flex-1 text-sm leading-5 break-words normal-case transition-colors",
+            todo.done &&
+              "text-muted-foreground line-through decoration-white/30",
           )}
         >
           {todo.text}
@@ -90,7 +129,7 @@ const TodoRow = ({ todo }: { todo: Todo }) => {
               type="button"
               aria-label={`edit "${todo.text}"`}
               onClick={() => setEditing(true)}
-              className="text-muted-foreground hover:text-foreground cursor-pointer rounded p-0.5"
+              className={cn(ACTION, "hover:text-foreground")}
             >
               <Pencil className="size-3.5" />
             </button>
@@ -99,7 +138,7 @@ const TodoRow = ({ todo }: { todo: Todo }) => {
             type="button"
             aria-label={`delete "${todo.text}"`}
             onClick={() => removeTodo(todo.id)}
-            className="text-muted-foreground hover:text-destructive cursor-pointer rounded p-0.5"
+            className={cn(ACTION, "hover:text-destructive")}
           >
             <X className="size-3.5" />
           </button>
@@ -137,7 +176,10 @@ const OpenTodo = ({ todo }: { todo: Todo }) => {
           e.preventDefault();
           moveTodo(todo.id, e.key === "ArrowUp" ? -1 : 1);
         }}
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -ml-1 cursor-grab touch-none rounded p-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing max-md:opacity-60"
+        className={cn(
+          GRIP_SLOT,
+          "text-muted-foreground hover:text-foreground focus-visible:ring-ring cursor-grab touch-none rounded opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing max-md:opacity-60",
+        )}
       >
         <GripVertical className="size-4" />
       </button>
@@ -146,7 +188,13 @@ const OpenTodo = ({ todo }: { todo: Todo }) => {
   );
 };
 
-const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
+const Tasks = ({
+  className,
+  chrome,
+}: {
+  className?: string;
+  chrome?: PanelChrome;
+}) => {
   const todos = useTodos();
   const garden = useGarden();
   const hydrated = useHydrated();
@@ -154,6 +202,7 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
   const [syncView, setSyncView] = useState(false);
   const { code } = useSync();
   const { state: syncState } = useSyncStatus();
+  const { hideDone } = usePrefs();
 
   const sorted = sortTodos(todos);
   const openTodos = sorted.filter((t) => !t.done);
@@ -171,10 +220,18 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
       actions={
         <span className="flex items-center gap-2">
           <span className="text-muted-foreground text-xs">
-            {openTodos.length ? `${openTodos.length} to go` : todos.length ? "all done" : ""}
+            {openTodos.length
+              ? `${openTodos.length} to go`
+              : todos.length
+                ? "all done"
+                : ""}
           </span>
           <IconButton
-            label={code ? `sync: ${syncState === "offline" ? "offline" : "on"}` : "sync with your phone"}
+            label={
+              code
+                ? `sync: ${syncState === "offline" ? "offline" : "on"}`
+                : "sync with your phone"
+            }
             aria-pressed={syncView}
             onClick={() => setSyncView((v) => !v)}
             className={cn("size-8", syncView && "bg-white/10")}
@@ -217,30 +274,78 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           </p>
 
           {/* layoutScroll lets the drag measure rows correctly inside a scroller. */}
-          <motion.div layoutScroll className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1">
-            <Reorder.Group axis="y" as="ul" values={openTodos.map((t) => t.id)} onReorder={reorderOpen}>
+          <motion.div
+            layoutScroll
+            className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1"
+          >
+            <Reorder.Group
+              axis="y"
+              as="ul"
+              values={openTodos.map((t) => t.id)}
+              onReorder={reorderOpen}
+            >
               <AnimatePresence initial={false}>
                 {openTodos.map((t) => (
                   <OpenTodo key={t.id} todo={t} />
                 ))}
               </AnimatePresence>
             </Reorder.Group>
-            <ul>
-              <AnimatePresence initial={false}>
-                {doneTodos.map((t) => (
-                  <motion.li key={t.id} layout {...ITEM_MOTION} className={cn(ROW, "pl-7")}>
-                    <TodoRow todo={t} />
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
+            {doneTodos.length > 0 && (
+              <button
+                type="button"
+                aria-expanded={!hideDone}
+                aria-controls="tasks-done"
+                onClick={() => setPrefs({ hideDone: !hideDone })}
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mt-1 flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 transition-transform",
+                    hideDone && "-rotate-90",
+                  )}
+                />
+                completed {doneTodos.length}
+              </button>
+            )}
+            <AnimatePresence initial={false}>
+              {!hideDone && (
+                <motion.ul
+                  key="done"
+                  id="tasks-done"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <AnimatePresence initial={false}>
+                    {doneTodos.map((t) => (
+                      <motion.li
+                        key={t.id}
+                        layout
+                        {...ITEM_MOTION}
+                        className={ROW}
+                      >
+                        <span aria-hidden="true" className={GRIP_SLOT} />
+                        <TodoRow todo={t} />
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </motion.ul>
+              )}
+            </AnimatePresence>
             {hydrated && todos.length === 0 && (
-              <p className="text-muted-foreground px-2 py-8 text-center text-sm">no tasks yet</p>
+              <p className="text-muted-foreground px-2 py-8 text-center text-sm">
+                no tasks yet
+              </p>
             )}
           </motion.div>
 
           <footer className="border-glass-edge mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs">
-            <span className="text-muted-foreground flex items-center gap-1" title={`up to ${TASK_DAILY_CAP} tasks a day earn rewards`}>
+            <span
+              className="text-muted-foreground flex items-center gap-1"
+              title={`up to ${TASK_DAILY_CAP} tasks a day earn rewards`}
+            >
               each task:
               <span className="text-glow-2 font-pixel inline-flex items-center gap-0.5">
                 <Droplet className="size-3" />
@@ -248,7 +353,8 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
               </span>
               <span className="text-glow font-pixel">+{reward.xp} xp</span>
               <span className="text-muted-foreground/70">
-                · {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP} today
+                · {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP}{" "}
+                today
               </span>
             </span>
             {doneTodos.length > 0 && (

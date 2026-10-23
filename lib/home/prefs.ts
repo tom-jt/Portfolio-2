@@ -34,6 +34,8 @@ export interface HomePrefs {
   /** Cards open on desktop. They stay open, across visits too, until their
    *  chip is clicked again or the scene behind them is. */
   openPanels: PanelId[];
+  /** Whether the tasks card folds its finished tasks away. */
+  hideDone: boolean;
 }
 
 const initial: HomePrefs = {
@@ -45,6 +47,7 @@ const initial: HomePrefs = {
   spotifyUrl: null,
   spotifyLoaded: false,
   openPanels: [],
+  hideDone: false,
 };
 
 export const prefsStore = createPersistentStore<HomePrefs>(
