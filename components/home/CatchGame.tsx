@@ -8,12 +8,14 @@ import {
   catchDrop,
   gardenStore,
   goldenChance,
+  soakDrop,
   spawnInterval,
 } from "@/lib/home/garden";
 
 /**
  * The garden's window: raindrops run down it, and clicking (or tapping, or
  * pressing Space) catches them for drops. Golden ones are worth far more.
+ * Drops left to land still pay a little, which rich soil raises.
  *
  * With reduced motion the drops bead in place and fade instead of falling,
  * so the game still works without anything moving across the screen.
@@ -44,6 +46,8 @@ interface Floater {
   text: string;
   age: number;
   golden: boolean;
+  /** A landed drop's small payout, shown smaller and dimmer than a catch. */
+  faint?: boolean;
 }
 
 const MAX_DROPS = 12;
@@ -132,6 +136,10 @@ const CatchGame = ({ label }: { label: string }) => {
       floaters.push({ x: d.x, y: d.y - d.r * 2, text: `+${formatNumber(value)}`, age: 0, golden: d.golden });
     };
 
+    const soak = (x: number, y: number) => {
+      floaters.push({ x, y, text: `+${formatNumber(soakDrop())}`, age: 0, golden: false, faint: true });
+    };
+
     const onPointer = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       const px = e.clientX - rect.left;
@@ -203,9 +211,9 @@ const CatchGame = ({ label }: { label: string }) => {
       }
 
       ctx.textAlign = "center";
-      ctx.font = `16px ${pixelFont}`;
       for (const f of floaters) {
-        ctx.globalAlpha = Math.max(0, 1 - f.age / 0.9);
+        ctx.font = `${f.faint ? 11 : 16}px ${pixelFont}`;
+        ctx.globalAlpha = Math.max(0, 1 - f.age / 0.9) * (f.faint ? 0.55 : 1);
         ctx.fillStyle = f.golden ? gold : "#eaf6fb";
         ctx.fillText(f.text, f.x, f.y - f.age * 34);
       }
@@ -235,8 +243,11 @@ const CatchGame = ({ label }: { label: string }) => {
         if (d.y + d.r >= h) {
           burst(d.x, h - 1, d.golden, 5, 70);
           drops.splice(i, 1);
+          soak(d.x, h - 8);
         } else if (d.age > d.life) {
+          // Reduced motion: beaded drops fade rather than land, and pay the same.
           drops.splice(i, 1);
+          soak(d.x, d.y);
         }
       }
       for (let i = particles.length - 1; i >= 0; i--) {

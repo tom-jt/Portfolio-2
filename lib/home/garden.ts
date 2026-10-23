@@ -87,6 +87,7 @@ const PLANT_GROWTH = 1.15;
 
 export type UpgradeId =
   | "jar"
+  | "soil"
   | "rainmaker"
   | "goldleaf"
   | "deepfocus"
@@ -104,6 +105,10 @@ export interface UpgradeDef {
   effect: (level: number) => string;
 }
 
+/** Share of a catch a drop pays when it lands uncaught. Rich soil raises it
+ *  to half at most, so letting the rain fall never rivals catching it. */
+const soakShareAt = (level: number) => 0.1 + 0.05 * level;
+
 export const offlineRate = (level: number) => 0.4 + 0.15 * level;
 export const offlineHours = (level: number) => 8 + 4 * level;
 
@@ -116,6 +121,15 @@ export const UPGRADES: UpgradeDef[] = [
     max: 15,
     unlockLevel: 1,
     effect: (l) => `+${2 * l} per catch`,
+  },
+  {
+    id: "soil",
+    name: "Rich soil",
+    baseCost: 120,
+    growth: 2.8,
+    max: 8,
+    unlockLevel: 1,
+    effect: (l) => `missed drops pay ${Math.round(soakShareAt(l) * 100)}%`,
   },
   {
     id: "rainmaker",
@@ -272,6 +286,8 @@ export const plantCount = (s: GardenState) =>
  *  catching rain stays worth doing as the garden grows. */
 export const catchValue = (s: GardenState) =>
   1 + 2 * upgradeLevel(s, "jar") + rate(s) * 0.25;
+
+export const soakShare = (s: GardenState) => soakShareAt(upgradeLevel(s, "soil"));
 
 const goldenChanceAt = (level: number) => 0.03 + 0.015 * level;
 export const goldenChance = (s: GardenState) =>
@@ -566,6 +582,17 @@ export function catchDrop(golden: boolean) {
       golden: g.stats.golden + (golden ? 1 : 0),
     },
   }));
+  return value;
+}
+
+/**
+ * A drop landing in the soil uncaught: a share of an ordinary catch, golden
+ * or not, and no XP or catch count, which are for catching.
+ */
+export function soakDrop() {
+  const s = gardenStore.get();
+  const value = catchValue(s) * soakShare(s);
+  commit((g) => addDrops(g, value));
   return value;
 }
 
