@@ -5,9 +5,10 @@ import { useReducedMotion } from "motion/react";
 import { animate, cappedDpr, fitCanvas, GRAIN, lerp, onResize, seeded } from "./canvas";
 
 /**
- * A grassy hill under a big blue sky, in a light rain. The sky, distant
- * hills and the lone tree are drawn once to the back canvas; the front one
- * moves the clouds, the drizzle, and the grass along the near crest.
+ * A grassy hill under a big blue sky, in a light rain. The sky, the hills
+ * (hazier with distance), the lone tree and the near slope's tufts and
+ * flowers are drawn once to the back canvas; the front one moves the
+ * clouds, the drizzle, and the tall grass in the foreground.
  */
 
 /** The near hill's skyline: low on the left, rising gently to the right. */
@@ -31,46 +32,85 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = sun;
   ctx.fillRect(0, 0, w, h);
 
-  // Hills, far to near: hazier and bluer with distance.
-  const layers: [base: number, amp: number, freq: number, phase: number, color: string][] = [
-    [0.6, 0.035, 2.2, 0.5, "#8fbfb4"],
-    [0.66, 0.05, 1.6, 2.1, "#6fae78"],
-    [0.71, 0.045, 1.2, 4.0, "#589d60"],
+  // Hills, far to near: hazier and bluer with distance. Each is lit along
+  // its crest and darkens down its slope, and haze pools between them.
+  const layers: [base: number, amp: number, freq: number, phase: number, top: string, bottom: string][] = [
+    [0.57, 0.03, 3.1, 1.2, "#a9cbe0", "#9cc2d4"],
+    [0.6, 0.035, 2.2, 0.5, "#9cc9b6", "#86b7a3"],
+    [0.66, 0.05, 1.6, 2.1, "#7cba7c", "#5e9f63"],
+    [0.71, 0.045, 1.2, 4.0, "#63a865", "#4b8f51"],
   ];
-  for (const [base, amp, freq, phase, color] of layers) {
-    ctx.fillStyle = color;
+  const ridge = (base: number, amp: number, freq: number, phase: number, x: number) =>
+    h * base - Math.sin((x / w) * Math.PI * freq + phase) * h * amp;
+  for (const [base, amp, freq, phase, top, bottom] of layers) {
+    const fill = ctx.createLinearGradient(0, h * (base - amp), 0, h * (base + 0.12));
+    fill.addColorStop(0, top);
+    fill.addColorStop(1, bottom);
+    ctx.fillStyle = fill;
     ctx.beginPath();
     ctx.moveTo(0, h);
     for (let x = 0; ; x = Math.min(w, x + 8)) {
-      ctx.lineTo(x, h * base - Math.sin((x / w) * Math.PI * freq + phase) * h * amp);
+      ctx.lineTo(x, ridge(base, amp, freq, phase, x));
       if (x === w) break;
     }
     ctx.lineTo(w, h);
     ctx.fill();
+    // A rim of light along the crest, from the sun behind the cloud.
+    ctx.strokeStyle = "rgba(235,255,225,0.22)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let x = 0; ; x = Math.min(w, x + 8)) {
+      const y = ridge(base, amp, freq, phase, x) + 0.8;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+      if (x === w) break;
+    }
+    ctx.stroke();
+    // Haze settling in front of it, so the next hill stands out.
+    const haze = ctx.createLinearGradient(0, h * (base + 0.01), 0, h * (base + 0.07));
+    haze.addColorStop(0, "rgba(220,238,245,0)");
+    haze.addColorStop(1, "rgba(220,238,245,0.18)");
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, h * (base + 0.01), w, h * 0.06);
   }
 
-  // A lone tree on the middle hill.
-  const tx = w * 0.72;
-  const ty = h * 0.66 - Math.sin(0.72 * Math.PI * 1.6 + 2.1) * h * 0.05;
+  // A lone tree, standing on the middle hill's crest.
   const s = Math.min(w, h) / 900;
+  const tx = w * 0.72;
+  const ty = ridge(0.66, 0.05, 1.6, 2.1, tx) + 2 * s;
+  ctx.fillStyle = "rgba(20,50,25,0.25)";
+  ctx.beginPath();
+  ctx.ellipse(tx + 10 * s, ty + 1 * s, 30 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = "#3b2b1f";
-  ctx.fillRect(tx - 3 * s, ty - 46 * s, 6 * s, 48 * s);
-  ctx.fillStyle = "#2f6d39";
-  for (const [dx, dy, r] of [
-    [0, -62, 30],
-    [-22, -50, 22],
-    [22, -50, 22],
-    [0, -82, 20],
-  ]) {
+  ctx.beginPath();
+  ctx.moveTo(tx - 4.5 * s, ty);
+  ctx.lineTo(tx - 2 * s, ty - 48 * s);
+  ctx.lineTo(tx + 2 * s, ty - 48 * s);
+  ctx.lineTo(tx + 4.5 * s, ty);
+  ctx.fill();
+  const canopy: [dx: number, dy: number, r: number, color: string][] = [
+    [-20, -52, 22, "#2a5e33"],
+    [22, -54, 21, "#2a5e33"],
+    [0, -64, 30, "#2f6d39"],
+    [-12, -80, 20, "#357a3f"],
+    [12, -84, 19, "#357a3f"],
+    // The side facing the sun, top right, catches the light.
+    [16, -78, 12, "#4a9150"],
+    [24, -60, 10, "#43884a"],
+  ];
+  for (const [dx, dy, r, color] of canopy) {
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(tx + dx * s, ty + dy * s, r * s, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // The near hill.
-  const near = ctx.createLinearGradient(0, h * 0.7, 0, h);
-  near.addColorStop(0, "#4a974f");
-  near.addColorStop(1, "#2c6a35");
+  // The near hill, lighter where it crests.
+  const near = ctx.createLinearGradient(0, h * 0.72, 0, h);
+  near.addColorStop(0, "#56a35a");
+  near.addColorStop(0.45, "#3f8846");
+  near.addColorStop(1, "#285f30");
   ctx.fillStyle = near;
   ctx.beginPath();
   ctx.moveTo(0, h);
@@ -80,6 +120,35 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number) {
   }
   ctx.lineTo(w, h);
   ctx.fill();
+
+  // Tufts and a few wildflowers on the near slope, thicker and larger the
+  // nearer they are.
+  const rand = seeded(7);
+  ctx.lineCap = "round";
+  for (let i = 0; i < Math.round(w / 2.2); i++) {
+    const x = rand() * w;
+    const top = crest(x, w, h) + 6;
+    const depth = rand() ** 0.8;
+    const y = lerp(top, h, depth);
+    const len = lerp(3, 11, depth) * (Math.min(w, h) / 800 + 0.4);
+    ctx.strokeStyle = rand() < 0.5 ? "rgba(30,80,35,0.55)" : "rgba(110,180,100,0.45)";
+    ctx.lineWidth = lerp(0.8, 1.6, depth);
+    for (let k = -1; k <= 1; k++) {
+      ctx.beginPath();
+      ctx.moveTo(x + k * 1.5, y);
+      ctx.lineTo(x + k * 3, y - len * (k ? 0.75 : 1));
+      ctx.stroke();
+    }
+  }
+  for (let i = 0; i < Math.round(w / 28); i++) {
+    const x = rand() * w;
+    const depth = rand() ** 0.7;
+    const y = lerp(crest(x, w, h) + 10, h, depth);
+    ctx.fillStyle = ["#f7f3e8", "#ffe27a", "#f3b8d0"][Math.floor(rand() * 3)];
+    ctx.beginPath();
+    ctx.arc(x, y, lerp(1, 2.4, depth), 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** A soft cumulus, pre-rendered from overlapping white puffs. */
@@ -133,13 +202,14 @@ const HillScene = () => {
         };
       });
 
-      const blades = Array.from({ length: Math.round(w / 3) }, () => {
+      // Tall grass in the very front, rising from the bottom of the window.
+      const blades = Array.from({ length: Math.round(w / 2.5) }, () => {
         const x = rand() * w;
         return {
           x,
-          len: lerp(8, 22, rand()),
+          len: lerp(18, 58, rand() ** 1.6) * (Math.min(w, h) / 800 + 0.4),
           lean: lerp(-0.3, 0.3, rand()),
-          color: rand() < 0.5 ? "#4f9d55" : "#6ab56b",
+          color: ["#2f7537", "#3f8b45", "#56a159"][Math.floor(rand() * 3)],
           phase: rand() * Math.PI * 2,
         };
       });
@@ -175,11 +245,11 @@ const HillScene = () => {
         }
         ctx.stroke();
 
-        // Grass along the crest, leaning with the wind.
-        ctx.lineWidth = 1.3;
+        // The tall grass, leaning with the wind.
+        ctx.lineWidth = 1.6;
         ctx.lineCap = "round";
         for (const g of blades) {
-          const base = crest(g.x, w, h) + 2;
+          const base = h + 2;
           const sway = Math.sin(t * 1.4 + g.x * 0.015 + g.phase) * 4 + g.lean * 6;
           ctx.strokeStyle = g.color;
           ctx.beginPath();

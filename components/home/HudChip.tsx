@@ -26,7 +26,7 @@ const HudChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
         "flex h-10 items-center gap-2 rounded-full pr-3.5 pl-1",
         open && "border-glow/55",
         // Stored progress is only known after hydration; fade in rather than
-        // flash "lv 1 · 0" at returning visitors.
+        // flash "lv 1 | 0" at returning visitors.
         hydrated ? "opacity-100" : "opacity-0",
       )}
     >

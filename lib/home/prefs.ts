@@ -10,6 +10,7 @@ import {
   type AmbienceKind,
   type SceneId,
 } from "./scenes";
+import { isDecorPick, isPotId, type DecorPick, type PotId } from "./cosmetics";
 import { isThemeId, type ThemeId } from "./themes";
 
 /** Every card on /home, each opened from its own chip. */
@@ -36,6 +37,9 @@ export interface HomePrefs {
   openPanels: PanelId[];
   /** Whether the tasks card folds its finished tasks away. */
   hideDone: boolean;
+  /** The garden's pots, and the decor in its window. */
+  pot: PotId;
+  decor: DecorPick;
 }
 
 const initial: HomePrefs = {
@@ -48,6 +52,8 @@ const initial: HomePrefs = {
   spotifyLoaded: false,
   openPanels: [],
   hideDone: false,
+  pot: "classic",
+  decor: "auto",
 };
 
 export const prefsStore = createPersistentStore<HomePrefs>(
@@ -57,6 +63,8 @@ export const prefsStore = createPersistentStore<HomePrefs>(
     const merged = { ...init, ...(raw as Partial<HomePrefs>) };
     if (!isSceneId(merged.scene)) merged.scene = init.scene;
     if (!isThemeId(merged.theme)) merged.theme = null;
+    if (!isPotId(merged.pot)) merged.pot = init.pot;
+    if (!isDecorPick(merged.decor)) merged.decor = init.decor;
     merged.ambienceVolume = Math.min(1, Math.max(0, +merged.ambienceVolume || 0));
     if (!isAmbienceKind(merged.ambience)) merged.ambience = null;
     merged.openPanels = Array.isArray(merged.openPanels)

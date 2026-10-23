@@ -53,41 +53,75 @@ function drawStreet(ctx: CanvasRenderingContext2D, win: Layout["win"], rand: () 
   ctx.fillStyle = night;
   ctx.fillRect(x, y, w, h);
 
-  // Buildings opposite, barely there.
-  for (let bx = x; bx < x + w; ) {
-    const bw = lerp(0.08, 0.18, rand()) * w;
-    const bh = lerp(0.35, 0.7, rand()) * h;
-    ctx.fillStyle = rand() < 0.5 ? "#0e1428" : "#121a30";
-    ctx.fillRect(bx, y + h - bh, bw, bh);
-    bx += bw;
+  // Everything outside is out of focus, seen through wet glass. The street is
+  // drawn once, so the blur costs nothing after the first frame.
+  ctx.filter = `blur(${Math.max(1.5, w / 450)}px)`;
+
+  // Buildings opposite, and their lit windows: each light belongs to a wall.
+  const street = y + h * 0.78;
+  const s = w / 900 + 0.4;
+  for (let bx = x - w * 0.02; bx < x + w; ) {
+    const bw = lerp(0.1, 0.2, rand()) * w;
+    const bh = lerp(0.4, 0.72, rand()) * h;
+    const top = street - bh;
+    ctx.fillStyle = rand() < 0.5 ? "#101730" : "#141c36";
+    ctx.fillRect(bx, top, bw, bh);
+    // Windows in a grid, a few lit, slightly soft with distance.
+    const cols = Math.max(2, Math.round(bw / (16 * s)));
+    const rows = Math.max(3, Math.round(bh / (20 * s)));
+    const cw = bw / cols;
+    const rh = bh / rows;
+    for (let r = 0; r < rows - 1; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (rand() > 0.32) continue;
+        const wx = bx + c * cw + cw * 0.28;
+        const wy = top + r * rh + rh * 0.3;
+        ctx.fillStyle = rand() < 0.75 ? "rgba(255,200,130,0.34)" : "rgba(190,215,255,0.24)";
+        ctx.fillRect(wx, wy, cw * 0.38, rh * 0.36);
+      }
+    }
+    bx += bw + lerp(2, 8, rand()) * s;
   }
 
-  // Out-of-focus lights: windows, street lamps, a passing car.
-  const colors = ["255,196,120", "255,170,90", "255,140,180", "120,200,230", "255,220,160"];
-  for (let i = 0; i < 36; i++) {
-    const bx = x + rand() * w;
-    const by = y + lerp(0.3, 1, rand() ** 0.7) * h;
-    const r = lerp(6, 22, rand()) * (w / 900 + 0.4);
-    const c = colors[Math.floor(rand() * colors.length)];
-    const a = lerp(0.15, 0.45, rand());
-    const g = ctx.createRadialGradient(bx, by, 0, bx, by, r);
-    g.addColorStop(0, `rgba(${c},${a})`);
-    g.addColorStop(0.7, `rgba(${c},${a * 0.6})`);
-    g.addColorStop(1, `rgba(${c},0)`);
+  // The pavement, and street lamps standing on it at even intervals.
+  ctx.fillStyle = "#1c1d30";
+  ctx.fillRect(x, street, w, h * 0.06);
+  const lampGap = Math.max(160, w * 0.32);
+  for (let lx = x + lampGap * 0.4; lx < x + w; lx += lampGap) {
+    const lampY = street - h * 0.22;
+    ctx.strokeStyle = "#0b0f1d";
+    ctx.lineWidth = 2.5 * s;
+    ctx.beginPath();
+    ctx.moveTo(lx, street + h * 0.04);
+    ctx.lineTo(lx, lampY);
+    ctx.lineTo(lx + 12 * s, lampY);
+    ctx.stroke();
+    const r = 34 * s;
+    const g = ctx.createRadialGradient(lx + 12 * s, lampY + 3 * s, 0, lx + 12 * s, lampY + 3 * s, r);
+    g.addColorStop(0, "rgba(255,206,140,0.7)");
+    g.addColorStop(0.35, "rgba(255,190,120,0.25)");
+    g.addColorStop(1, "rgba(255,190,120,0)");
     ctx.fillStyle = g;
-    ctx.fillRect(bx - r, by - r, r * 2, r * 2);
+    ctx.fillRect(lx + 12 * s - r, lampY + 3 * s - r, r * 2, r * 2);
   }
 
-  // A neon sign across the street, smeared by the rain.
-  const nx = x + w * 0.2;
-  const ny = y + h * 0.42;
-  const neon = ctx.createRadialGradient(nx, ny, 0, nx, ny, w * 0.12);
-  neon.addColorStop(0, "rgba(255,120,170,0.45)");
-  neon.addColorStop(1, "rgba(255,120,170,0)");
-  ctx.fillStyle = neon;
-  ctx.fillRect(nx - w * 0.12, ny - w * 0.12, w * 0.24, w * 0.24);
-  ctx.fillStyle = "rgba(255,170,205,0.55)";
-  ctx.fillRect(nx - w * 0.04, ny - 2, w * 0.08, 4);
+  // Cars on the road, softly out of focus: headlights one way, tail lights
+  // the other.
+  const lanes = street + h * 0.11;
+  for (let i = 0; i < 3; i++) {
+    const cx = x + lerp(0.12, 0.88, rand()) * w;
+    const toward = i % 2 === 0;
+    const rgb = toward ? "255,240,215" : "255,70,60";
+    const lane = lanes + (toward ? h * 0.03 : 0);
+    for (const dx of [-14, 14]) {
+      const r = (toward ? 16 : 11) * s;
+      const g = ctx.createRadialGradient(cx + dx * s, lane, 0, cx + dx * s, lane, r);
+      g.addColorStop(0, `rgba(${rgb},0.55)`);
+      g.addColorStop(1, `rgba(${rgb},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(cx + dx * s - r, lane - r, r * 2, r * 2);
+    }
+  }
 
   // Wet road reflecting it all.
   const road = ctx.createLinearGradient(0, y + h * 0.85, 0, y + h);
@@ -144,22 +178,47 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
     for (const side of [0, 1]) {
       const sx = side ? x + ww + x * 0.18 : x * 0.12;
       const sw = x * 0.7;
+      // Sized against the cup on the counter: a book stands about twice a
+      // mug's height, a jar about as tall as one.
+      const k = l.cup.s;
       for (const row of [0.26, 0.46]) {
         const sy = h * row;
         ctx.fillStyle = "#4a2f1d";
-        ctx.fillRect(sx, sy, sw, 5);
-        // Jars and tins.
-        for (let jx = sx + 6; jx < sx + sw - 12; ) {
-          const jw = lerp(10, 18, rand());
-          const jh = lerp(16, 34, rand());
-          const hue = ["#8a5a3a", "#b98a5a", "#5f7a6a", "#c9b08a", "#7a4a3a"][Math.floor(rand() * 5)];
-          ctx.fillStyle = hue;
-          ctx.globalAlpha = 0.85;
-          ctx.fillRect(jx, sy - jh, jw, jh);
-          ctx.fillStyle = "rgba(255,230,190,0.18)";
-          ctx.fillRect(jx + 2, sy - jh + 2, 2, jh - 4);
-          ctx.globalAlpha = 1;
-          jx += jw + lerp(3, 9, rand());
+        ctx.fillRect(sx, sy, sw, 5 * k);
+        // Books in groups, a jar or two between them.
+        for (let bx = sx + 6; bx < sx + sw - 10; ) {
+          if (rand() < 0.22) {
+            const jw = lerp(22, 30, rand()) * k;
+            const jh = lerp(30, 40, rand()) * k;
+            ctx.fillStyle = ["#b98a5a", "#5f7a6a", "#c9b08a"][Math.floor(rand() * 3)];
+            ctx.fillRect(bx, sy - jh, jw, jh);
+            ctx.fillStyle = "#3a2416";
+            ctx.fillRect(bx - k, sy - jh - 5 * k, jw + 2 * k, 5 * k);
+            bx += jw + 8 * k;
+            continue;
+          }
+          const count = 4 + Math.floor(rand() * 4);
+          for (let n = 0; n < count && bx < sx + sw - 14 * k; n++) {
+            const bw = lerp(11, 17, rand()) * k;
+            const bh = lerp(68, 84, rand()) * k;
+            const hue = ["#7a3b2e", "#4f6a5a", "#8a6a3e", "#3f4f6a", "#a3724a", "#5a3a4a"][Math.floor(rand() * 6)];
+            // The last of a group sometimes leans back onto its neighbour:
+            // it pivots on its outer corner, standing out from the group by
+            // as far as its top tips in, so the top rests on the book beside.
+            const lean = n > 0 && n === count - 1 && rand() < 0.35 ? 0.22 : 0;
+            if (lean) bx += bh * Math.sin(lean);
+            ctx.save();
+            ctx.translate(bx + bw, sy);
+            ctx.rotate(-lean);
+            ctx.fillStyle = hue;
+            ctx.fillRect(-bw, -bh, bw, bh);
+            ctx.fillStyle = "rgba(255,230,190,0.22)";
+            ctx.fillRect(-bw + k, -bh + 10 * k, bw - 2 * k, 2.5 * k);
+            ctx.fillRect(-bw + k, -18 * k, bw - 2 * k, 2.5 * k);
+            ctx.restore();
+            bx += bw + k;
+          }
+          bx += lerp(12, 22, rand()) * k;
         }
       }
     }
@@ -183,7 +242,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
       }
     }
     ctx.fillStyle = "#a0583a";
-    ctx.fillRect(px - 10, py - 18, 20, 18);
+    const pk = l.cup.s;
+    ctx.fillRect(px - 13 * pk, py - 24 * pk, 26 * pk, 24 * pk);
   }
 
   // Counter.
@@ -196,30 +256,57 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.fillStyle = "rgba(255,200,140,0.25)";
   ctx.fillRect(0, l.counter, w, 2);
 
-  // The cup and saucer.
+  // The cup and saucer, lit from the lamps on the left.
   const { x: cx, y: cy, s } = l.cup;
-  ctx.fillStyle = "#e8dccb";
+  // Shadow on the counter.
+  ctx.fillStyle = "rgba(10,5,2,0.45)";
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 2 * s, 46 * s, 8 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 8 * s, cy + 6 * s, 50 * s, 7 * s, 0, 0, Math.PI * 2);
   ctx.fill();
+  // Saucer: a wide shallow dish with a lit rim.
+  ctx.fillStyle = "#d9cab5";
   ctx.beginPath();
-  ctx.moveTo(cx - 28 * s, cy - 40 * s);
-  ctx.lineTo(cx + 28 * s, cy - 40 * s);
-  ctx.quadraticCurveTo(cx + 26 * s, cy, cx, cy);
-  ctx.quadraticCurveTo(cx - 26 * s, cy, cx - 28 * s, cy - 40 * s);
+  ctx.ellipse(cx, cy + 2 * s, 44 * s, 8 * s, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "#e8dccb";
-  ctx.lineWidth = 6 * s;
+  ctx.fillStyle = "#c4b39c";
   ctx.beginPath();
-  ctx.ellipse(cx + 32 * s, cy - 24 * s, 10 * s, 12 * s, 0, -Math.PI / 2, Math.PI / 2);
+  ctx.ellipse(cx, cy + 1 * s, 30 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Handle: a ring on the right, open in the middle.
+  ctx.strokeStyle = "#e2d5c2";
+  ctx.lineWidth = 5 * s;
+  ctx.beginPath();
+  // Its ends meet the cup's side, so it reads as joined, not floating.
+  ctx.ellipse(cx + 22 * s, cy - 19 * s, 11 * s, 10 * s, 0, -Math.PI * 0.5, Math.PI * 0.5);
   ctx.stroke();
-  ctx.fillStyle = "#4a2a18";
+  // Body: straight sides rounding into the foot.
+  const body = ctx.createLinearGradient(cx - 24 * s, 0, cx + 24 * s, 0);
+  body.addColorStop(0, "#f6ecdd");
+  body.addColorStop(0.55, "#e2d5c2");
+  body.addColorStop(1, "#b9a993");
+  ctx.fillStyle = body;
   ctx.beginPath();
-  ctx.ellipse(cx, cy - 40 * s, 27 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.moveTo(cx - 24 * s, cy - 34 * s);
+  ctx.lineTo(cx + 24 * s, cy - 34 * s);
+  ctx.lineTo(cx + 22 * s, cy - 10 * s);
+  ctx.quadraticCurveTo(cx + 20 * s, cy - 1 * s, cx + 10 * s, cy - 1 * s);
+  ctx.lineTo(cx - 10 * s, cy - 1 * s);
+  ctx.quadraticCurveTo(cx - 20 * s, cy - 1 * s, cx - 22 * s, cy - 10 * s);
+  ctx.closePath();
   ctx.fill();
-  // Lamplight on the cup's left.
-  ctx.fillStyle = "rgba(255,200,140,0.18)";
-  ctx.fillRect(cx - 24 * s, cy - 36 * s, 6 * s, 30 * s);
+  // Rim, and the coffee inside it with a crema ring.
+  ctx.fillStyle = "#f8f0e4";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 34 * s, 24 * s, 4.6 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const coffee = ctx.createRadialGradient(cx - 4 * s, cy - 34 * s, 0, cx, cy - 34 * s, 21 * s);
+  coffee.addColorStop(0, "#8a5a32");
+  coffee.addColorStop(0.7, "#5a351c");
+  coffee.addColorStop(1, "#3a2010");
+  ctx.fillStyle = coffee;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 34 * s, 21 * s, 3.6 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   // Pendant lamps: cord and shade. Their glow is on the front canvas.
   for (const lamp of l.lamps) {

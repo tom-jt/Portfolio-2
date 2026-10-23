@@ -92,8 +92,10 @@ export const timerStore = createPersistentStore<TimerState>(
 
 export const useTimer = () => useStore(timerStore);
 
+/** Never more than was left at the start: the shared clock rounds down, so
+ *  just after starting it can read a moment early and show 25:01. */
 export function timeLeft(s: TimerState, now = Date.now()) {
-  return s.status === "running" ? Math.max(0, s.endsAt - now) : s.remaining;
+  return s.status === "running" ? Math.min(s.remaining, Math.max(0, s.endsAt - now)) : s.remaining;
 }
 
 export function todayStats(s: TimerState) {

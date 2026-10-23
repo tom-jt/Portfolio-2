@@ -6,7 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "Tom Liu";
-const EYEBROW = "COMPUTER SCIENCE · UNSW SYDNEY";
+const EYEBROW = "COMPUTER SCIENCE | UNSW SYDNEY";
 const TAGLINE = "Games, apps, and other creations.";
 
 const GROUND = "#fafafa";

@@ -6,7 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "tom's room";
-const EYEBROW = "focus · tasks · garden · games";
+const EYEBROW = "focus | tasks | garden | games";
 
 const GROUND = "#0a0f1f";
 const INK = "#ede7da";

@@ -6,9 +6,11 @@
  * Adding a theme:
  *   1. add its id and entry here,
  *   2. add a palette block for it in globals.css
- *      (html[data-home-theme="<id>"] [data-site="home"], [data-home-swatch="<id>"]).
+ *      (html[data-home-theme="<id>"] [data-site="home"], [data-home-swatch="<id>"]),
+ *   3. give it an `unlock` if it has to be earned.
  */
 
+import type { Unlock } from "./cosmetics";
 import { getScene, type SceneId } from "./scenes";
 
 export type ThemeId =
@@ -18,7 +20,14 @@ export type ThemeId =
   | "neon"
   | "meadow"
   | "lavender"
-  | "mocha";
+  | "mocha"
+  | "ember"
+  | "sakura"
+  | "aurora"
+  | "pastel"
+  | "iridescent"
+  | "canopy"
+  | "tropic";
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -27,9 +36,12 @@ export interface ThemeMeta {
   hint: string;
   /** The scene it was made to sit with, if any. */
   pairsWith?: SceneId;
+  /** Earned rather than free. */
+  unlock?: Unlock;
 }
 
-/** The first row stands on its own; the second follows the scenes in order. */
+/** The first row stands on its own; the next follow the classic scenes and
+ *  then the picture scenes they were made for; the earned ones come last. */
 export const THEMES: ThemeMeta[] = [
   { id: "mono", name: "mono", hint: "black and white" },
   { id: "rose", name: "rose", hint: "red and pink" },
@@ -48,6 +60,46 @@ export const THEMES: ThemeMeta[] = [
     pairsWith: "sunset",
   },
   { id: "mocha", name: "mocha", hint: "latte and cinnamon", pairsWith: "cafe" },
+  {
+    id: "canopy",
+    name: "canopy",
+    hint: "sunlight through the pines",
+    pairsWith: "p-forest",
+  },
+  {
+    id: "tropic",
+    name: "tropic",
+    hint: "coral and twilight violet",
+    pairsWith: "p-sunset",
+  },
+  // Earned: a third row that fills in as the garden grows.
+  {
+    id: "pastel",
+    name: "pastel",
+    hint: "soft pinks, blues and lilacs",
+    unlock: { level: 6 },
+  },
+  {
+    id: "sakura",
+    name: "sakura",
+    hint: "blossom and cream",
+    unlock: { level: 8 },
+  },
+  { id: "ember", name: "ember", hint: "embers and ash", unlock: { level: 11 } },
+  {
+    id: "aurora",
+    name: "aurora",
+    hint: "green and violet lights",
+    pairsWith: "p-aurora",
+    unlock: { level: 15 },
+  },
+  {
+    id: "iridescent",
+    name: "iridescent",
+    hint: "space blue and turquoise",
+    pairsWith: "p-space",
+    unlock: { level: 20 },
+  },
 ];
 
 const THEME_IDS = THEMES.map((t) => t.id);

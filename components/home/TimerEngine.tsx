@@ -57,7 +57,7 @@ const TimerEngine = () => {
   useEffect(() => {
     setTitlePart(
       "timer",
-      active ? `${timer.status === "paused" ? "❚❚ " : ""}${clock} · ${MODE_LABEL[timer.mode]}` : null,
+      active ? `${timer.status === "paused" ? "❚❚ " : ""}${clock} | ${MODE_LABEL[timer.mode]}` : null,
     );
   }, [active, clock, timer.status, timer.mode]);
   useEffect(() => () => setTitlePart("timer", null), []);

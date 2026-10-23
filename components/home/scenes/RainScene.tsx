@@ -62,14 +62,9 @@ function windowColor(r: number): Rgb {
   return "255,158,199";
 }
 
-const BOKEH_COLORS: Rgb[] = [
-  "255,180,100", // street lamps
-  "255,180,100",
-  "255,96,84", // tail lights
-  "255,236,204", // headlights
-  "126,208,228", // a teal sign
-  "236,150,190", // a pink one
-];
+const LAMP: Rgb = "255,180,100";
+const HEADLIGHT: Rgb = "255,236,204";
+const TAIL_LIGHT: Rgb = "255,84,72";
 
 function buildCity(w: number, h: number): City {
   const rand = seeded(20251022);
@@ -117,15 +112,31 @@ function buildCity(w: number, h: number): City {
     }
   });
 
-  const count = Math.round(w / 30);
-  for (let i = 0; i < count; i++) {
-    city.bokeh.push({
-      x: rand() * w,
-      y: lerp(0.74, 1.05, rand()) * h,
-      r: lerp(12, 58, rand() ** 1.5),
-      color: BOKEH_COLORS[Math.floor(rand() * BOKEH_COLORS.length)],
-      alpha: lerp(0.22, 0.6, rand()),
-    });
+  // The street, out of focus. Every light has a source: a row of street
+  // lamps at even spacing, shop windows at the foot of the front buildings,
+  // and cars in two lanes, headlights coming, tail lights going.
+  const lampGap = Math.max(150, w * 0.16);
+  for (let x = lampGap * 0.3; x < w + lampGap; x += lampGap) {
+    city.bokeh.push({ x: x + lerp(-8, 8, rand()), y: h * 0.8, r: lerp(26, 34, rand()), color: LAMP, alpha: 0.5 });
+  }
+  for (const b of city.buildings.filter((b) => b.color === LAYERS[2].color)) {
+    if (rand() < 0.45) continue;
+    city.bokeh.push({ x: b.x + b.w * lerp(0.3, 0.7, rand()), y: h * 0.9, r: lerp(30, 46, rand()), color: "255,205,150", alpha: 0.28 });
+  }
+  const cars = Math.max(3, Math.round(w / 260));
+  for (let i = 0; i < cars; i++) {
+    const coming = i % 2 === 0;
+    const cx = ((i + rand() * 0.6) / cars) * w;
+    const y = h * (coming ? 1.0 : 0.94);
+    const r = coming ? lerp(18, 24, rand()) : lerp(12, 16, rand());
+    const gap = r * (coming ? 2.2 : 2.6);
+    for (const dx of [-gap / 2, gap / 2]) {
+      city.bokeh.push({ x: cx + dx, y, r, color: coming ? HEADLIGHT : TAIL_LIGHT, alpha: coming ? 0.55 : 0.6 });
+    }
+  }
+  // Each sign spills its colour onto the street below it.
+  for (const sign of city.signs) {
+    city.bokeh.push({ x: sign.x + sign.w / 2, y: h * 0.86, r: 40, color: sign.color, alpha: 0.18 });
   }
   return city;
 }

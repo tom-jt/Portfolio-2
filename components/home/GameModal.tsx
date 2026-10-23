@@ -17,7 +17,7 @@ function ratio(aspect: string) {
  * A game played in a frame over the page, sized to fit the viewport.
  *
  * Portalled to the /home root: it is opened from inside a card, and the
- * card's backdrop-filter and transform would otherwise make it the
+ * card's transform would otherwise make it the
  * containing block, pinning this "fixed" overlay to the card instead of the
  * window. The root still carries the scene's palette tokens.
  */
@@ -54,7 +54,7 @@ const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-95 flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-95 flex items-center justify-center bg-black/80 p-3 sm:p-6"
           onClick={onClose}
         >
           <motion.div

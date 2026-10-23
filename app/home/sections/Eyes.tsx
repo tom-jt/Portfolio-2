@@ -31,7 +31,8 @@ function eyeStatus(eyes: EyeState, now: number) {
   if (!eyes.enabled) return "off";
   if (eyes.phase !== "idle") return "now";
   if (!now || !eyes.nextAt) return `${eyes.interval}m`;
-  return `${Math.max(1, Math.ceil((eyes.nextAt - now) / 60_000))}m`;
+  // Capped at the interval: the clock rounds down, so it can read early.
+  return `${Math.min(eyes.interval, Math.max(1, Math.ceil((eyes.nextAt - now) / 60_000)))}m`;
 }
 
 /** Eye-break settings: how often, and how it gets your attention. */

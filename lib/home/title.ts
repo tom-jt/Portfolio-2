@@ -18,7 +18,7 @@ export function setTitlePart(part: Part, text: string | null) {
 
   const shown = ORDER.map((p) => parts.get(p)).filter(Boolean);
   if (shown.length) {
-    document.title = shown.join(" · ");
+    document.title = shown.join(" | ");
   } else {
     document.title = base;
     base = null;

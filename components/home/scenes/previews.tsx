@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from "react";
-import type { SceneId } from "@/lib/home/scenes";
+import { getScene, type SceneId } from "@/lib/home/scenes";
+import { photoThumb } from "./PhotoScene";
 
 /**
  * Thumbnails for the scene picker: each scene drawn small enough to read
@@ -109,7 +110,7 @@ const Cafe = ({ id }: { id: string }) => (
   </>
 );
 
-const PREVIEW: Record<SceneId, (p: { id: string }) => ReactNode> = {
+const PREVIEW: Partial<Record<SceneId, (p: { id: string }) => ReactNode>> = {
   rain: Rain,
   hill: Hill,
   sunset: Sunset,
@@ -119,6 +120,14 @@ const PREVIEW: Record<SceneId, (p: { id: string }) => ReactNode> = {
 export const ScenePreview = ({ scene, className }: { scene: SceneId; className?: string }) => {
   const id = useId().replace(/:/g, "");
   const Draw = PREVIEW[scene];
+  const photo = getScene(scene).photo;
+  if (photo || !Draw) {
+    // Photo scenes show a thumbnail of the photograph itself.
+    return photo ? (
+      // eslint-disable-next-line @next/next/no-img-element -- a 40px thumbnail
+      <img src={photoThumb(photo)} alt="" aria-hidden="true" loading="lazy" className={`object-cover ${className ?? ""}`} />
+    ) : null;
+  }
   return (
     <svg viewBox="0 0 40 40" aria-hidden="true" className={className}>
       <Draw id={id} />

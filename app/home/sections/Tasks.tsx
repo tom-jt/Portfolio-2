@@ -353,7 +353,7 @@ const Tasks = ({
               </span>
               <span className="text-glow font-pixel">+{reward.xp} xp</span>
               <span className="text-muted-foreground/70">
-                · {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP}{" "}
+                | {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP}{" "}
                 today
               </span>
             </span>

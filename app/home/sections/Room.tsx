@@ -13,6 +13,7 @@ import { primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
 import { formatClock } from "@/lib/home/format";
 import { activeAmbience, closePanels, togglePanel, usePrefs, type PanelId } from "@/lib/home/prefs";
 import { getAmbience } from "@/lib/home/scenes";
+import { useSpotifyPlaying } from "@/lib/home/spotify";
 import { useHydrated, useNow } from "@/lib/home/store";
 import { MODE_LABEL, pause, start, timeLeft, useTimer } from "@/lib/home/timer";
 import { sortTodos, useTodos } from "@/lib/home/todos";
@@ -73,18 +74,22 @@ const startOrPause = (running: boolean) => {
   start();
 };
 
+const CARD_GONE = { opacity: 0, y: 10, scale: 0.98, transition: { duration: 0.15 } };
+
 /**
  * A card. `layout` lets the others glide into place when one opens or
  * closes; min-h-0 lets it shrink and scroll inside when space runs short.
+ * `hidden` closes it without unmounting, for a card playing music.
  */
-const Card = ({ className, children }: { className?: string; children: ReactNode }) => (
+const Card = ({ className, hidden, children }: { className?: string; hidden?: boolean; children: ReactNode }) => (
   <motion.div
     layout="position"
     initial={{ opacity: 0, y: 10, scale: 0.98 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    exit={{ opacity: 0, y: 10, scale: 0.98, transition: { duration: 0.15 } }}
+    animate={hidden ? { ...CARD_GONE, transitionEnd: { display: "none" } } : { opacity: 1, y: 0, scale: 1, display: "flex" }}
+    exit={CARD_GONE}
     transition={{ type: "spring", stiffness: 420, damping: 34 }}
-    className={cn("pointer-events-auto flex min-h-0 flex-col", className)}
+    aria-hidden={hidden || undefined}
+    className={cn("pointer-events-auto flex min-h-0 flex-col", hidden && "pointer-events-none", className)}
   >
     {children}
   </motion.div>
@@ -271,6 +276,10 @@ const Room = () => {
 
   const rightColumn = isOpen("garden") || isOpen("timer") || isOpen("eyes");
   const SheetPanel = sheet ? PANELS[sheet] : null;
+  // Closing the sound card would stop Spotify mid-song, so while it plays
+  // the card only hides. With nothing playing it unmounts as usual, which
+  // frees the heavy embed.
+  const keepSound = useSpotifyPlaying();
 
   // Only a press that starts and ends on the scene closes the cards. Cards
   // and chips sit over it, so the target says which was clicked, and
@@ -357,8 +366,8 @@ const Room = () => {
               </div>
             </motion.div>
           )}
-          {isOpen("sound") && (
-            <Card key="sound" className="max-h-full w-[22rem] min-w-[19rem] shrink">
+          {wide && (isOpen("sound") || keepSound) && (
+            <Card key="sound" hidden={!isOpen("sound")} className="max-h-full w-[22rem] min-w-[19rem] shrink">
               <Sound className={CARD_PANEL} />
             </Card>
           )}
@@ -398,18 +407,24 @@ const Room = () => {
             className="fixed inset-0 z-30 bg-black/30 md:hidden"
           />
         )}
-        {!wide && SheetPanel && sheet && (
+        {!wide && (sheet || keepSound) && (
           <motion.div
             key="sheet"
-            role="dialog"
-            aria-label={LABEL[sheet]}
+            role={sheet ? "dialog" : undefined}
+            aria-label={sheet ? LABEL[sheet] : undefined}
+            aria-hidden={!sheet || undefined}
             initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
+            // Kept for Spotify with nothing open: hidden, still mounted.
+            animate={
+              sheet
+                ? { opacity: 1, y: 0, display: "block" }
+                : { opacity: 0, y: 40, transition: { duration: 0.15 }, transitionEnd: { display: "none" } }
+            }
             exit={{ opacity: 0, y: 40, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
             // Anchored above the tab bar and only as tall as its contents,
             // up to just under the greeting.
-            className="bg-glass-strong/85 border-glass-edge @container fixed inset-x-2.5 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-30 max-h-[calc(100dvh-16.25rem-env(safe-area-inset-bottom))] overflow-y-auto rounded-[1.75rem] border px-5 pt-1.5 pb-5 backdrop-blur-xl md:hidden"
+            className="bg-glass-strong/85 border-glass-edge @container fixed inset-x-2.5 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-30 max-h-[calc(100dvh-16.25rem-env(safe-area-inset-bottom))] overflow-y-auto rounded-[1.75rem] border px-5 pt-1.5 pb-5 md:hidden"
           >
             <button
               type="button"
@@ -419,7 +434,13 @@ const Room = () => {
             >
               <span aria-hidden="true" className="mx-auto block h-1 w-10 rounded-full bg-white/25" />
             </button>
-            <SheetPanel chrome="bare" />
+            {SheetPanel && sheet !== "sound" && <SheetPanel chrome="bare" />}
+            {/* Its own slot, so switching tabs doesn't remount it and stop the music. */}
+            {(sheet === "sound" || keepSound) && (
+              <div className={sheet === "sound" ? undefined : "hidden"}>
+                <Sound chrome="bare" />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

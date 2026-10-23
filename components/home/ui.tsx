@@ -7,10 +7,11 @@ import { cn } from "@/lib/utils";
 /**
  * Glass for the small controls that sit straight on the scene (chips, the
  * tab bar). Built from separate utilities rather than home-glass so that
- * an open state can swap the border colour and focus rings still show.
+ * an open state can swap the border colour and focus rings still show. No
+ * backdrop blur, like home-glass: see globals.css.
  */
 export const chipGlass =
-  "bg-glass border border-glass-edge text-foreground shadow-[inset_0_1px_0_var(--glass-highlight),0_18px_40px_-24px_rgb(0_0_0/0.7)] backdrop-blur-[14px] backdrop-saturate-[1.15]";
+  "bg-glass border border-glass-edge text-foreground shadow-[inset_0_1px_0_var(--glass-highlight),0_18px_40px_-24px_rgb(0_0_0/0.7)]";
 
 /** Text that acts as a button, underlined so it never passes for plain
  *  text: faintly at rest, fully on hover. Colour and size are the caller's. */

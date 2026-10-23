@@ -171,6 +171,49 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
       { file: "wind", gain: 0.12, offset: 20 },
     ],
   },
+  wind: {
+    layers: [
+      { file: "wind", gain: 0.62 },
+      { file: "light-rain", gain: 0.32, lowpass: 3000 },
+    ],
+  },
+  leaves: {
+    layers: [
+      { file: "rain-on-leaves", gain: 0.8 },
+      { file: "light-rain", gain: 0.22, offset: 9 },
+    ],
+  },
+  deluge: {
+    layers: [
+      { file: "heavy-rain", gain: 0.85 },
+      { file: "rain-on-window", gain: 0.25, lowpass: 1600, offset: 5 },
+    ],
+  },
+  lake: {
+    layers: [
+      { file: "waves", gain: 0.32, lowpass: 900 },
+      { file: "wind", gain: 0.14, offset: 30 },
+    ],
+    extra: (c, out) => crickets(c, out, 0.5),
+  },
+  woods: {
+    layers: [
+      { file: "rain-on-leaves", gain: 0.16, lowpass: 2500, offset: 14 },
+      { file: "wind", gain: 0.3, offset: 8 },
+    ],
+    extra: birds,
+  },
+  cosmos: {
+    layers: [],
+    extra: drone,
+  },
+  shore: {
+    layers: [
+      { file: "waves", gain: 0.85 },
+      { file: "wind", gain: 0.16, offset: 40 },
+    ],
+    extra: (c, out) => crickets(c, out, 0.25),
+  },
   cafe: {
     layers: [
       { file: "cafe", gain: 0.5 },
@@ -179,6 +222,137 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
     extra: (c, out) => jazz(c, route(gain(c, 0.6), out)),
   },
 };
+
+// ---------------------------------------------------------------- nature
+
+/**
+ * Calls `play(at)` for each event a little ahead of the audio clock, where
+ * `play` returns the seconds until the next. Two seconds ahead, because
+ * background tabs only get timers once a second. Returns a stop function.
+ */
+function every(c: AudioContext, play: (at: number) => number) {
+  let next = c.currentTime + 0.5;
+  const schedule = () => {
+    while (next < c.currentTime + 2) next += play(next);
+  };
+  schedule();
+  const timer = setInterval(schedule, 400);
+  return () => clearInterval(timer);
+}
+
+/** Birds in the canopy: short phrases of whistled notes, a few seconds apart,
+ *  each bird with its own pitch and pattern. */
+function birds(c: AudioContext, out: AudioNode) {
+  const bus = gain(c, 0.5);
+  route(bus, out, room(c, 2.4), gain(c, 0.35));
+  bus.connect(out);
+  const voices = [
+    { base: 2600, spread: 900, notes: [3, 6], gap: 0.13, length: 0.09 },
+    { base: 3400, spread: 500, notes: [2, 4], gap: 0.2, length: 0.16 },
+    { base: 1900, spread: 700, notes: [4, 8], gap: 0.09, length: 0.06 },
+  ];
+  const chirp = (at: number, from: number, to: number, length: number, level: number) => {
+    const osc = c.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(from, at);
+    osc.frequency.exponentialRampToValueAtTime(to, at + length);
+    const env = c.createGain();
+    env.gain.setValueAtTime(0, at);
+    env.gain.linearRampToValueAtTime(level, at + length * 0.25);
+    env.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    osc.connect(env).connect(bus);
+    osc.start(at);
+    osc.stop(at + length + 0.05);
+  };
+  return every(c, (at) => {
+    const v = voices[Math.floor(Math.random() * voices.length)];
+    const count = v.notes[0] + Math.floor(Math.random() * (v.notes[1] - v.notes[0] + 1));
+    const level = 0.03 + Math.random() * 0.03;
+    for (let i = 0; i < count; i++) {
+      const f = v.base + (Math.random() - 0.5) * v.spread;
+      const up = Math.random() < 0.5;
+      chirp(at + i * v.gap, f, f * (up ? 1.35 : 0.7), v.length, level);
+    }
+    return count * v.gap + 1.5 + Math.random() * 4;
+  });
+}
+
+/** Crickets: trains of quick high pulses, now near, now far. */
+function crickets(c: AudioContext, out: AudioNode, level: number) {
+  const bus = gain(c, level);
+  route(bus, out, filter(c, "highpass", 2500, 0.7));
+  return every(c, (at) => {
+    const f = 4200 + Math.random() * 900;
+    const pulses = 3 + Math.floor(Math.random() * 4);
+    const near = 0.008 + Math.random() * 0.012;
+    for (let i = 0; i < pulses; i++) {
+      const t = at + i * 0.045;
+      const osc = c.createOscillator();
+      osc.frequency.value = f;
+      const env = c.createGain();
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(near, t + 0.006);
+      env.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      osc.connect(env).connect(bus);
+      osc.start(t);
+      osc.stop(t + 0.04);
+    }
+    return 0.35 + Math.random() * 0.9;
+  });
+}
+
+/**
+ * Deep space: a low chord held for ever, its filter opening and closing over
+ * half a minute, and now and then a faint high shimmer like distant light.
+ */
+function drone(c: AudioContext, out: AudioNode) {
+  const bus = gain(c, 0.9);
+  const tone = filter(c, "lowpass", 600, 0.9);
+  bus.connect(tone);
+  route(tone, out, room(c, 4));
+  tone.connect(out);
+  const sources: OscillatorNode[] = [];
+  for (const [note, detune, level] of [
+    [38, -6, 0.1],
+    [38, 7, 0.1],
+    [45, 0, 0.07],
+    [50, 4, 0.05],
+    [57, -3, 0.025],
+  ] as const) {
+    const osc = c.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = midiHz(note);
+    osc.detune.value = detune;
+    osc.connect(gain(c, level)).connect(bus);
+    osc.start();
+    sources.push(osc);
+  }
+  // The filter breathes.
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 1 / 32;
+  const depth = gain(c, 380);
+  lfo.connect(depth).connect(tone.frequency);
+  lfo.start();
+  sources.push(lfo);
+
+  const stopShimmer = every(c, (at) => {
+    const osc = c.createOscillator();
+    osc.frequency.value = midiHz(81 + [0, 2, 4, 7, 9][Math.floor(Math.random() * 5)]);
+    const env = c.createGain();
+    env.gain.setValueAtTime(0, at);
+    env.gain.linearRampToValueAtTime(0.012, at + 2.5);
+    env.gain.linearRampToValueAtTime(0, at + 6);
+    osc.connect(env).connect(bus);
+    osc.start(at);
+    osc.stop(at + 6.2);
+    return 5 + Math.random() * 7;
+  });
+  return () => {
+    stopShimmer();
+    const t = c.currentTime;
+    for (const s of sources) s.stop(t + 3);
+  };
+}
 
 // ------------------------------------------------------------------ jazz
 
@@ -401,15 +575,46 @@ function jazz(c: AudioContext, out: AudioNode) {
 /** Perceived loudness is roughly the square of the gain. */
 const curve = (v: number) => v * v * 0.8;
 
-export function setAmbienceVolume(volume: number) {
-  if (!ctx || !master || !bed) return;
-  master.gain.setTargetAtTime(curve(volume), ctx.currentTime, 0.08);
+/** The ambience's own level, kept so a chime's dip can return to it. */
+let volume = 0;
+/** When the current dip under a chime ends, in context time. */
+let duckUntil = 0;
+/** Ambience dips to this share of its level under a chime… */
+const DUCK = 0.3;
+/** …and is most of the way down this many seconds after the dip starts. */
+const DUCK_LEAD = 0.25;
+
+/**
+ * Dips the ambience under a chime for `seconds` from now, then lets it swell
+ * back. Returns whether there was any to dip.
+ */
+function duck(seconds: number) {
+  if (!ctx || !master || !bed) return false;
+  const t = ctx.currentTime;
+  duckUntil = Math.max(duckUntil, t + seconds);
+  const g = master.gain;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.setTargetAtTime(curve(volume) * DUCK, t, DUCK_LEAD / 3);
+  g.setTargetAtTime(curve(volume), duckUntil, 0.5);
+  return true;
 }
 
-export function playAmbience(kind: AmbienceKind, volume: number) {
+const ducking = () => !!ctx && ctx.currentTime < duckUntil;
+
+export function setAmbienceVolume(v: number) {
+  volume = v;
+  if (!ctx || !master || !bed) return;
+  // Mid-dip, move the dip's level and where it returns to instead.
+  if (ducking()) duck(0);
+  else master.gain.setTargetAtTime(curve(v), ctx.currentTime, 0.08);
+}
+
+export function playAmbience(kind: AmbienceKind, v: number) {
   const c = context();
   if (!master) return;
-  master.gain.setTargetAtTime(curve(volume), c.currentTime, 0.15);
+  volume = v;
+  if (!ducking()) master.gain.setTargetAtTime(curve(v), c.currentTime, 0.15);
   if (bed?.kind === kind) return;
 
   // Crossfade: the old bed fades out on its own bus while the new one fades
@@ -470,8 +675,9 @@ export function stopAmbience() {
 
 /**
  * A few sine notes with overtones and a long tail: the house bell. Plays even
- * with ambience off. A sound can be due on load, before any click; the
- * browser would refuse it, so it isn't asked for.
+ * with ambience off, and dips the ambience first when it is on, so the chime
+ * is heard rather than fought over. A sound can be due on load, before any
+ * click; the browser would refuse it, so it isn't asked for.
  */
 function bell(
   notes: [freq: number, delay: number][],
@@ -483,7 +689,11 @@ function bell(
   const c = context();
   const out = gain(c, level);
   out.connect(c.destination);
-  for (const [freq, delay] of notes) {
+  const last = Math.max(...notes.map(([, d]) => d));
+  // Hold the dip through the notes and most of their ring.
+  const lead = duck(DUCK_LEAD + last + decay * 0.6) ? DUCK_LEAD : 0;
+  for (const [freq, at] of notes) {
+    const delay = at + lead;
     for (const [mult, amount] of [
       [1, 1],
       [2, 0.25],
@@ -502,16 +712,24 @@ function bell(
       osc.stop(t + decay + 0.1);
     }
   }
-  const longest = Math.max(...notes.map(([, d]) => d)) + decay;
-  setTimeout(() => out.disconnect(), longest * 1000 + 500);
+  setTimeout(() => out.disconnect(), (lead + last + decay) * 1000 + 500);
 }
 
-/** End of a focus session: two bright rising notes. */
+/**
+ * End of a focus session: a bright chord struck at once, then its octave.
+ * Struck together rather than in turn, so it never sounds like the eye
+ * reminders, which are little tunes.
+ */
 export const playChime = () =>
-  bell([
-    [659.25, 0],
-    [987.77, 0.22],
-  ]);
+  bell(
+    [
+      [659.25, 0],
+      [830.61, 0],
+      [987.77, 0],
+      [1318.51, 0.32],
+    ],
+    { level: 0.13, attack: 0.008, decay: 2.8 },
+  );
 
 /** Time to rest your eyes: two low notes falling, eased in so it never startles. */
 export const playEyeChime = () =>

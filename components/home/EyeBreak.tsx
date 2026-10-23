@@ -99,7 +99,9 @@ const EyeBreak = () => {
   const due = eyes.phase === "due";
   const resting = eyes.phase === "resting";
   const now = useNow(250, resting);
-  const secondsLeft = resting && now ? Math.max(0, Math.ceil((eyes.restUntil - now) / 1000)) : REST_SECONDS;
+  // Capped: the shared clock rounds down, so it can read a moment early.
+  const secondsLeft =
+    resting && now ? Math.min(REST_SECONDS, Math.max(0, Math.ceil((eyes.restUntil - now) / 1000))) : REST_SECONDS;
   const progress = 1 - secondsLeft / REST_SECONDS;
 
   useEffect(() => {

@@ -6,7 +6,7 @@
       "tagline": "",
       "description": "",
       "url": "https://diviners.vercel.app",
-      "thumbnail": "",
+      "thumbnail": "public/images/projects/the-diviners-gambit.png",
       "accent": "#7fc8dc",
       "aspect": "16/9",
       "status": "live"

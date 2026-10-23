@@ -36,7 +36,7 @@ const Greeting = ({ className }: { className?: string }) => {
         {date ? greetingFor(date.getHours()) : "hello"}.
       </h1>
       <p className="text-foreground/75 mt-2.5 text-[0.8rem] md:text-[0.95rem]">
-        {date ? `${dateFormat.format(date)} · ${timeFormat.format(date)}` : " "}
+        {date ? `${dateFormat.format(date)} | ${timeFormat.format(date)}` : " "}
       </p>
     </div>
   );

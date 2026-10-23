@@ -6,8 +6,15 @@ import type { SceneId } from "@/lib/home/scenes";
 import { useHydrated } from "@/lib/home/store";
 import CafeScene from "./CafeScene";
 import HillScene from "./HillScene";
+import PhotoScene, { type PhotoId } from "./PhotoScene";
 import RainScene from "./RainScene";
 import SunsetScene from "./SunsetScene";
+
+const photo = (id: PhotoId) => {
+  const Scene = () => <PhotoScene id={id} />;
+  Scene.displayName = `PhotoScene(${id})`;
+  return Scene;
+};
 
 /** Each scene's live background. Metadata lives in lib/home/scenes.ts. */
 const BACKGROUNDS: Record<SceneId, ComponentType> = {
@@ -15,6 +22,10 @@ const BACKGROUNDS: Record<SceneId, ComponentType> = {
   hill: HillScene,
   sunset: SunsetScene,
   cafe: CafeScene,
+  "p-aurora": photo("aurora"),
+  "p-forest": photo("forest"),
+  "p-space": photo("space"),
+  "p-sunset": photo("sunset"),
 };
 
 /**

@@ -24,8 +24,17 @@ interface Layout {
   h: number;
   horizon: number;
   sun: { x: number; y: number; r: number };
-  lighthouse: { x: number; y: number };
+  /** The lamp, and the tower's height and base below it. */
+  lighthouse: { x: number; y: number; tower: number; base: number };
 }
+
+/** The headland spans the left third of the horizon. */
+const HEADLAND = 0.34;
+
+/** How high the headland stands at `t` (0 at the left edge, 1 at its tip):
+ *  a rounded hill falling to a low cliff, smooth so things can stand on it. */
+const headlandHeight = (t: number, h: number) =>
+  h * 0.062 * (1 - t ** 2.4) * (1 + 0.06 * Math.sin(t * 11)) + (t > 0.92 ? 0 : h * 0.004);
 
 function layout(w: number, h: number): Layout {
   const horizon = h * 0.62;
@@ -35,7 +44,12 @@ function layout(w: number, h: number): Layout {
     h,
     horizon,
     sun: { x: w * 0.66, y: horizon + r * 0.18, r },
-    lighthouse: { x: w * 0.12, y: horizon - h * 0.07 },
+    lighthouse: (() => {
+      const t = 0.55;
+      const base = horizon - headlandHeight(t, h) + 1;
+      const tower = Math.min(78, Math.max(36, h * 0.075));
+      return { x: w * HEADLAND * t, y: base - tower - tower * 0.12, tower, base };
+    })(),
   };
 }
 
@@ -99,20 +113,23 @@ function drawBack(ctx: CanvasRenderingContext2D, l: Layout) {
   ctx.fillStyle = "rgba(255,226,180,0.55)";
   ctx.fillRect(0, horizon - 0.5, w, 1);
 
-  // A headland on the left, and a fainter one far off to the right.
-  const rand = seeded(7);
+  // A headland on the left, with rocks at its foot, and a fainter one far
+  // off to the right.
+  const span = w * HEADLAND;
   ctx.fillStyle = "#2b1636";
   ctx.beginPath();
   ctx.moveTo(0, horizon + 2);
-  ctx.lineTo(0, horizon - h * 0.05);
-  const span = w * 0.32;
-  for (let x = 0; x <= span; x += span / 14) {
-    const t = x / span;
-    const height = h * 0.055 * (1 - t ** 1.6) * (0.85 + rand() * 0.3);
-    ctx.lineTo(x, horizon - height);
-  }
+  for (let x = 0; x <= span; x += 3) ctx.lineTo(x, horizon - headlandHeight(x / span, h));
   ctx.lineTo(span, horizon + 2);
   ctx.fill();
+  const rand = seeded(7);
+  for (let i = 0; i < 5; i++) {
+    const x = span * lerp(0.9, 1.12, rand());
+    const r = lerp(2, 6, rand()) * (h / 900 + 0.4);
+    ctx.beginPath();
+    ctx.ellipse(x, horizon + 0.5, r * 1.6, r, 0, Math.PI, 0);
+    ctx.fill();
+  }
 
   ctx.fillStyle = "rgba(110,52,90,0.55)";
   ctx.beginPath();
@@ -121,19 +138,46 @@ function drawBack(ctx: CanvasRenderingContext2D, l: Layout) {
   ctx.lineTo(w, horizon + 1);
   ctx.fill();
 
-  // The lighthouse.
+  // The lighthouse: a tapering tower in red and white bands, a gallery, the
+  // lantern room and its dome. Backlit, so its colours stay muted.
   const lh = l.lighthouse;
-  const towerH = h * 0.07 - h * 0.022;
-  ctx.fillStyle = "#e7cfc2";
+  const T = lh.tower;
+  const top = lh.base - T;
+  const half = (y: number) => lerp(T * 0.11, T * 0.07, (lh.base - y) / T);
+  const band = (from: number, to: number, color: string) => {
+    const y0 = lh.base - T * from;
+    const y1 = lh.base - T * to;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(lh.x - half(y0), y0);
+    ctx.lineTo(lh.x - half(y1), y1);
+    ctx.lineTo(lh.x + half(y1), y1);
+    ctx.lineTo(lh.x + half(y0), y0);
+    ctx.fill();
+  };
+  band(0, 1, "#dcc4bc");
+  band(0.12, 0.3, "#a8475a");
+  band(0.48, 0.66, "#a8475a");
+  band(0.84, 1, "#a8475a");
+  // Shade on the side away from the sun.
+  ctx.fillStyle = "rgba(43,22,54,0.35)";
   ctx.beginPath();
-  ctx.moveTo(lh.x - 4, lh.y + 6 + towerH);
-  ctx.lineTo(lh.x - 2.5, lh.y + 6);
-  ctx.lineTo(lh.x + 2.5, lh.y + 6);
-  ctx.lineTo(lh.x + 4, lh.y + 6 + towerH);
+  ctx.moveTo(lh.x - half(lh.base), lh.base);
+  ctx.lineTo(lh.x - half(top), top);
+  ctx.lineTo(lh.x - half(top) * 0.1, top);
+  ctx.lineTo(lh.x - half(lh.base) * 0.1, lh.base);
   ctx.fill();
-  ctx.fillStyle = "#3a1d40";
-  ctx.fillRect(lh.x - 3.5, lh.y + 6 + towerH * 0.45, 7, towerH * 0.16);
-  ctx.fillRect(lh.x - 3, lh.y, 6, 6);
+  // Gallery, lantern room, dome.
+  ctx.fillStyle = "#2b1636";
+  ctx.fillRect(lh.x - T * 0.12, top - T * 0.02, T * 0.24, T * 0.03);
+  ctx.fillStyle = "#ffe3a8";
+  ctx.fillRect(lh.x - T * 0.055, top - T * 0.11, T * 0.11, T * 0.09);
+  ctx.fillStyle = "#2b1636";
+  ctx.fillRect(lh.x - T * 0.006, top - T * 0.11, T * 0.012, T * 0.09);
+  ctx.beginPath();
+  ctx.moveTo(lh.x - T * 0.075, top - T * 0.11);
+  ctx.quadraticCurveTo(lh.x, top - T * 0.2, lh.x + T * 0.075, top - T * 0.11);
+  ctx.fill();
 }
 
 /** Soft, wide cloud built from overlapping ellipses, pre-rendered once. */
@@ -248,15 +292,36 @@ const SunsetScene = () => {
           ctx.fillRect(x - g.len / 2, g.y, g.len, g.thick);
         }
 
-        // The lighthouse turns roughly every five seconds.
-        const beam = Math.max(0, Math.sin(t * 1.25)) ** 6;
-        if (beam > 0.01) {
-          const { x, y } = l.lighthouse;
-          const glow = ctx.createRadialGradient(x, y + 3, 0, x, y + 3, 22);
-          glow.addColorStop(0, `rgba(255,236,190,${beam})`);
+        // The lighthouse turns roughly every five seconds: its beam sweeps
+        // out over the sea, brightest as it faces us, then round the back.
+        {
+          const { x, y, tower } = l.lighthouse;
+          const turn = t * 1.25;
+          const facing = Math.cos(turn);
+          const reach = Math.min(w * 0.35, tower * 9);
+          const glowR = tower * 0.35;
+          const glow = ctx.createRadialGradient(x, y, 0, x, y, glowR);
+          const lamp = 0.35 + 0.65 * Math.max(0, facing) ** 4;
+          glow.addColorStop(0, `rgba(255,236,190,${lamp})`);
           glow.addColorStop(1, "rgba(255,236,190,0)");
           ctx.fillStyle = glow;
-          ctx.fillRect(x - 22, y - 19, 44, 44);
+          ctx.fillRect(x - glowR, y - glowR, glowR * 2, glowR * 2);
+          // The beam is only seen while it points across the view.
+          const side = Math.sin(turn);
+          const strength = (1 - Math.abs(facing)) * 0.35;
+          if (strength > 0.02) {
+            const dir = side > 0 ? 1 : -1;
+            const beamGrad = ctx.createLinearGradient(x, y, x + dir * reach, y);
+            beamGrad.addColorStop(0, `rgba(255,236,190,${strength})`);
+            beamGrad.addColorStop(1, "rgba(255,236,190,0)");
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath();
+            ctx.moveTo(x, y - tower * 0.03);
+            ctx.lineTo(x + dir * reach, y - tower * 0.25);
+            ctx.lineTo(x + dir * reach, y + tower * 0.2);
+            ctx.lineTo(x, y + tower * 0.03);
+            ctx.fill();
+          }
         }
 
         flockClock -= dt;

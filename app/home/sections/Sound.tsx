@@ -1,26 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Bird,
   CloudDrizzle,
   CloudLightning,
   CloudRain,
+  CloudRainWind,
   Coffee,
   Headphones,
+  Leaf,
+  Lock,
+  Moon,
   Music2,
+  Orbit,
   Pause,
   Play,
   Volume1,
   Volume2,
+  Sunset,
   Waves,
+  Wind,
   type LucideIcon,
 } from "lucide-react";
 import { Eyebrow, Panel, PrimaryButton, textButton, type PanelChrome } from "@/components/home/ui";
 import { DEFAULT_SPOTIFY_URL } from "@/data/home/config";
 import { playAmbience, primeAudio, useAmbienceStatus } from "@/lib/home/ambience";
+import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
+import { useGarden } from "@/lib/home/garden";
 import { activeAmbience, setPrefs, usePrefs } from "@/lib/home/prefs";
 import { AMBIENCES, getAmbience, getScene, type AmbienceKind } from "@/lib/home/scenes";
-import { spotifyEmbedUrl } from "@/lib/home/spotify";
+import {
+  loadSpotifyApi,
+  setSpotifyPlaying,
+  spotifyEmbedUrl,
+  spotifyUri,
+  type SpotifyController,
+} from "@/lib/home/spotify";
 import { cn } from "@/lib/utils";
 
 /** Three bars bouncing while ambience plays. */
@@ -42,10 +58,71 @@ const ICONS: Record<AmbienceKind, LucideIcon> = {
   hill: CloudDrizzle,
   storm: CloudLightning,
   waves: Waves,
+  wind: Wind,
+  leaves: Leaf,
+  deluge: CloudRainWind,
+  lake: Moon,
+  woods: Bird,
+  cosmos: Orbit,
+  shore: Sunset,
+};
+
+/**
+ * Spotify's player, through its iFrame API so the page can tell whether it
+ * is playing: while it is, /home keeps it alive with its card closed. If the
+ * API won't load, a plain embed still plays; it just stops when closed.
+ */
+const SpotifyPlayer = ({ link, embed }: { link: string; embed: string }) => {
+  const host = useRef<HTMLDivElement>(null);
+  const [fallback, setFallback] = useState(false);
+
+  useEffect(() => {
+    const uri = spotifyUri(link);
+    const root = host.current;
+    // The link was already checked to make `embed`, so this always parses.
+    if (!uri || !root) return;
+    // The API replaces the element it's given, so give it one React doesn't own.
+    const target = document.createElement("div");
+    root.appendChild(target);
+    let controller: SpotifyController | undefined;
+    let cancelled = false;
+    loadSpotifyApi().then(
+      (api) => {
+        if (cancelled) return;
+        api.createController(target, { uri, width: "100%", height: 152 }, (c) => {
+          if (cancelled) return c.destroy?.();
+          controller = c;
+          c.addListener("playback_update", (e) => setSpotifyPlaying(!e.data.isPaused));
+        });
+      },
+      () => !cancelled && setFallback(true),
+    );
+    return () => {
+      cancelled = true;
+      controller?.destroy?.();
+      root.replaceChildren();
+      setSpotifyPlaying(false);
+    };
+  }, [link]);
+
+  if (fallback) {
+    return (
+      <iframe
+        title="Spotify player"
+        src={embed}
+        width="100%"
+        height="152"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        className="block rounded-xl border-0"
+      />
+    );
+  }
+  return <div ref={host} className="h-[152px] overflow-hidden rounded-xl [&_iframe]:block [&_iframe]:border-0" />;
 };
 
 const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const prefs = usePrefs();
+  const garden = useGarden();
   const scene = getScene(prefs.scene);
   const kind = activeAmbience(prefs);
   const ambience = getAmbience(kind);
@@ -137,23 +214,26 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           </button>
         )}
       </div>
-      <div role="group" aria-label="ambient sound" className="mt-2 grid grid-cols-5 gap-1.5">
+      <div role="group" aria-label="ambient sound" className="mt-2 grid grid-cols-4 gap-1.5">
         {AMBIENCES.map((a) => {
-          const Icon = ICONS[a.id];
+          const locked = !isUnlocked(a.unlock, garden);
+          const Icon = locked ? Lock : ICONS[a.id];
           const selected = a.id === kind;
+          const title = locked && a.unlock ? `${a.label}: ${describeUnlock(a.unlock)}` : a.label;
           return (
             <button
               key={a.id}
               type="button"
               aria-pressed={selected}
-              aria-label={a.label}
-              title={a.label}
+              aria-label={title}
+              title={title}
+              disabled={locked}
               onClick={() => choose(a.id)}
               className={cn(
-                "focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[0.7rem] transition focus-visible:ring-2 focus-visible:outline-none",
+                "focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[0.7rem] transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
                 selected
                   ? "border-glow/60 bg-glow/12 text-foreground"
-                  : "border-glass-edge text-muted-foreground hover:text-foreground bg-white/3 hover:bg-white/8",
+                  : "border-glass-edge text-muted-foreground enabled:hover:text-foreground bg-white/3 enabled:hover:bg-white/8",
               )}
             >
               <Icon className={cn("size-4", selected && "text-glow")} />
@@ -230,16 +310,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
 
       <div className="mt-3">
         {prefs.spotifyLoaded && embed ? (
-          <iframe
-            key={embed}
-            title="Spotify player"
-            src={embed}
-            width="100%"
-            height="152"
-            loading="lazy"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            className="block rounded-xl border-0"
-          />
+          <SpotifyPlayer key={embed} link={prefs.spotifyUrl ?? DEFAULT_SPOTIFY_URL} embed={embed} />
         ) : (
           // Spotify's embed pulls in a lot of script and sets cookies, so it
           // waits until it's asked for. After that it loads automatically.

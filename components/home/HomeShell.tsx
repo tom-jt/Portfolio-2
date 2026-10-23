@@ -9,25 +9,50 @@ import {
   setAmbienceVolume,
   stopAmbience,
 } from "@/lib/home/ambience";
-import { awayToast, tick } from "@/lib/home/garden";
+import { currentHoliday } from "@/lib/home/cosmetics";
+import { awayToast, noteHoliday, tick } from "@/lib/home/garden";
 import { activeAmbience, usePrefs } from "@/lib/home/prefs";
 import { useTodoSync } from "@/lib/home/sync";
 import { cn } from "@/lib/utils";
 
-/** Pays out the garden's passive income every second while /home is open. */
+/**
+ * Pays out the garden's passive income every second while /home is open.
+ *
+ * Timers are throttled or frozen whenever the browser thinks nobody is
+ * looking (a hidden tab, but also a window left visible behind another app),
+ * so payouts arrive in lumps that each look like time away. They are added
+ * up and announced once, only when the visitor is actually back: on load,
+ * when the tab shows again, or when the window gets focus.
+ */
 function useGardenEngine() {
   useEffect(() => {
+    let awayFor = 0;
+    let awayGain = 0;
     const payOut = () => {
       const { away, gain } = tick();
-      if (away > 300 && gain >= 1) awayToast(gain, away);
+      if (away > 0) {
+        awayFor += away;
+        awayGain += gain;
+      }
     };
-    payOut();
+    const welcomeBack = () => {
+      payOut();
+      if (document.hidden) return;
+      if (awayFor > 300 && awayGain >= 1) awayToast(awayGain, awayFor);
+      awayFor = 0;
+      awayGain = 0;
+    };
+    welcomeBack();
+    // Being here for a holiday unlocks its decor for good.
+    const holiday = currentHoliday();
+    if (holiday) noteHoliday(holiday);
     const interval = setInterval(payOut, 1000);
-    const onVisible = () => !document.hidden && payOut();
-    document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("visibilitychange", welcomeBack);
+    window.addEventListener("focus", welcomeBack);
     return () => {
       clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("visibilitychange", welcomeBack);
+      window.removeEventListener("focus", welcomeBack);
       tick();
     };
   }, []);

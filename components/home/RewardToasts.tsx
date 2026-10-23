@@ -38,7 +38,7 @@ const RewardToasts = () => {
               exit={{ opacity: 0, y: -12, transition: { duration: 0.2 } }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
               className={cn(
-                "bg-glass-strong border-glass-edge pointer-events-auto flex w-full items-start gap-3 rounded-2xl border p-3.5 shadow-[0_18px_40px_-18px_rgb(0_0_0/0.8)] backdrop-blur-xl",
+                "bg-glass-strong border-glass-edge pointer-events-auto flex w-full items-start gap-3 rounded-2xl border p-3.5 shadow-[0_18px_40px_-18px_rgb(0_0_0/0.8)]",
                 big && "border-glow/60 shadow-[0_0_40px_-10px_var(--glow)]",
               )}
             >

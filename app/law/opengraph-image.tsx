@@ -6,7 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "Tom Liu";
-const EYEBROW = "BACHELOR OF LAWS · UNSW SYDNEY";
+const EYEBROW = "BACHELOR OF LAWS | UNSW SYDNEY";
 const TAGLINE = "Legal experience, competitions, and writing.";
 
 const GOLD = "#d4af37";
