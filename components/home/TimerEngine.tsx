@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { playChime } from "@/lib/home/ambience";
 import { formatClock } from "@/lib/home/format";
 import { useNow } from "@/lib/home/store";
+import { setTitlePart } from "@/lib/home/title";
 import {
   MODE_LABEL,
   notificationsSupported,
@@ -54,16 +55,12 @@ const TimerEngine = () => {
   const now = useNow(250, timer.status === "running");
   const clock = formatClock(timer.status === "running" && now ? timeLeft(timer, now) : timeLeft(timer));
   useEffect(() => {
-    if (!active) return;
-    const previous = document.title;
-    return () => {
-      document.title = previous;
-    };
-  }, [active]);
-  useEffect(() => {
-    if (!active) return;
-    document.title = `${timer.status === "paused" ? "❚❚ " : ""}${clock} · ${MODE_LABEL[timer.mode]}`;
+    setTitlePart(
+      "timer",
+      active ? `${timer.status === "paused" ? "❚❚ " : ""}${clock} · ${MODE_LABEL[timer.mode]}` : null,
+    );
   }, [active, clock, timer.status, timer.mode]);
+  useEffect(() => () => setTitlePart("timer", null), []);
 
   return (
     <p className="sr-only" aria-live="assertive">

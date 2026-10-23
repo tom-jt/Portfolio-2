@@ -66,7 +66,7 @@ const Arcade = ({ className, chrome }: { className?: string; chrome?: PanelChrom
 
   return (
     <Panel id="arcade" title="arcade" icon={Gamepad2} className={className} chrome={chrome}>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 @[18rem]:grid-cols-2 @[28rem]:grid-cols-3">
         {games.map((g) => (
           <Cartridge
             key={g.id}

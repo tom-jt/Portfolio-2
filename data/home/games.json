@@ -5,11 +5,11 @@
       "title": "cartridge 01",
       "tagline": "",
       "description": "",
-      "url": "",
+      "url": "https://diviners.vercel.app",
       "thumbnail": "",
       "accent": "#7fc8dc",
       "aspect": "16/9",
-      "status": "soon"
+      "status": "live"
     },
     {
       "id": "cartridge-02",

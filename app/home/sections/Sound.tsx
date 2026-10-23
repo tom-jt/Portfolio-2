@@ -1,18 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { Headphones, Music2, Pause, Play, Volume1, Volume2 } from "lucide-react";
-import { Eyebrow, Panel, PrimaryButton, type PanelChrome } from "@/components/home/ui";
+import {
+  CloudDrizzle,
+  CloudLightning,
+  CloudRain,
+  Coffee,
+  Headphones,
+  Music2,
+  Pause,
+  Play,
+  Volume1,
+  Volume2,
+  Waves,
+  type LucideIcon,
+} from "lucide-react";
+import { Eyebrow, Panel, PrimaryButton, textButton, type PanelChrome } from "@/components/home/ui";
 import { DEFAULT_SPOTIFY_URL } from "@/data/home/config";
-import { playAmbience, primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
-import { setPrefs, usePrefs } from "@/lib/home/prefs";
-import { getScene } from "@/lib/home/scenes";
+import { playAmbience, primeAudio, useAmbienceStatus } from "@/lib/home/ambience";
+import { activeAmbience, setPrefs, usePrefs } from "@/lib/home/prefs";
+import { AMBIENCES, getAmbience, getScene, type AmbienceKind } from "@/lib/home/scenes";
 import { spotifyEmbedUrl } from "@/lib/home/spotify";
 import { cn } from "@/lib/utils";
 
 /** Three bars bouncing while ambience plays. */
 export const Equaliser = ({ on }: { on: boolean }) => (
-  <span aria-hidden="true" className="flex h-3.5 items-end gap-0.5">
+  <span aria-hidden="true" className="flex h-3.5 shrink-0 items-end gap-0.5">
     {[0, 0.25, 0.5].map((delay) => (
       <span
         key={delay}
@@ -23,16 +36,41 @@ export const Equaliser = ({ on }: { on: boolean }) => (
   </span>
 );
 
+const ICONS: Record<AmbienceKind, LucideIcon> = {
+  glass: CloudRain,
+  cafe: Coffee,
+  hill: CloudDrizzle,
+  storm: CloudLightning,
+  waves: Waves,
+};
+
 const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const prefs = usePrefs();
   const scene = getScene(prefs.scene);
+  const kind = activeAmbience(prefs);
+  const ambience = getAmbience(kind);
   const embed = spotifyEmbedUrl(prefs.spotifyUrl ?? DEFAULT_SPOTIFY_URL);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState(false);
-  const playing = useAmbiencePlaying();
+  const status = useAmbienceStatus();
+  const playing = status !== "off";
   // Saved as on, but waiting for a first click before the browser allows sound.
   const waiting = prefs.ambienceOn && !playing;
+  const note = waiting
+    ? "click anywhere to resume"
+    : status === "loading"
+      ? "loading…"
+      : status === "error"
+        ? "couldn\u2019t load the sound"
+        : null;
+
+  const choose = (id: AmbienceKind) => {
+    // Inside the click, so the sound can start straight away.
+    primeAudio();
+    // Picking the scene's own sound goes back to following the scene.
+    setPrefs({ ambience: id === scene.ambience ? null : id, ambienceOn: true });
+  };
 
   const save = () => {
     if (!spotifyEmbedUrl(draft)) return setError(true);
@@ -49,12 +87,12 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           type="button"
           data-ambience-toggle
           aria-pressed={playing}
-          aria-label={`${playing ? "Pause" : "Play"} ${scene.ambienceLabel.toLowerCase()}`}
+          aria-label={`${playing ? "Pause" : "Play"} ${ambience.label}`}
           onClick={() => {
             if (playing) return setPrefs({ ambienceOn: false });
             // Inside the click, so Safari lets the audio start.
             primeAudio();
-            if (waiting) playAmbience(scene.ambience, prefs.ambienceVolume);
+            if (waiting) playAmbience(kind, prefs.ambienceVolume);
             else setPrefs({ ambienceOn: true });
           }}
           className="bg-glow-2/15 text-glow-2 hover:bg-glow-2/25 focus-visible:ring-glow-2 grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition focus-visible:ring-2 focus-visible:outline-none"
@@ -63,10 +101,14 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
         </button>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-sm font-medium">
-            {scene.ambienceLabel}
-            <Equaliser on={playing} />
+            <span className="truncate">{ambience.label}</span>
+            <Equaliser on={status === "playing"} />
           </p>
-          {waiting && <p className="text-muted-foreground truncate text-xs">click anywhere to resume</p>}
+          {note && (
+            <p className={cn("truncate text-xs", status === "error" ? "text-destructive" : "text-muted-foreground")}>
+              {note}
+            </p>
+          )}
         </div>
         <label className="text-muted-foreground flex items-center gap-2">
           <span className="sr-only">Ambience volume</span>
@@ -78,9 +120,47 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
             step={0.01}
             value={prefs.ambienceVolume}
             onChange={(e) => setPrefs({ ambienceVolume: Number(e.target.value) })}
-            className="accent-glow-2 w-20 cursor-pointer sm:w-28"
+            className="accent-glow-2 w-20 cursor-pointer"
           />
         </label>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <Eyebrow>Ambience</Eyebrow>
+        {prefs.ambience && (
+          <button
+            type="button"
+            onClick={() => setPrefs({ ambience: null })}
+            className={cn(textButton, "text-muted-foreground text-xs")}
+          >
+            match scene
+          </button>
+        )}
+      </div>
+      <div role="group" aria-label="ambient sound" className="mt-2 grid grid-cols-5 gap-1.5">
+        {AMBIENCES.map((a) => {
+          const Icon = ICONS[a.id];
+          const selected = a.id === kind;
+          return (
+            <button
+              key={a.id}
+              type="button"
+              aria-pressed={selected}
+              aria-label={a.label}
+              title={a.label}
+              onClick={() => choose(a.id)}
+              className={cn(
+                "focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-xl border px-1 py-2 text-[0.7rem] transition focus-visible:ring-2 focus-visible:outline-none",
+                selected
+                  ? "border-glow/60 bg-glow/12 text-foreground"
+                  : "border-glass-edge text-muted-foreground hover:text-foreground bg-white/3 hover:bg-white/8",
+              )}
+            >
+              <Icon className={cn("size-4", selected && "text-glow")} />
+              <span className="max-w-full truncate">{a.short}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-4 flex items-center justify-between">
@@ -91,7 +171,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
             setEditing((e) => !e);
             setError(false);
           }}
-          className="text-muted-foreground hover:text-foreground cursor-pointer text-xs underline-offset-2 hover:underline"
+          className={cn(textButton, "text-muted-foreground text-xs")}
         >
           {editing ? "Cancel" : "Change playlist"}
         </button>
@@ -138,7 +218,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
                     setPrefs({ spotifyUrl: null });
                     setEditing(false);
                   }}
-                  className="hover:text-foreground cursor-pointer underline underline-offset-2"
+                  className={textButton}
                 >
                   Back to the default
                 </button>
@@ -173,7 +253,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
               <button
                 type="button"
                 onClick={() => setPrefs({ spotifyLoaded: true })}
-                className="text-glow hover:text-foreground mt-2 cursor-pointer text-sm font-medium underline-offset-2 hover:underline"
+                className={cn(textButton, "text-glow mt-2 text-sm font-medium")}
               >
                 load player →
               </button>

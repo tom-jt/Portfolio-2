@@ -5,17 +5,15 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   Droplet,
   Flame,
-  Minus,
   Pause,
   Play,
-  Plus,
   RotateCcw,
   Settings2,
   SkipForward,
   Timer as TimerIcon,
   X,
 } from "lucide-react";
-import { Eyebrow, IconButton, Panel, PrimaryButton, Segmented, Switch, type PanelChrome } from "@/components/home/ui";
+import { Eyebrow, IconButton, Panel, PrimaryButton, Segmented, Stepper, Switch, type PanelChrome } from "@/components/home/ui";
 import { primeAudio } from "@/lib/home/ambience";
 import { formatClock, formatMinutes, formatNumber } from "@/lib/home/format";
 import { currentStreak, focusReward, useGarden } from "@/lib/home/garden";
@@ -61,49 +59,6 @@ const Digits = ({ value }: { value: string }) => (
   </span>
 );
 
-const Stepper = ({
-  label,
-  value,
-  min,
-  max,
-  step,
-  unit,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  onChange: (v: number) => void;
-}) => (
-  <div className="flex items-center justify-between gap-4 py-1.5">
-    <span className="text-sm">{label}</span>
-    <div className="flex items-center gap-2">
-      <IconButton
-        label={`Less ${label.toLowerCase()}`}
-        className="size-8"
-        disabled={value <= min}
-        onClick={() => onChange(Math.max(min, value - step))}
-      >
-        <Minus className="size-3.5" />
-      </IconButton>
-      <span className="font-pixel w-16 text-center text-sm tabular-nums" aria-live="polite">
-        {value} {unit}
-      </span>
-      <IconButton
-        label={`More ${label.toLowerCase()}`}
-        className="size-8"
-        disabled={value >= max}
-        onClick={() => onChange(Math.min(max, value + step))}
-      >
-        <Plus className="size-3.5" />
-      </IconButton>
-    </div>
-  </div>
-);
-
 const Settings = ({ settings, onClose }: { settings: TimerSettings; onClose: () => void }) => {
   const [blocked, setBlocked] = useState(false);
 
@@ -130,10 +85,10 @@ const Settings = ({ settings, onClose }: { settings: TimerSettings; onClose: () 
           <X className="size-4" />
         </IconButton>
       </div>
-      <Stepper label="Focus" unit="min" step={5} min={LIMITS.focus[0]} max={LIMITS.focus[1]} value={settings.focus} onChange={(focus) => updateSettings({ focus })} />
-      <Stepper label="Short break" unit="min" step={1} min={LIMITS.short[0]} max={LIMITS.short[1]} value={settings.short} onChange={(short) => updateSettings({ short })} />
-      <Stepper label="Long break" unit="min" step={5} min={LIMITS.long[0]} max={LIMITS.long[1]} value={settings.long} onChange={(long) => updateSettings({ long })} />
-      <Stepper label="Long break every" unit="focus" step={1} min={LIMITS.longEvery[0]} max={LIMITS.longEvery[1]} value={settings.longEvery} onChange={(longEvery) => updateSettings({ longEvery })} />
+      <Stepper label="focus" format={(v) => `${v} min`} step={5} min={LIMITS.focus[0]} max={LIMITS.focus[1]} value={settings.focus} onChange={(focus) => updateSettings({ focus })} />
+      <Stepper label="short break" format={(v) => `${v} min`} step={1} min={LIMITS.short[0]} max={LIMITS.short[1]} value={settings.short} onChange={(short) => updateSettings({ short })} />
+      <Stepper label="long break" format={(v) => `${v} min`} step={5} min={LIMITS.long[0]} max={LIMITS.long[1]} value={settings.long} onChange={(long) => updateSettings({ long })} />
+      <Stepper label="long break every" format={(v) => `${v} focus`} step={1} min={LIMITS.longEvery[0]} max={LIMITS.longEvery[1]} value={settings.longEvery} onChange={(longEvery) => updateSettings({ longEvery })} />
       <div className="border-glass-edge my-2 border-t" />
       <Switch label="Start the next session automatically" checked={settings.autoStart} onChange={(autoStart) => updateSettings({ autoStart })} />
       <Switch label="Chime when a session ends" checked={settings.chime} onChange={(chime) => updateSettings({ chime })} />

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps, ComponentType, ReactNode } from "react";
+import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,6 +11,11 @@ import { cn } from "@/lib/utils";
  */
 export const chipGlass =
   "bg-glass border border-glass-edge text-foreground shadow-[inset_0_1px_0_var(--glass-highlight),0_18px_40px_-24px_rgb(0_0_0/0.7)] backdrop-blur-[14px] backdrop-saturate-[1.15]";
+
+/** Text that acts as a button, underlined so it never passes for plain
+ *  text: faintly at rest, fully on hover. Colour and size are the caller's. */
+export const textButton =
+  "cursor-pointer rounded underline decoration-current/35 decoration-1 underline-offset-[3px] transition hover:text-foreground hover:decoration-current focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 /** Interactive chip: chipGlass plus hover and focus states. */
 export const chipButton = `${chipGlass} cursor-pointer transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`;
@@ -197,4 +203,48 @@ export const Eyebrow = ({
   >
     {children}
   </p>
+);
+
+/** A number with − and + buttons, for minute settings. */
+export const Stepper = ({
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  format: (value: number) => string;
+  onChange: (value: number) => void;
+}) => (
+  <div className="flex items-center justify-between gap-4 py-1.5">
+    <span className="text-sm">{label}</span>
+    <div className="flex items-center gap-2">
+      <IconButton
+        label={`less ${label}`}
+        className="size-8"
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - step))}
+      >
+        <Minus className="size-3.5" />
+      </IconButton>
+      <span className="font-pixel w-16 text-center text-sm tabular-nums" aria-live="polite">
+        {format(value)}
+      </span>
+      <IconButton
+        label={`more ${label}`}
+        className="size-8"
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + step))}
+      >
+        <Plus className="size-3.5" />
+      </IconButton>
+    </div>
+  </div>
 );

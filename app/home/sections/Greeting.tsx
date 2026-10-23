@@ -25,9 +25,15 @@ const Greeting = ({ className }: { className?: string }) => {
   const date = now ? new Date(now) : null;
 
   return (
-    <div className={cn("transition-opacity duration-700", date ? "opacity-100" : "opacity-0", className)}>
+    <div
+      className={cn(
+        "transition-opacity duration-700 [text-shadow:0_1px_12px_rgb(0_0_0/0.25)]",
+        date ? "opacity-100" : "opacity-0",
+        className,
+      )}
+    >
       <h1 className="font-display text-[2.6rem] leading-none tracking-tight md:text-5xl lg:text-[3.5rem]">
-        {date ? greetingFor(date.getHours()) : "hello"}
+        {date ? greetingFor(date.getHours()) : "hello"}.
       </h1>
       <p className="text-foreground/75 mt-2.5 text-[0.8rem] md:text-[0.95rem]">
         {date ? `${dateFormat.format(date)} · ${timeFormat.format(date)}` : " "}

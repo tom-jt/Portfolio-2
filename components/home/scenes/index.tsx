@@ -4,13 +4,17 @@ import type { ComponentType } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { SceneId } from "@/lib/home/scenes";
 import { useHydrated } from "@/lib/home/store";
+import CafeScene from "./CafeScene";
+import HillScene from "./HillScene";
 import RainScene from "./RainScene";
 import SunsetScene from "./SunsetScene";
 
 /** Each scene's live background. Metadata lives in lib/home/scenes.ts. */
 const BACKGROUNDS: Record<SceneId, ComponentType> = {
   rain: RainScene,
+  hill: HillScene,
   sunset: SunsetScene,
+  cafe: CafeScene,
 };
 
 /**

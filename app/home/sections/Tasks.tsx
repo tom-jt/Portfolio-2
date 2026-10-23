@@ -1,17 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Check, Droplet, ListTodo, Pencil, Plus, X } from "lucide-react";
-import { IconButton, Panel, type PanelChrome } from "@/components/home/ui";
+import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
+import { Check, Cloud, CloudOff, Droplet, GripVertical, ListTodo, Pencil, Plus, X } from "lucide-react";
+import TaskSync from "@/components/home/TaskSync";
+import { IconButton, Panel, textButton, type PanelChrome } from "@/components/home/ui";
 import { dayKey, formatNumber } from "@/lib/home/format";
 import { TASK_DAILY_CAP, taskReward, useGarden } from "@/lib/home/garden";
 import { useHydrated } from "@/lib/home/store";
+import { useSync, useSyncStatus } from "@/lib/home/sync";
 import {
   addTodo,
   clearDone,
   editTodo,
+  moveTodo,
   removeTodo,
+  reorderOpen,
   sortTodos,
   TODO_MAX_LENGTH,
   toggleTodo,
@@ -20,18 +24,21 @@ import {
 } from "@/lib/home/todos";
 import { cn } from "@/lib/utils";
 
-const TodoItem = ({ todo }: { todo: Todo }) => {
+const ITEM_MOTION = {
+  initial: { opacity: 0, y: -6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, x: -16, transition: { duration: 0.15 } },
+  transition: { type: "spring", stiffness: 500, damping: 40 },
+} as const;
+
+const ROW = "group flex items-start gap-2 rounded-xl px-2 py-2 transition-colors hover:bg-white/4";
+
+/** Checkbox, text (double-click to edit) and actions: everything but the grip. */
+const TodoRow = ({ todo }: { todo: Todo }) => {
   const [editing, setEditing] = useState(false);
 
   return (
-    <motion.li
-      layout
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -16, transition: { duration: 0.15 } }}
-      transition={{ type: "spring", stiffness: 500, damping: 40 }}
-      className="group flex items-start gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/4"
-    >
+    <>
       <button
         type="button"
         role="checkbox"
@@ -53,7 +60,7 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
           autoFocus
           defaultValue={todo.text}
           maxLength={TODO_MAX_LENGTH}
-          aria-label="Edit task"
+          aria-label="edit task"
           onBlur={(e) => {
             editTodo(todo.id, e.currentTarget.value);
             setEditing(false);
@@ -62,13 +69,13 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
             if (e.key === "Enter") e.currentTarget.blur();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="border-glass-edge focus:border-glow min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0.5 text-sm normal-case outline-none"
+          className="border-glass-edge focus:border-glow ml-1 min-w-0 flex-1 rounded-md border bg-black/20 px-2 py-0.5 text-sm normal-case outline-none"
         />
       ) : (
         <span
           onDoubleClick={() => setEditing(true)}
           className={cn(
-            "min-w-0 flex-1 text-sm leading-snug break-words normal-case transition-colors",
+            "ml-1 min-w-0 flex-1 text-sm leading-snug break-words normal-case transition-colors",
             todo.done && "text-muted-foreground line-through decoration-white/30",
           )}
         >
@@ -81,7 +88,7 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
           {!todo.done && (
             <button
               type="button"
-              aria-label={`Edit "${todo.text}"`}
+              aria-label={`edit "${todo.text}"`}
               onClick={() => setEditing(true)}
               className="text-muted-foreground hover:text-foreground cursor-pointer rounded p-0.5"
             >
@@ -90,7 +97,7 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
           )}
           <button
             type="button"
-            aria-label={`Delete "${todo.text}"`}
+            aria-label={`delete "${todo.text}"`}
             onClick={() => removeTodo(todo.id)}
             className="text-muted-foreground hover:text-destructive cursor-pointer rounded p-0.5"
           >
@@ -98,7 +105,44 @@ const TodoItem = ({ todo }: { todo: Todo }) => {
           </button>
         </div>
       )}
-    </motion.li>
+    </>
+  );
+};
+
+/**
+ * An open task, draggable by its grip. Dragging starts only from the grip so
+ * clicking the checkbox or text never picks the row up; the grip also takes
+ * the arrow keys, for reordering without a pointer.
+ */
+const OpenTodo = ({ todo }: { todo: Todo }) => {
+  const controls = useDragControls();
+
+  return (
+    <Reorder.Item
+      as="li"
+      value={todo.id}
+      dragListener={false}
+      dragControls={controls}
+      {...ITEM_MOTION}
+      whileDrag={{ scale: 1.02 }}
+      className={cn(ROW, "relative")}
+    >
+      <button
+        type="button"
+        aria-label={`reorder "${todo.text}"`}
+        aria-describedby="reorder-help"
+        onPointerDown={(e) => controls.start(e)}
+        onKeyDown={(e) => {
+          if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+          e.preventDefault();
+          moveTodo(todo.id, e.key === "ArrowUp" ? -1 : 1);
+        }}
+        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -ml-1 cursor-grab touch-none rounded p-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing max-md:opacity-60"
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <TodoRow todo={todo} />
+    </Reorder.Item>
   );
 };
 
@@ -107,10 +151,13 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
   const garden = useGarden();
   const hydrated = useHydrated();
   const [draft, setDraft] = useState("");
+  const [syncView, setSyncView] = useState(false);
+  const { code } = useSync();
+  const { state: syncState } = useSyncStatus();
 
   const sorted = sortTodos(todos);
-  const open = todos.filter((t) => !t.done).length;
-  const doneCount = todos.length - open;
+  const openTodos = sorted.filter((t) => !t.done);
+  const doneTodos = sorted.filter((t) => t.done);
   const reward = taskReward(garden);
   const rewardedToday = garden.daily.day === dayKey() ? garden.daily.tasks : 0;
 
@@ -122,66 +169,100 @@ const Tasks = ({ className, chrome }: { className?: string; chrome?: PanelChrome
       className={className}
       chrome={chrome}
       actions={
-        <span className="text-muted-foreground text-xs">
-          {open ? `${open} to go` : todos.length ? "All done" : ""}
+        <span className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">
+            {openTodos.length ? `${openTodos.length} to go` : todos.length ? "all done" : ""}
+          </span>
+          <IconButton
+            label={code ? `sync: ${syncState === "offline" ? "offline" : "on"}` : "sync with your phone"}
+            aria-pressed={syncView}
+            onClick={() => setSyncView((v) => !v)}
+            className={cn("size-8", syncView && "bg-white/10")}
+          >
+            {code && syncState === "offline" ? (
+              <CloudOff className="text-destructive size-3.5" />
+            ) : (
+              <Cloud className={cn("size-3.5", code && "text-glow")} />
+            )}
+          </IconButton>
         </span>
       }
     >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (addTodo(draft)) setDraft("");
-        }}
-        className="mb-3 flex gap-2"
-      >
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          maxLength={TODO_MAX_LENGTH}
-          placeholder="add a task…"
-          aria-label="New task"
-          className="border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 focus:ring-glow/20 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case transition outline-none focus:ring-4"
-        />
-        <IconButton type="submit" label="Add task" disabled={!draft.trim()}>
-          <Plus className="size-4" />
-        </IconButton>
-      </form>
-
-      <ul className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1">
-        <AnimatePresence initial={false}>
-          {sorted.map((t) => (
-            <TodoItem key={t.id} todo={t} />
-          ))}
-        </AnimatePresence>
-        {hydrated && todos.length === 0 && (
-          <li className="text-muted-foreground px-2 py-8 text-center text-sm">
-            no tasks yet
-          </li>
-        )}
-      </ul>
-
-      <footer className="border-glass-edge mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs">
-        <span className="text-muted-foreground flex items-center gap-1" title={`Up to ${TASK_DAILY_CAP} tasks a day earn rewards`}>
-          Each task:
-          <span className="text-glow-2 font-pixel inline-flex items-center gap-0.5">
-            <Droplet className="size-3" />
-            {formatNumber(reward.drops)}
-          </span>
-          <span className="text-glow font-pixel">+{reward.xp} xp</span>
-          <span className="text-muted-foreground/70">
-            · {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP} today
-          </span>
-        </span>
-        {doneCount > 0 && (
-          <button
-            type="button"
-            onClick={clearDone}
-            className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer underline-offset-2 hover:underline"
+      {hydrated && syncView ? (
+        <TaskSync onBack={() => setSyncView(false)} />
+      ) : (
+        <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (addTodo(draft)) setDraft("");
+            }}
+            className="mb-3 flex gap-2"
           >
-            Clear done
-          </button>
-        )}
-      </footer>
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={TODO_MAX_LENGTH}
+              placeholder="add a task…"
+              aria-label="new task"
+              className="border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 focus:ring-glow/20 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case transition outline-none focus:ring-4"
+            />
+            <IconButton type="submit" label="add task" disabled={!draft.trim()}>
+              <Plus className="size-4" />
+            </IconButton>
+          </form>
+
+          <p id="reorder-help" className="sr-only">
+            drag, or press the up and down arrow keys, to reorder
+          </p>
+
+          {/* layoutScroll lets the drag measure rows correctly inside a scroller. */}
+          <motion.div layoutScroll className="-mx-2 min-h-0 flex-1 overflow-y-auto pr-1">
+            <Reorder.Group axis="y" as="ul" values={openTodos.map((t) => t.id)} onReorder={reorderOpen}>
+              <AnimatePresence initial={false}>
+                {openTodos.map((t) => (
+                  <OpenTodo key={t.id} todo={t} />
+                ))}
+              </AnimatePresence>
+            </Reorder.Group>
+            <ul>
+              <AnimatePresence initial={false}>
+                {doneTodos.map((t) => (
+                  <motion.li key={t.id} layout {...ITEM_MOTION} className={cn(ROW, "pl-7")}>
+                    <TodoRow todo={t} />
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+            {hydrated && todos.length === 0 && (
+              <p className="text-muted-foreground px-2 py-8 text-center text-sm">no tasks yet</p>
+            )}
+          </motion.div>
+
+          <footer className="border-glass-edge mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs">
+            <span className="text-muted-foreground flex items-center gap-1" title={`up to ${TASK_DAILY_CAP} tasks a day earn rewards`}>
+              each task:
+              <span className="text-glow-2 font-pixel inline-flex items-center gap-0.5">
+                <Droplet className="size-3" />
+                {formatNumber(reward.drops)}
+              </span>
+              <span className="text-glow font-pixel">+{reward.xp} xp</span>
+              <span className="text-muted-foreground/70">
+                · {Math.min(rewardedToday, TASK_DAILY_CAP)}/{TASK_DAILY_CAP} today
+              </span>
+            </span>
+            {doneTodos.length > 0 && (
+              <button
+                type="button"
+                onClick={clearDone}
+                className={cn(textButton, "text-muted-foreground shrink-0")}
+              >
+                clear done
+              </button>
+            )}
+          </footer>
+        </>
+      )}
     </Panel>
   );
 };

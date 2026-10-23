@@ -296,6 +296,11 @@ export const focusReward = (s: GardenState, minutes: number) => ({
   xp: Math.round(3 * minutes + 10),
 });
 
+export const eyeReward = (s: GardenState) => ({
+  drops: Math.round(10 + rate(s) * 20),
+  xp: 3,
+});
+
 export const gameReward = (s: GardenState) => ({
   drops: Math.round(40 + rate(s) * 90),
   xp: 10,
@@ -619,6 +624,17 @@ export function rewardFocus(minutes: number) {
       xp,
     },
   );
+}
+
+/** A rest taken when the eye reminder asked for one. */
+export function rewardEyeBreak() {
+  const { drops, xp } = eyeReward(gardenStore.get());
+  commit((g) => ({ ...addDrops(g, drops), xp: g.xp + xp }), {
+    kind: "reward",
+    title: "eyes rested",
+    drops,
+    xp,
+  });
 }
 
 /** The first play of each game each day pays out. */

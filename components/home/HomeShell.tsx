@@ -10,8 +10,8 @@ import {
   stopAmbience,
 } from "@/lib/home/ambience";
 import { awayToast, tick } from "@/lib/home/garden";
-import { usePrefs } from "@/lib/home/prefs";
-import { getScene } from "@/lib/home/scenes";
+import { activeAmbience, usePrefs } from "@/lib/home/prefs";
+import { useTodoSync } from "@/lib/home/sync";
 import { cn } from "@/lib/utils";
 
 /** Pays out the garden's passive income every second while /home is open. */
@@ -39,8 +39,9 @@ function useGardenEngine() {
  * first click or key press anywhere on the page.
  */
 function useAmbience() {
-  const { ambienceOn, ambienceVolume, scene } = usePrefs();
-  const kind = getScene(scene).ambience;
+  const prefs = usePrefs();
+  const { ambienceOn, ambienceVolume } = prefs;
+  const kind = activeAmbience(prefs);
 
   useEffect(() => {
     if (!ambienceOn) {
@@ -76,7 +77,7 @@ function useAmbience() {
 
 /**
  * Client wrapper for /home: the scene, its background, sound, the garden's
- * clock and the toasts. The layout stays a server component for metadata
+ * clock, task sync and the toasts. The layout stays a server component for metadata
  * and fonts.
  */
 const HomeShell = ({
@@ -86,16 +87,20 @@ const HomeShell = ({
   className?: string;
   children: ReactNode;
 }) => {
-  const { scene } = usePrefs();
+  const { scene, theme } = usePrefs();
 
-  // The boot script sets this on first paint; this keeps it current when the
-  // scene changes, or when arriving here by client-side navigation.
+  // The boot script sets these on first paint; this keeps them current when
+  // the scene or colours change, or when arriving by client-side navigation.
   useEffect(() => {
-    document.documentElement.dataset.homeScene = scene;
-  }, [scene]);
+    const html = document.documentElement;
+    html.dataset.homeScene = scene;
+    if (theme) html.dataset.homeTheme = theme;
+    else delete html.dataset.homeTheme;
+  }, [scene, theme]);
 
   useGardenEngine();
   useAmbience();
+  useTodoSync();
 
   return (
     // Everything on /home is lowercase, set once here so labels, dates and

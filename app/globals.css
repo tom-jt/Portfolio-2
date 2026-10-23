@@ -426,6 +426,200 @@ html[data-home-scene="sunset"] [data-site="home"] {
   --nav-fg-hover: #ffb06a;
 }
 
+html[data-home-scene="hill"] [data-site="home"] {
+  --background: #2f6fc9;
+  --foreground: #f6fbff;
+  --card: rgb(18 42 72 / 50%);
+  --card-foreground: #f6fbff;
+  --popover: #1c3b63;
+  --popover-foreground: #f6fbff;
+  --primary: #ffcf5a;
+  --primary-foreground: #1f2a10;
+  --secondary: rgb(240 248 255 / 10%);
+  --secondary-foreground: #f6fbff;
+  --muted: rgb(240 248 255 / 8%);
+  --muted-foreground: #d3e2f0;
+  --accent: rgb(240 248 255 / 12%);
+  --accent-foreground: #f6fbff;
+  --destructive: #ff9a8f;
+  --border: rgb(240 248 255 / 18%);
+  --input: rgb(240 248 255 / 22%);
+  --ring: #ffcf5a;
+  --accent-text: #ffcf5a;
+
+  --glass: rgb(16 38 66 / 42%);
+  --glass-strong: rgb(16 36 62 / 92%);
+  --glass-edge: rgb(240 248 255 / 20%);
+  --glass-highlight: rgb(255 255 255 / 12%);
+  --glow: #ffcf5a; /* the sun behind the drizzle */
+  --glow-2: #bfe6ff; /* the rain */
+  --glow-3: #9be38a; /* the grass */
+
+  --nav-fg: #e4eef8;
+  --nav-fg-hover: #ffcf5a;
+}
+
+html[data-home-scene="cafe"] [data-site="home"] {
+  --background: #1a110c;
+  --foreground: #f6eadb;
+  --card: rgb(40 24 15 / 58%);
+  --card-foreground: #f6eadb;
+  --popover: #2a1a11;
+  --popover-foreground: #f6eadb;
+  --primary: #ffb867;
+  --primary-foreground: #2a1406;
+  --secondary: rgb(255 236 214 / 8%);
+  --secondary-foreground: #f6eadb;
+  --muted: rgb(255 236 214 / 6%);
+  --muted-foreground: #c8b39d;
+  --accent: rgb(255 236 214 / 10%);
+  --accent-foreground: #f6eadb;
+  --destructive: #ff8f7a;
+  --border: rgb(255 226 196 / 14%);
+  --input: rgb(255 226 196 / 18%);
+  --ring: #ffb867;
+  --accent-text: #ffb867;
+
+  --glass: rgb(36 22 14 / 55%);
+  --glass-strong: rgb(32 19 12 / 94%);
+  --glass-edge: rgb(255 222 186 / 14%);
+  --glass-highlight: rgb(255 236 214 / 8%);
+  --glow: #ffb867; /* the lamps */
+  --glow-2: #8fc4e0; /* rain on the glass */
+  --glow-3: #e89a7a; /* terracotta and neon */
+
+  --nav-fg: #e6d3bf;
+  --nav-fg-hover: #ffb867;
+}
+
+/* ---------------------------------------------------------------
+   Home colour themes. They recolour the chrome (glass, text and glows) and
+   leave the scene and its ground alone, so they sit at the same specificity
+   as the scene blocks above and must stay after them. With no theme picked,
+   each scene keeps its own palette.
+
+   data-home-theme is set on <html> like data-home-scene. [data-home-swatch]
+   lets a picker swatch wear a theme without applying it.
+   --------------------------------------------------------------- */
+html[data-home-theme] [data-site="home"] {
+  --primary: var(--glow);
+  --ring: var(--glow);
+  --accent-text: var(--glow);
+  --nav-fg-hover: var(--glow);
+  --scrollbar-thumb: color-mix(in srgb, var(--glow) 70%, transparent);
+  --scrollbar-thumb-sheen: color-mix(in srgb, var(--glow) 55%, white);
+  --scrollbar-thumb-hover: var(--glow);
+}
+
+html[data-home-theme="mono"] [data-site="home"],
+[data-home-swatch="mono"] {
+  --foreground: #efefef;
+  --muted-foreground: #a6a6a6;
+  --primary-foreground: #141414;
+  --glass: rgb(16 16 17 / 56%);
+  --glass-strong: rgb(18 18 19 / 93%);
+  --glass-edge: rgb(255 255 255 / 13%);
+  --glass-highlight: rgb(255 255 255 / 8%);
+  --glow: #f2f2f2;
+  --glow-2: #b3b3b3;
+  --glow-3: #868686;
+  --nav-fg: #c4c4c4;
+}
+
+html[data-home-theme="rose"] [data-site="home"],
+[data-home-swatch="rose"] {
+  --foreground: #fff0f2;
+  --muted-foreground: #dfb3bd;
+  --primary-foreground: #2c0710;
+  --glass: rgb(50 12 26 / 52%);
+  --glass-strong: rgb(42 10 22 / 93%);
+  --glass-edge: rgb(255 196 212 / 16%);
+  --glass-highlight: rgb(255 226 234 / 9%);
+  --glow: #ff6479;
+  --glow-2: #ffb1c6;
+  --glow-3: #ff9478;
+  --nav-fg: #efc7d0;
+}
+
+html[data-home-theme="glacier"] [data-site="home"],
+[data-home-swatch="glacier"] {
+  --foreground: #eef6ff;
+  --muted-foreground: #a8bdd3;
+  --primary-foreground: #082030;
+  --glass: rgb(12 28 46 / 52%);
+  --glass-strong: rgb(11 25 41 / 93%);
+  --glass-edge: rgb(212 234 255 / 16%);
+  --glass-highlight: rgb(236 246 255 / 9%);
+  --glow: #9ed6ff;
+  --glow-2: #eef7ff;
+  --glow-3: #93aaff;
+  --nav-fg: #c3d6ea;
+}
+
+/* Made for the rainy window: its neon sign, in pink and cyan. */
+html[data-home-theme="neon"] [data-site="home"],
+[data-home-swatch="neon"] {
+  --foreground: #f5efff;
+  --muted-foreground: #b9aed8;
+  --primary-foreground: #2b0722;
+  --glass: rgb(26 14 50 / 54%);
+  --glass-strong: rgb(22 12 42 / 93%);
+  --glass-edge: rgb(226 204 255 / 15%);
+  --glass-highlight: rgb(240 228 255 / 9%);
+  --glow: #ff7ac8;
+  --glow-2: #6ef0ff;
+  --glow-3: #b18cff;
+  --nav-fg: #d3c6ef;
+}
+
+/* Made for the hill: its grass and buttercups. */
+html[data-home-theme="meadow"] [data-site="home"],
+[data-home-swatch="meadow"] {
+  --foreground: #f3fbef;
+  --muted-foreground: #c0d6bb;
+  --primary-foreground: #11260d;
+  --glass: rgb(20 46 30 / 52%);
+  --glass-strong: rgb(18 40 27 / 93%);
+  --glass-edge: rgb(224 255 220 / 17%);
+  --glass-highlight: rgb(240 255 236 / 10%);
+  --glow: #a6e58f;
+  --glow-2: #fff0a0;
+  --glow-3: #9fd8ff;
+  --nav-fg: #d6e8d0;
+}
+
+/* Made for the sunset: the sky after the sun has gone, and its last peach. */
+html[data-home-theme="lavender"] [data-site="home"],
+[data-home-swatch="lavender"] {
+  --foreground: #f7f2ff;
+  --muted-foreground: #cdc0e4;
+  --primary-foreground: #21133a;
+  --glass: rgb(40 24 66 / 50%);
+  --glass-strong: rgb(34 20 56 / 93%);
+  --glass-edge: rgb(232 220 255 / 16%);
+  --glass-highlight: rgb(244 236 255 / 9%);
+  --glow: #c9b3ff;
+  --glow-2: #ffc6a1;
+  --glow-3: #ffa0bb;
+  --nav-fg: #ddd0f2;
+}
+
+/* Made for the café: latte foam and cinnamon. */
+html[data-home-theme="mocha"] [data-site="home"],
+[data-home-swatch="mocha"] {
+  --foreground: #f8eee2;
+  --muted-foreground: #cbb7a1;
+  --primary-foreground: #2d1b0e;
+  --glass: rgb(42 28 20 / 56%);
+  --glass-strong: rgb(36 24 17 / 94%);
+  --glass-edge: rgb(255 228 200 / 14%);
+  --glass-highlight: rgb(255 238 220 / 8%);
+  --glow: #efcfa2;
+  --glow-2: #e3957a;
+  --glow-3: #b9d08f;
+  --nav-fg: #e5d2bd;
+}
+
 /* Overscroll and the document scrollbar sit outside the wrapper, so the
    ground colour has to be lifted to <html> to avoid a white edge. */
 html:has([data-site="home"]) {
@@ -445,6 +639,24 @@ html[data-home-scene="sunset"]:has([data-site="home"]) {
   --scrollbar-thumb: rgb(255 176 106 / 75%);
   --scrollbar-thumb-sheen: #ffd98a;
   --scrollbar-thumb-hover: #ffb06a;
+}
+
+html[data-home-scene="hill"]:has([data-site="home"]) {
+  background: #2f6fc9;
+  --scrollbar-track: #2f6fc9;
+  --scrollbar-line: rgb(240 248 255 / 18%);
+  --scrollbar-thumb: rgb(255 207 90 / 75%);
+  --scrollbar-thumb-sheen: #fff0b8;
+  --scrollbar-thumb-hover: #ffcf5a;
+}
+
+html[data-home-scene="cafe"]:has([data-site="home"]) {
+  background: #1a110c;
+  --scrollbar-track: #1a110c;
+  --scrollbar-line: rgb(255 226 196 / 14%);
+  --scrollbar-thumb: rgb(255 184 103 / 75%);
+  --scrollbar-thumb-sheen: #ffd9a8;
+  --scrollbar-thumb-hover: #ffb867;
 }
 
 html:has([data-site="home"]) body {
