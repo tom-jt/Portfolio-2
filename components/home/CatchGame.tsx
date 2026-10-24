@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import { animate, lerp } from "@/components/home/scenes/canvas";
+import { playCatch } from "@/lib/home/ambience";
 import { formatNumber } from "@/lib/home/format";
 import {
   catchDrop,
@@ -234,6 +235,8 @@ const CatchGame = ({ label }: { label: string }) => {
       const d = drops[i];
       drops.splice(i, 1);
       const value = catchDrop(d.kind);
+      // Inside the click or key press, so it may start the audio itself.
+      playCatch(d.kind);
       const s = gardenStore.get();
       if (d.kind === "rainbow") {
         floaters.push({ x: d.x, y: d.y - d.r * 4, text: "×3 for 20s", age: 0, tone: "rainbow" });
@@ -566,7 +569,9 @@ const CatchGame = ({ label }: { label: string }) => {
           continue;
         }
         if (d.y + d.r >= h) {
-          burst(d.x, h - 1, toneOf(d.kind), 5, 70);
+          // Landed, every drop is a plain one: the soil soaks up a plain
+          // drop's share, and only a catch pays a golden or diamond's worth.
+          burst(d.x, h - 1, "rain", 5, 70);
           drops.splice(i, 1);
           soak(d.x, h - 8);
         } else if (d.age > d.life) {

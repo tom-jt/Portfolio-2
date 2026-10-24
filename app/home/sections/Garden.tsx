@@ -53,7 +53,6 @@ import {
   maxAffordable,
   milestoneStep,
   nextUnlock,
-  unlocksAt,
   plantCost,
   plantCostScale,
   plantCount,
@@ -75,7 +74,8 @@ import {
   type GardenState,
 } from "@/lib/home/garden";
 import { PETS } from "@/lib/home/pets";
-import { setPrefs, usePrefs } from "@/lib/home/prefs";
+import { setPrefs, usePrefs, type GardenTab } from "@/lib/home/prefs";
+import { SCENES } from "@/lib/home/scenes";
 import { THEMES } from "@/lib/home/themes";
 import {
   BRANCHES,
@@ -537,8 +537,10 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
         </div>
       )}
 
+      {/* The picked skill's details float at the bottom while the tree
+          scrolls under them, so they're in view whichever node is picked. */}
       <div
-        className="border-glass-edge mt-2 rounded-2xl border bg-white/3 p-3"
+        className="border-glass-edge bg-glass-strong sticky bottom-0 z-10 mt-2 rounded-2xl border p-3 shadow-[0_-12px_24px_-14px_rgb(0_0_0/0.7)]"
         aria-live="polite"
       >
         <div className="flex items-baseline justify-between gap-3">
@@ -594,7 +596,6 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
   const how = (u: Unlock | undefined) =>
     u ? describeUnlock(u, achievementName) : "";
   const auto = resolveDecor("auto", prefs.scene, garden);
-  const sceneDecor = resolveDecor("scene", prefs.scene, garden);
   const scenePot = resolvePot("scene", prefs.scene, garden);
   const decorName = (id: string | null) =>
     DECOR.find((d) => d.id === id)?.name ?? "none";
@@ -706,11 +707,6 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
           {
             id: "auto" as const,
             name: `auto: ${decorName(auto)}`,
-            unlock: undefined,
-          },
-          {
-            id: "scene" as const,
-            name: `match scene: ${decorName(sceneDecor)}`,
             unlock: undefined,
           },
           { id: "none" as const, name: "bare window", unlock: undefined },
@@ -832,45 +828,85 @@ const JournalTab = ({ garden }: { garden: GardenState }) => {
   );
 };
 
+/** The nearest ancestor that scrolls, if any. */
+function scrollParent(el: HTMLElement | null) {
+  for (let p = el?.parentElement; p; p = p.parentElement) {
+    if (/auto|scroll/.test(getComputedStyle(p).overflowY)) return p;
+  }
+  return null;
+}
+
 const TAB_TRIGGER =
   "text-muted-foreground data-[state=active]:text-foreground data-[state=active]:border-glow focus-visible:ring-ring shrink-0 cursor-pointer border-b-2 border-transparent px-1 pb-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:outline-none";
 
 // --------------------------------------------------------------- levels
 
-/** Every reward each level opens, from the same lists the game unlocks by. */
+/** The timeline's headings, in the order each level lists them. */
+const REWARD_KINDS = [
+  "cosmetics",
+  "garden decor",
+  "plants",
+  "upgrades",
+  "pets",
+] as const;
+type RewardKind = (typeof REWARD_KINDS)[number];
+
+/**
+ * Every reward each level opens, from the same lists the game unlocks by,
+ * grouped under headings.
+ */
 function levelRewards() {
-  const byLevel = new Map<number, string[]>();
-  const add = (level: number | undefined, item: string) => {
+  const byLevel = new Map<number, Map<RewardKind, string[]>>();
+  const add = (level: number | undefined, kind: RewardKind, item: string) => {
     if (!level || level < 2) return;
-    byLevel.set(level, [...(byLevel.get(level) ?? []), item]);
+    const kinds = byLevel.get(level) ?? new Map<RewardKind, string[]>();
+    kinds.set(kind, [...(kinds.get(kind) ?? []), item]);
+    byLevel.set(level, kinds);
   };
-  for (let l = 2; l <= 100; l++) for (const item of unlocksAt(l)) add(l, item);
-  for (const t of THEMES) add(t.unlock?.level, `${t.name} colours`);
-  for (const p of POTS) add(p.unlock?.level, `${p.name} pot`);
-  for (const d of DECOR) add(d.unlock?.level, `${d.name} decor`);
-  for (const f of FRAMES) add(f.unlock?.level, `${f.name} frame`);
-  for (const p of PETS) add(p.unlock.level, `a ${p.name}`);
-  add(GOLD_LEAF.level, "gold leaf on every plant");
-  return [...byLevel.entries()].sort(([a], [b]) => a - b);
+  for (const s of SCENES) add(s.unlockLevel, "cosmetics", `${s.name} scene`);
+  for (const t of THEMES)
+    add(t.unlock?.level, "cosmetics", `${t.name} colours`);
+  for (let l = 10; l <= 100; l += 10)
+    add(l, "cosmetics", `the title "${titleFor(l)}"`);
+  for (const d of DECOR)
+    add(d.unlock?.level, "garden decor", `${d.name} window`);
+  for (const f of FRAMES)
+    add(f.unlock?.level, "garden decor", `${f.name} frame`);
+  for (const p of POTS) add(p.unlock?.level, "garden decor", `${p.name} pot`);
+  add(GOLD_LEAF.level, "garden decor", "gilded plants");
+  for (const p of PLANTS) add(p.unlockLevel, "plants", p.name);
+  for (const u of UPGRADES) add(u.unlockLevel, "upgrades", u.name);
+  for (const p of PETS) add(p.unlock.level, "pets", `a ${p.name}`);
+  return [...byLevel.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([level, kinds]) => ({
+      level,
+      groups: REWARD_KINDS.filter((k) => kinds.has(k)).map(
+        (k) => [k, kinds.get(k)!] as const,
+      ),
+    }));
 }
 
 const LEVEL_REWARDS = levelRewards();
 
 /**
  * Every level that opens something, as a timeline: a line down the side
- * with a dot for each, filled once reached. Opens over the garden from its
- * level badge, scrolled to the next one ahead.
+ * with a dot for each, filled once reached, and the line lit as far as the
+ * visitor has got, xp into the current level included. Opens over the
+ * garden from its level badge, scrolled to the next one ahead.
  */
 const LevelTimeline = ({
-  level,
+  progress,
   onClose,
 }: {
-  level: number;
+  /** The level, with the share of the way to the next as its fraction. */
+  progress: number;
   onClose: () => void;
 }) => {
+  const level = Math.floor(progress);
   const next = useRef<HTMLLIElement>(null);
   useEffect(() => next.current?.scrollIntoView({ block: "center" }), []);
-  const upcoming = LEVEL_REWARDS.find(([l]) => l > level)?.[0];
+  const upcoming = LEVEL_REWARDS.find((r) => r.level > level)?.level;
 
   return (
     <div className="bg-glass-strong absolute inset-x-0 top-16 bottom-0 z-20 flex flex-col rounded-b-[1.75rem] px-5 pb-5">
@@ -884,23 +920,34 @@ const LevelTimeline = ({
           back to the garden
         </button>
       </div>
-      {/* The list scrolls; the line lives on the list inside, so it runs the
-          whole length rather than just the first screenful. */}
       <div className="min-h-0 flex-1 overflow-y-auto pr-2">
-        <ol className="relative pl-6">
-          {/* The timeline's line, through every dot. */}
-          <span
-            aria-hidden="true"
-            className="bg-glow/70 absolute top-2 bottom-5 left-[0.55rem] w-[3px] rounded-full"
-          />
-          {LEVEL_REWARDS.map(([l, items]) => {
+        <ol className="pl-6">
+          {LEVEL_REWARDS.map(({ level: l, groups }, i) => {
             const reached = l <= level;
+            const after = LEVEL_REWARDS[i + 1]?.level;
+            // How much of the line from this dot to the next is lit.
+            const lit = after
+              ? Math.min(1, Math.max(0, (progress - l) / (after - l)))
+              : 0;
             return (
               <li
                 key={l}
                 ref={l === upcoming ? next : undefined}
-                className="relative pb-3.5"
+                className="relative pb-4"
               >
+                {/* The line from this dot to the next: each item draws its
+                    own stretch, so it runs as long as the list does. */}
+                {after && (
+                  <span
+                    aria-hidden="true"
+                    className="bg-glass-edge absolute top-[9px] left-[calc(-1.2rem+3.5px)] h-full w-[3px]"
+                  >
+                    <span
+                      className="bg-glow/70 absolute inset-x-0 top-0"
+                      style={{ height: `${lit * 100}%` }}
+                    />
+                  </span>
+                )}
                 <span
                   aria-hidden="true"
                   className={cn(
@@ -925,14 +972,30 @@ const LevelTimeline = ({
                     <span className="text-glow text-[0.65rem]">next</span>
                   )}
                 </p>
-                <p
-                  className={cn(
-                    "text-xs leading-snug",
-                    reached ? "text-foreground/85" : "text-muted-foreground",
-                  )}
-                >
-                  {items.join(", ")}
-                </p>
+                <dl className="mt-1 space-y-1.5">
+                  {groups.map(([kind, items]) => (
+                    <div key={kind}>
+                      <dt
+                        className={cn(
+                          "text-xs font-semibold",
+                          reached ? "text-foreground" : "text-muted-foreground",
+                        )}
+                      >
+                        {kind}
+                      </dt>
+                      <dd
+                        className={cn(
+                          "text-xs leading-snug",
+                          reached
+                            ? "text-foreground/80"
+                            : "text-muted-foreground/80",
+                        )}
+                      >
+                        {items.join(", ")}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               </li>
             );
           })}
@@ -965,6 +1028,31 @@ const Garden = ({
   const next = nextUnlock(level);
   const perSecond = rate(garden);
   const sill = PLANTS.filter((p) => (garden.plants[p.id] ?? 0) > 0);
+  // The last tab open, unless that's a season tab that isn't there.
+  const tab =
+    prefs.gardenTab === "season" && !seasonsOpen(garden)
+      ? "plants"
+      : prefs.gardenTab;
+  const panes = useRef<HTMLDivElement>(null);
+
+  const pickTab = (value: string) => {
+    // On a phone the sheet scrolls, and is only as tall as what's in it, so
+    // a shorter tab would pull the scroll back up, towards the top. Keep
+    // just enough room under the tabs that it can stay where it is. On a
+    // card the tabs scroll inside themselves, and there's nothing to keep.
+    const area = panes.current;
+    const sheet = chrome === "bare" ? scrollParent(area) : null;
+    if (area && sheet) {
+      const top =
+        area.getBoundingClientRect().top -
+        sheet.getBoundingClientRect().top +
+        sheet.scrollTop;
+      const below = sheet.scrollHeight - (top + area.offsetHeight);
+      const keep = sheet.scrollTop + sheet.clientHeight - top - below;
+      area.style.minHeight = `${Math.max(0, keep)}px`;
+    }
+    setPrefs({ gardenTab: value as GardenTab });
+  };
 
   return (
     <Panel
@@ -1007,7 +1095,6 @@ const Garden = ({
               </span>{" "}
               per catch
             </p>
-
           </div>
         </div>
 
@@ -1053,8 +1140,12 @@ const Garden = ({
             aria-live="polite"
             className="bg-glass-strong/85 pointer-events-none absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] text-[#ffb3ad]"
           >
-            <span aria-hidden="true" className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]" />
-            luck ×2 <span className="font-pixel tabular-nums">{formatClock(luck)}</span>
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]"
+            />
+            luck ×2{" "}
+            <span className="font-pixel tabular-nums">{formatClock(luck)}</span>
           </p>
         )}
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/6" />
@@ -1096,7 +1187,8 @@ const Garden = ({
       </div>
 
       <Tabs.Root
-        defaultValue="plants"
+        value={tab}
+        onValueChange={pickTab}
         className="mt-4 flex min-h-0 flex-1 flex-col"
       >
         <Tabs.List
@@ -1125,7 +1217,10 @@ const Garden = ({
             Journal
           </Tabs.Trigger>
         </Tabs.List>
-        <div className="-mr-2 min-h-0 flex-1 overflow-y-auto pt-3 pr-2">
+        <div
+          ref={panes}
+          className="-mr-2 min-h-0 flex-1 overflow-y-auto pt-3 pr-2"
+        >
           <Tabs.Content value="plants" className="focus-visible:outline-none">
             <PlantsTab garden={garden} level={level} />
           </Tabs.Content>
@@ -1144,7 +1239,10 @@ const Garden = ({
         </div>
       </Tabs.Root>
       {levels && (
-        <LevelTimeline level={level} onClose={() => setLevels(false)} />
+        <LevelTimeline
+          progress={level + into / span}
+          onClose={() => setLevels(false)}
+        />
       )}
     </Panel>
   );

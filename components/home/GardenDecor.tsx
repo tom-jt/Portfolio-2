@@ -183,9 +183,18 @@ const MapleLeaf = ({ hue }: { hue: string }) => (
   </svg>
 );
 
-const Gull = () => (
-  <svg viewBox="0 0 16 6" className="block w-4" aria-hidden="true">
-    <path d="M0 4 Q4 0 8 4 Q12 0 16 4" stroke="#2a1d33" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+/** A gull, lit warm from below by the low sun so it shows on dark glass,
+ *  its wings beating now and then gliding. */
+const Gull = ({ flap = 0 }: { flap?: number }) => (
+  <svg viewBox="0 0 16 6" className="block w-4 overflow-visible drop-shadow-[0_0_3px_rgb(255_170_120/0.6)]" aria-hidden="true">
+    <path
+      d="M0 4 Q4 0 8 4 Q12 0 16 4"
+      stroke="#ffe3cc"
+      strokeWidth="1.3"
+      fill="none"
+      strokeLinecap="round"
+      style={{ transformOrigin: "8px 4px", animation: `home-gull 1.6s ease-in-out ${flap}s infinite` }}
+    />
   </svg>
 );
 
@@ -364,14 +373,19 @@ const DECOR: Record<DecorId, () => ReactNode> = {
   gulls: () => (
     <>
       <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgb(255_150_110/0.22),transparent)]" />
-      <Crosser top="22%" duration={26} delay={-4} bob={-6}>
-        <Gull />
-      </Crosser>
-      <Crosser top="30%" duration={31} delay={-17} bob={4}>
-        <span className="block scale-75">
-          <Gull />
-        </span>
-      </Crosser>
+      {/* A loose flock, the far ones smaller and slower. */}
+      {[
+        { top: "18%", duration: 24, delay: -4, bob: -6, scale: 1, flap: 0 },
+        { top: "24%", duration: 25, delay: -6.5, bob: -3, scale: 0.85, flap: -0.5 },
+        { top: "14%", duration: 27, delay: -8, bob: -8, scale: 0.75, flap: -1.1 },
+        { top: "34%", duration: 33, delay: -19, bob: 4, scale: 0.65, flap: -0.3 },
+      ].map((g) => (
+        <Crosser key={g.top} top={g.top} duration={g.duration} delay={g.delay} bob={g.bob}>
+          <span className="block" style={{ transform: `scale(${g.scale})` }}>
+            <Gull flap={g.flap} />
+          </span>
+        </Crosser>
+      ))}
     </>
   ),
   // The café: warm bulbs on a wire and steam curling up.

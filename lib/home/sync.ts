@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import type { SimplePool } from "nostr-tools/pool";
 import type { Event } from "nostr-tools/pure";
 import { gardenStore, mergeXpElsewhere, totalXp } from "./garden";
 import { createPersistentStore, useStore } from "./store";
@@ -10,6 +11,7 @@ import {
   mergeTodos,
   todoSnapshot,
   todoStore,
+  type Todo,
   type TodoSnapshot,
 } from "./todos";
 
@@ -149,14 +151,117 @@ function parse(text: string): Shared | null {
     for (const [device, value] of Object.entries(raw.xp ?? {})) {
       if (typeof value === "number" && Number.isFinite(value) && value > 0) xp[device] = value;
     }
-    return { todos: raw.todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp) };
+    const todos = (raw.todos as Todo[]).filter((t) => typeof t?.id === "string" && typeof t.text === "string");
+    return { todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp) };
   } catch {
     return null;
   }
 }
 
+/**
+ * The most text a note can hold. Relays refuse notes over 64 KiB, and NIP-44
+ * pads what it encrypts up in steps, so this is the most that still pads,
+ * encrypts and encodes to a note under that.
+ */
+const NOTE_MAX = 40_960;
+
+/** Base64, in slices: spreading 40 KB into one call can overflow the stack. */
+function toBase64(bytes: Uint8Array) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/**
+ * What goes inside the encryption: the copy, deflated where the browser can
+ * (all current ones), since a full list of long tasks is otherwise too big
+ * for the relays. Notes from before this are plain, and still read.
+ */
+async function pack(text: string) {
+  if (typeof CompressionStream === "undefined") return text;
+  const deflated = new Blob([text]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  return JSON.stringify({ v: 2, z: toBase64(new Uint8Array(await new Response(deflated).arrayBuffer())) });
+}
+
+async function unpack(plain: string) {
+  if (!plain.startsWith('{"v":2,')) return plain;
+  const { z } = JSON.parse(plain) as { z: string };
+  const bytes = Uint8Array.from(atob(z), (c) => c.charCodeAt(0));
+  return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+}
+
+/**
+ * The note's text, cut down if even deflated it's more than relays take:
+ * first the oldest finished tasks, then the oldest deletions, then open tasks
+ * from the bottom of the list. Only a list of a hundred tasks written in
+ * emoji gets near it. What's cut stays on this device.
+ */
+async function fit(s: Shared) {
+  const whole = await pack(serialise(s));
+  if (whole.length <= NOTE_MAX) return whole;
+  const byDone = (a: Todo, b: Todo) => (a.doneAt ?? 0) - (b.doneAt ?? 0);
+  const cuts = [
+    ...s.todos.filter((t) => t.done).sort(byDone).map((t) => ({ todo: t.id })),
+    ...Object.entries(s.deleted)
+      .sort(([, a], [, b]) => a - b)
+      .map(([id]) => ({ deleted: id })),
+    ...s.todos
+      .filter((t) => !t.done)
+      .reverse()
+      .map((t) => ({ todo: t.id })),
+  ];
+  const cut = (n: number) => {
+    const gone = new Set(cuts.slice(0, n).map((c) => ("todo" in c ? c.todo : `deleted:${c.deleted}`)));
+    return pack(
+      serialise({
+        todos: s.todos.filter((t) => !gone.has(t.id)),
+        deleted: Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !gone.has(`deleted:${id}`))),
+        xp: s.xp,
+      }),
+    );
+  };
+  // The fewest cuts that fit, found by halving.
+  let lo = 1;
+  let hi = cuts.length;
+  let best = await cut(hi);
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    const text = await cut(mid);
+    if (text.length <= NOTE_MAX) {
+      hi = mid;
+      best = text;
+    } else lo = mid + 1;
+  }
+  return best;
+}
+
+/** Waits before starting afresh after a failure, longer each time. */
+const BACKOFF_MS = [5_000, 15_000, 30_000, 60_000, 120_000];
+/** Away this long and the sockets are likely dead: start afresh on return. */
+const STALE_AFTER_MS = 30_000;
+
+/** Runs something that may throw or reject, and ignores it if it does. */
+function quietly(fn: () => unknown) {
+  try {
+    const result = fn();
+    if (result instanceof Promise) result.catch(() => {});
+  } catch {
+    // Already closed or never opened: nothing to undo.
+  }
+}
+
+/**
+ * Connects and keeps connected until the returned function is called.
+ *
+ * Sockets close all the time: relays restart, phones drop them in the
+ * background, laptops sleep. So nothing here assumes one stays open. Relays
+ * are pinged, and once every relay has dropped the subscription, or a write
+ * reaches none of them, it starts afresh after a wait that grows each time.
+ * Starting afresh means a new pool: a socket that died while the page wasn't
+ * looking is never written to again, only dropped.
+ */
 async function connect(code: string) {
-  const [{ SimplePool }, { finalizeEvent, getPublicKey }, { v2: nip44 }] = await Promise.all([
+  const [{ SimplePool: Pool }, { finalizeEvent, getPublicKey }, { v2: nip44 }] = await Promise.all([
     import("nostr-tools/pool"),
     import("nostr-tools/pure"),
     import("nostr-tools/nip44"),
@@ -165,9 +270,35 @@ async function connect(code: string) {
   const secret = new Uint8Array(digest);
   const pubkey = getPublicKey(secret);
   const key = nip44.utils.getConversationKey(secret, pubkey);
+  const filter = { kinds: [KIND], authors: [pubkey], "#d": [D_TAG] };
 
-  const pool = new SimplePool();
+  /**
+   * nostr-tools only learns a socket has closed when its close event lands,
+   * and can send in between, which the browser logs ("WebSocket is already
+   * in CLOSING or CLOSED state") once per message. Those sends go nowhere
+   * either way, so this drops them.
+   *
+   * It also closes from its error handler, and some WebSocket implementations
+   * fire the error from inside close(), which would loop until the stack ran
+   * out. Closing twice does nothing anyway, so the second close is skipped.
+   */
+  class QuietSocket extends WebSocket {
+    private closing = false;
+    override send(data: Parameters<WebSocket["send"]>[0]) {
+      if (this.readyState === WebSocket.OPEN) super.send(data);
+    }
+    override close(code?: number, reason?: string) {
+      if (this.closing) return;
+      this.closing = true;
+      super.close(code, reason);
+    }
+  }
+
   const me = deviceId();
+  let pool: SimplePool | undefined;
+  /** Bumped by every new subscription, so a closed one's callbacks are ignored. */
+  let generation = 0;
+  let closed = false;
   /** What the relays are known to hold, sent or read, to skip sending it back. */
   let remote = "";
   /** Newest note seen. A note older than the one a relay holds is ignored,
@@ -175,68 +306,122 @@ async function connect(code: string) {
   let lastCreated = 0;
   let caughtUp = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let retry: ReturnType<typeof setTimeout> | undefined;
+  let failures = 0;
+  let hiddenAt: number | null = document.hidden ? Date.now() : null;
+
+  /** Tries again in a while. Hidden or offline, it waits for the page's
+   *  return or the network's instead, which start afresh themselves. */
+  const retryLater = () => {
+    if (closed || retry || document.hidden || !navigator.onLine) return;
+    const wait = BACKOFF_MS[Math.min(failures, BACKOFF_MS.length - 1)];
+    failures += 1;
+    retry = setTimeout(() => {
+      retry = undefined;
+      restart();
+    }, wait);
+  };
 
   const publish = async () => {
-    const text = serialise(localShared(me));
-    if (text === remote) return setStatus("synced");
-    remote = text;
-    lastCreated = Math.max(Math.floor(Date.now() / 1000), lastCreated + 1);
-    const event = finalizeEvent(
-      { kind: KIND, created_at: lastCreated, tags: [["d", D_TAG]], content: nip44.encrypt(text, key) },
-      secret,
-    );
-    const results = await Promise.allSettled(pool.publish(RELAYS, event));
-    if (results.some((r) => r.status === "fulfilled")) setStatus("synced");
-    else {
-      // Try again on the next change or reconnect.
-      remote = "";
-      setStatus("offline");
+    if (closed || !pool) return;
+    let text = "";
+    try {
+      const shared = localShared(me);
+      text = serialise(shared);
+      if (text === remote) return setStatus("synced");
+      remote = text;
+      const content = nip44.encrypt(await fit(shared), key);
+      // Stopped while deflating: publishing now would open new sockets.
+      if (closed) return;
+      lastCreated = Math.max(Math.floor(Date.now() / 1000), lastCreated + 1);
+      const event = finalizeEvent({ kind: KIND, created_at: lastCreated, tags: [["d", D_TAG]], content }, secret);
+      const results = await Promise.allSettled(pool.publish(RELAYS, event));
+      if (closed) return;
+      if (results.some((r) => r.status === "fulfilled")) {
+        failures = 0;
+        return setStatus("synced");
+      }
+    } catch {
+      // Couldn't encrypt or send: treated as no relay taking it.
     }
+    if (closed) return;
+    // Not sent: send it on the next change, or when this starts afresh.
+    if (remote === text) remote = "";
+    setStatus("offline");
+    retryLater();
   };
 
   const schedule = () => {
-    if (!caughtUp) return;
+    if (!caughtUp || closed) return;
     clearTimeout(timer);
     timer = setTimeout(publish, 800);
   };
 
-  const onEvent = (event: Event) => {
+  const onEvent = async (event: Event) => {
     lastCreated = Math.max(lastCreated, event.created_at);
-    let snapshot: Shared | null = null;
+    failures = 0;
     try {
-      snapshot = parse(nip44.decrypt(event.content, key));
+      const snapshot = parse(await unpack(nip44.decrypt(event.content, key)));
+      if (!snapshot || closed) return;
+      remote = serialise({ ...mergeTodos(snapshot, NO_TODOS), xp: snapshot.xp });
+      // Applying the merges fires the store listeners, which write it back if
+      // this copy added anything: a task, or XP the note didn't have.
+      mergeXpElsewhere(snapshot.xp, me);
+      applyTodoSnapshot(mergeTodos(todoSnapshot(), snapshot));
+      if (caughtUp) setStatus("synced");
     } catch {
-      return;
+      // Not ours, or not readable: skip it.
     }
-    if (!snapshot) return;
-    remote = serialise({ ...mergeTodos(snapshot, NO_TODOS), xp: snapshot.xp });
-    // Applying the merges fires the store listeners, which write it back if
-    // this copy added anything: a task, or XP the note didn't have.
-    mergeXpElsewhere(snapshot.xp, me);
-    applyTodoSnapshot(mergeTodos(todoSnapshot(), snapshot));
-    if (caughtUp) setStatus("synced");
   };
 
-  let sub: { close: () => void } | undefined;
   const listen = () => {
-    sub?.close();
+    const mine = ++generation;
     caughtUp = false;
     setStatus("connecting");
-    sub = pool.subscribe(
-      RELAYS,
-      { kinds: [KIND], authors: [pubkey], "#d": [D_TAG] },
-      {
-        onevent: onEvent,
-        oneose: () => {
-          caughtUp = true;
-          // Nothing stored yet, or this device has news: write it.
-          publish();
-        },
+    pool?.subscribe(RELAYS, filter, {
+      onevent: (event) => void onEvent(event),
+      oneose: () => {
+        if (mine !== generation) return;
+        // A relay that couldn't be reached counts as done too; if none was,
+        // there's nothing to catch up with, so try again later instead.
+        if (![...(pool?.listConnectionStatus().values() ?? [])].some(Boolean)) {
+          setStatus("offline");
+          return retryLater();
+        }
+        caughtUp = true;
+        // Nothing stored yet, or this device has news: write it.
+        void publish();
       },
-    );
+      // Every relay has dropped it: their sockets closed, or they refused.
+      onclose: () => {
+        if (mine !== generation || closed) return;
+        setStatus("offline");
+        retryLater();
+      },
+    });
   };
 
-  listen();
+  const restart = () => {
+    if (closed) return;
+    clearTimeout(retry);
+    retry = undefined;
+    generation += 1;
+    // Closing the pool closes its subscription and every socket with it.
+    const old = pool;
+    quietly(() => old?.destroy());
+    pool = new Pool({ enablePing: true, websocketImplementation: QuietSocket } as ConstructorParameters<typeof Pool>[0]);
+    listen();
+  };
+
+  // nostr-tools sends a subscription's request without waiting on it, so a
+  // socket that closes in between rejects with nothing listening. Nothing is
+  // lost (the subscription is closed and redone), so keep it out of the console.
+  const onRejection = (e: PromiseRejectionEvent) => {
+    if (e.reason instanceof Error && e.reason.name === "SendingOnClosedConnection") e.preventDefault();
+  };
+  window.addEventListener("unhandledrejection", onRejection);
+
+  restart();
   const offTodos = todoStore.subscribe(schedule);
   const offDeleted = deletedStore.subscribe(schedule);
   // The garden changes every second as plants pay out; only XP is synced.
@@ -248,20 +433,36 @@ async function connect(code: string) {
     xpSeen = now;
     schedule();
   });
-  // Phones drop sockets in the background; catch up on return.
-  const onVisible = () => !document.hidden && listen();
-  document.addEventListener("visibilitychange", onVisible);
-  window.addEventListener("online", listen);
+  // Phones drop sockets in the background, often without a word: after a
+  // while away, or if it was already failing, start afresh and catch up.
+  const onVisibility = () => {
+    if (document.hidden) {
+      hiddenAt = Date.now();
+      return;
+    }
+    const away = hiddenAt === null ? 0 : Date.now() - hiddenAt;
+    hiddenAt = null;
+    if (away >= STALE_AFTER_MS || status.state === "offline") restart();
+  };
+  const onOffline = () => setStatus("offline");
+  document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("online", restart);
+  window.addEventListener("offline", onOffline);
 
   return () => {
+    closed = true;
+    generation += 1;
     clearTimeout(timer);
-    sub?.close();
+    clearTimeout(retry);
+    quietly(() => pool?.destroy());
     offTodos();
     offDeleted();
     offGarden();
-    document.removeEventListener("visibilitychange", onVisible);
-    window.removeEventListener("online", listen);
-    pool.destroy();
+    document.removeEventListener("visibilitychange", onVisibility);
+    window.removeEventListener("online", restart);
+    window.removeEventListener("offline", onOffline);
+    // Late rejections from the sockets just closed are still caught.
+    setTimeout(() => window.removeEventListener("unhandledrejection", onRejection), 10_000);
     setStatus("off");
   };
 }

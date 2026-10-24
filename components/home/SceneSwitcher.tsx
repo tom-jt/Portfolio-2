@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Ban, Check, Lock, Palette } from "lucide-react";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
 import { levelFromXp, totalXp, useGarden } from "@/lib/home/garden";
-import { setPrefs, usePrefs } from "@/lib/home/prefs";
+import { activeTheme, setPrefs, usePrefs } from "@/lib/home/prefs";
 import {
   getAmbience,
   SCENES,
@@ -13,10 +13,10 @@ import {
   type SceneMeta,
 } from "@/lib/home/scenes";
 import { PET_ROWS, PETS, petSheet } from "@/lib/home/pets";
-import { describeTheme, THEMES } from "@/lib/home/themes";
+import { describeTheme, sceneTheme, THEMES } from "@/lib/home/themes";
 import { cn } from "@/lib/utils";
 import { ScenePreview } from "./scenes/previews";
-import { IconButton } from "./ui";
+import { IconButton, textButton } from "./ui";
 
 /** One colour theme in the picker: a tile of its glass and glows, named. */
 const Swatch = ({
@@ -120,7 +120,11 @@ const SceneRow = ({
  * them. Colours stay open on a pick, so they can be tried one after another.
  */
 const SceneSwitcher = () => {
-  const { scene, theme, pet } = usePrefs();
+  const prefs = usePrefs();
+  const { scene, theme, pet } = prefs;
+  // Like the sound: the scene's own colours unless others are picked.
+  const wearing = activeTheme(prefs);
+  const own = sceneTheme(scene);
   const garden = useGarden();
   const level = levelFromXp(totalXp(garden));
   const [open, setOpen] = useState(false);
@@ -198,22 +202,21 @@ const SceneSwitcher = () => {
             </div>
 
             <div className="md:border-glass-edge md:min-w-0 md:flex-1 md:overflow-y-auto md:border-l md:pl-2">
-              <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium md:pt-1.5">
-                colours
-              </p>
-              <ul className="grid grid-cols-4 gap-1">
-                <li>
-                  <Swatch
-                    name="scene"
-                    title="the scene's own colours"
-                    active={!theme}
+              <div className="flex items-center justify-between gap-2 px-2.5 pt-4 pb-1 md:pt-1.5">
+                <p className="text-muted-foreground text-xs font-medium">
+                  colours
+                </p>
+                {theme && (
+                  <button
+                    type="button"
                     onClick={() => setPrefs({ theme: null })}
+                    className={cn(textButton, "text-muted-foreground text-xs")}
                   >
-                    <span className={cn(TILE, !theme && "ring-glow ring-2")}>
-                      <ScenePreview scene={scene} className="size-full" />
-                    </span>
-                  </Swatch>
-                </li>
+                    match scene
+                  </button>
+                )}
+              </div>
+              <ul className="grid grid-cols-4 gap-1">
                 {THEMES.map((t) => {
                   const locked = !isUnlocked(t.unlock, garden);
                   return (
@@ -225,16 +228,19 @@ const SceneSwitcher = () => {
                             ? `${t.name}: ${describeUnlock(t.unlock)}`
                             : describeTheme(t)
                         }
-                        active={theme === t.id}
+                        active={wearing === t.id}
                         disabled={locked}
-                        onClick={() => setPrefs({ theme: t.id })}
+                        // Picking the scene's own goes back to following it.
+                        onClick={() =>
+                          setPrefs({ theme: t.id === own ? null : t.id })
+                        }
                       >
                         <span
                           data-home-swatch={t.id}
                           className={cn(
                             TILE,
                             "bg-glass-strong grid place-items-center",
-                            theme === t.id && "ring-glow ring-2",
+                            wearing === t.id && "ring-glow ring-2",
                           )}
                         >
                           {/* Locked ones still show their colours, as a preview. */}
@@ -253,7 +259,7 @@ const SceneSwitcher = () => {
               <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
                 {theme
                   ? describeTheme(THEMES.find((t) => t.id === theme)!)
-                  : "following the scene"}
+                  : `following the scene${own ? `: ${THEMES.find((t) => t.id === own)!.hint}` : ""}`}
               </p>
 
               <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium">

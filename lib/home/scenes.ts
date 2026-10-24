@@ -56,22 +56,25 @@ export interface AmbienceMeta {
   unlock?: Unlock;
 }
 
+/** In the order of the scenes they belong to, as the scene picker and the
+ *  colours run, each the first time a scene uses it; then the rest. */
 export const AMBIENCES: AmbienceMeta[] = [
+  // The scenes' own sounds.
   { id: "glass", label: "rain on glass", short: "rain" },
-  { id: "cafe", label: "café and jazz", short: "café" },
   { id: "hill", label: "hilltop rain", short: "hill" },
-  { id: "storm", label: "thunderstorm", short: "storm" },
   { id: "waves", label: "ocean waves", short: "waves" },
-  { id: "wind", label: "wind and drizzle", short: "wind" },
-  { id: "leaves", label: "rain on the leaves", short: "leaves" },
-  { id: "deluge", label: "downpour", short: "deluge" },
-  // The picture scenes' own sounds.
+  { id: "cafe", label: "café and jazz", short: "café" },
   { id: "lake", label: "night by the lake", short: "lake" },
   { id: "woods", label: "forest birdsong", short: "birds" },
   { id: "cosmos", label: "deep space", short: "space" },
   { id: "shore", label: "warm shore", short: "shore" },
   { id: "majula", label: "majula bonfire", short: "majula" },
   { id: "snow", label: "falling snow", short: "snow" },
+  // Belonging to no scene: more ways to have it rain.
+  { id: "storm", label: "thunderstorm", short: "storm" },
+  { id: "wind", label: "wind and drizzle", short: "wind" },
+  { id: "leaves", label: "rain on the leaves", short: "leaves" },
+  { id: "deluge", label: "downpour", short: "deluge" },
 ];
 
 const AMBIENCE_IDS = AMBIENCES.map((a) => a.id);

@@ -723,7 +723,6 @@ export function unlocksAt(level: number) {
     ...(level % 10 === 0 && level <= 100
       ? [`the title "${titleFor(level)}"`]
       : []),
-    ...([50, 75, 100].includes(level) ? ["+1 seed a harvest"] : []),
   ];
 }
 
@@ -1150,18 +1149,12 @@ export const SEASON_MINIMUM = 1_000_000;
 /** How much more each season's harvest is worth than the first's. */
 const seasonFactor = (s: GardenState) => 1 + 0.25 * s.seasons;
 
-/** +1 seed a harvest at levels 50, 75 and 100. */
-const levelSeeds = (s: GardenState) => {
-  const level = levelFromXp(totalXp(s));
-  return [50, 75, 100].filter((l) => level >= l).length;
-};
-
 /** Sunlit seeds: harvests pay a share more. */
 const sunlit = (s: GardenState) => 1 + 0.15 * skillRank(s, "sunlitseeds");
 
 /**
  * Seeds a harvest pays: 2 × the fourth root of the season's drops in
- * millions, × 1.25 for every season already ended, plus the level bonus.
+ * millions, × 1.25 for every season already ended.
  *
  * The fourth root is what stops one long season paying out the tree: ten
  * times the drops is under twice the seeds. Later seasons pay far more,
@@ -1173,13 +1166,12 @@ export function seedsFor(s: GardenState) {
   if (s.seasonLifetime < SEASON_MINIMUM) return 0;
   const base =
     2 * (s.seasonLifetime / 1_000_000) ** 0.25 * seasonFactor(s) * sunlit(s);
-  return Math.floor(base) + levelSeeds(s);
+  return Math.floor(base);
 }
 
 /** Drops this season needs to pay `seeds`. */
 export function dropsForSeeds(seeds: number, s: GardenState) {
-  const base =
-    Math.max(1, seeds - levelSeeds(s)) / (2 * seasonFactor(s) * sunlit(s));
+  const base = Math.max(1, seeds) / (2 * seasonFactor(s) * sunlit(s));
   return Math.max(SEASON_MINIMUM, 1_000_000 * base ** 4);
 }
 

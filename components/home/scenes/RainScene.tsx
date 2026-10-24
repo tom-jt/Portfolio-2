@@ -84,8 +84,11 @@ function buildCity(w: number, h: number): City {
 
       const cell = layer.cell;
       for (let wy = top + cell; wy < h - cell; wy += cell * 1.35) {
+        // Some floors busy and some nearly dark, so the lights gather in
+        // places rather than sprinkling evenly over every building.
+        const floor = layer.lit * lerp(0.2, 2, rand() ** 1.5);
         for (let wx = x + cell * 0.6; wx < x + bw - cell * 0.8; wx += cell) {
-          if (rand() > layer.lit) continue;
+          if (rand() > floor) continue;
           city.windows.push({
             x: wx,
             y: wy,
@@ -113,15 +116,30 @@ function buildCity(w: number, h: number): City {
   });
 
   // The street, out of focus. Every light has a source: a row of street
-  // lamps at even spacing, shop windows at the foot of the front buildings,
-  // and cars in two lanes, headlights coming, tail lights going.
+  // lamps, shop windows at the foot of the front buildings, and cars in two
+  // lanes, headlights coming, tail lights going. The lamps keep roughly to a
+  // row, but their gaps, sizes, heights, and brightness all vary, and the
+  // odd one is out, so they don't line up like beads.
   const lampGap = Math.max(150, w * 0.16);
-  for (let x = lampGap * 0.3; x < w + lampGap; x += lampGap) {
-    city.bokeh.push({ x: x + lerp(-8, 8, rand()), y: h * 0.8, r: lerp(26, 34, rand()), color: LAMP, alpha: 0.5 });
+  for (let x = lampGap * lerp(0.1, 0.5, rand()); x < w + lampGap; x += lampGap * lerp(0.6, 1.4, rand())) {
+    if (rand() < 0.15) continue;
+    city.bokeh.push({
+      x,
+      y: h * lerp(0.77, 0.83, rand()),
+      r: lerp(20, 36, rand()),
+      color: LAMP,
+      alpha: lerp(0.34, 0.54, rand()),
+    });
   }
   for (const b of city.buildings.filter((b) => b.color === LAYERS[2].color)) {
     if (rand() < 0.45) continue;
-    city.bokeh.push({ x: b.x + b.w * lerp(0.3, 0.7, rand()), y: h * 0.9, r: lerp(30, 46, rand()), color: "255,205,150", alpha: 0.28 });
+    city.bokeh.push({
+      x: b.x + b.w * lerp(0.2, 0.8, rand()),
+      y: h * lerp(0.87, 0.93, rand()),
+      r: lerp(26, 48, rand()),
+      color: "255,205,150",
+      alpha: lerp(0.18, 0.32, rand()),
+    });
   }
   const cars = Math.max(3, Math.round(w / 260));
   for (let i = 0; i < cars; i++) {

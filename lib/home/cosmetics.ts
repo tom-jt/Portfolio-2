@@ -80,30 +80,29 @@ export interface PotMeta {
   unlock?: Unlock;
 }
 
+/** In the order they open up. */
 export const POTS: PotMeta[] = [
   { id: "classic", name: "mixed" },
   { id: "terracotta", name: "terracotta" },
-  { id: "porcelain", name: "porcelain", unlock: { level: 4 } },
-  { id: "stone", name: "mossy stone", unlock: { level: 7 } },
-  { id: "copper", name: "copper", unlock: { level: 10 } },
-  { id: "midnight", name: "midnight", unlock: { level: 14 } },
-  { id: "gilded", name: "gilded", unlock: { level: 19 } },
-  // The last of them, and the hardest to reach.
-  { id: "diamond", name: "diamond", unlock: { level: 30 } },
-  // Made for a scene each, in the order they open up.
   { id: "slick", name: "rain-slick", unlock: { level: 3 } },
+  { id: "porcelain", name: "porcelain", unlock: { level: 4 } },
   { id: "daisy", name: "daisy glaze", unlock: { level: 5 } },
   { id: "marble", name: "café marble", unlock: { level: 6 } },
+  { id: "stone", name: "mossy stone", unlock: { level: 7 } },
   { id: "dusk", name: "dusk glaze", unlock: { level: 8 } },
   { id: "bark", name: "bark", unlock: { level: 9 } },
+  { id: "copper", name: "copper", unlock: { level: 10 } },
   { id: "enamel", name: "alpine enamel", unlock: { level: 11 } },
   { id: "maple", name: "maple", unlock: { level: 12 } },
   { id: "borealis", name: "borealis", unlock: { level: 13 } },
+  { id: "midnight", name: "midnight", unlock: { level: 14 } },
   { id: "coral", name: "coral", unlock: { level: 16 } },
   { id: "frost", name: "frost", unlock: { level: 17 } },
+  { id: "gilded", name: "gilded", unlock: { level: 19 } },
   { id: "ashen", name: "ashen", unlock: { level: 21 } },
   { id: "nebula", name: "nebula", unlock: { level: 24 } },
-  // The long-haul ones, each with the frame of the same name.
+  { id: "diamond", name: "diamond", unlock: { level: 30 } },
+  // The long-haul ones.
   { id: "wood", name: "oak", unlock: { level: 35 } },
   { id: "stained", name: "stained glass", unlock: { level: 50 } },
   { id: "brass", name: "brass", unlock: { level: 65 } },
@@ -146,7 +145,7 @@ export const FRAMES: FrameMeta[] = [
 export const isFrameId = (v: unknown): v is FrameId =>
   FRAMES.some((f) => f.id === v);
 
-/** Gold leaf on every plant: the reward for reaching level 100. */
+/** Gilded plants, gold leaf on every one: the reward for reaching level 100. */
 export const GOLD_LEAF: Unlock = { level: 100 };
 
 // -------------------------------------------------------------- holidays
@@ -237,15 +236,11 @@ export const DECOR: DecorMeta[] = [
   { id: "starfield", name: "starfield", unlock: { level: 24 } },
 ];
 
-/** "auto" follows the calendar, "scene" matches the scene, and "none" is a
- *  bare window. */
-export type DecorPick = DecorId | "auto" | "scene" | "none";
+/** "auto" follows the scene and the calendar, and "none" is a bare window. */
+export type DecorPick = DecorId | "auto" | "none";
 
 export const isDecorPick = (v: unknown): v is DecorPick =>
-  v === "auto" ||
-  v === "scene" ||
-  v === "none" ||
-  DECOR.some((d) => d.id === v);
+  v === "auto" || v === "none" || DECOR.some((d) => d.id === v);
 
 /** The decor and pot made for each scene. */
 export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
@@ -322,8 +317,8 @@ export function currentSeason(
 }
 
 /**
- * The decor to draw for a pick: the holiday or season when on auto; the
- * scene's own when matching the scene, if it's unlocked, else the calendar's.
+ * The decor to draw for a pick. On auto: the holiday while one is on, else
+ * the scene's own once it's unlocked, else the season outside.
  */
 export function resolveDecor(
   pick: DecorPick,
@@ -332,9 +327,10 @@ export function resolveDecor(
   now = new Date(),
 ): DecorId | null {
   if (pick === "none") return null;
-  if (pick === "scene") {
-    const decor = SCENE_STYLE[scene].decor;
-    if (isUnlocked(DECOR.find((d) => d.id === decor)?.unlock, s)) return decor;
-  } else if (pick !== "auto") return pick;
-  return currentHoliday(now) ?? currentSeason(now);
+  if (pick !== "auto") return pick;
+  const holiday = currentHoliday(now);
+  if (holiday) return holiday;
+  const decor = SCENE_STYLE[scene].decor;
+  if (isUnlocked(DECOR.find((d) => d.id === decor)?.unlock, s)) return decor;
+  return currentSeason(now);
 }

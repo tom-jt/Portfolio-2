@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { DropKind } from "./garden";
 import type { AmbienceKind } from "./scenes";
 
 /**
@@ -200,11 +201,15 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
   },
   woods: {
     layers: [
-      { file: "rain-on-leaves", gain: 0.14, lowpass: 2500, offset: 14 },
-      // The canopy rustling overhead, rather than wind in the open.
-      { file: "wind-in-trees", gain: 0.34, offset: 8 },
+      // Kept low: a hush of leaves under the birds, not a rustle over them.
+      { file: "rain-on-leaves", gain: 0.05, lowpass: 2000, offset: 14 },
+      // The canopy stirring overhead, rather than wind in the open.
+      { file: "wind-in-trees", gain: 0.2, lowpass: 3200, offset: 8 },
     ],
-    extra: birds,
+    extra: (c, out) => {
+      const stops = [birds(c, out), halo(c, out)];
+      return () => stops.forEach((stop) => stop());
+    },
   },
   cosmos: {
     layers: [],
@@ -250,7 +255,10 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
 function every(c: AudioContext, play: (at: number) => number) {
   let next = c.currentTime + 0.5;
   const schedule = () => {
-    while (next < c.currentTime + 2) next += play(next);
+    // Back from a stall (a throttled background tab, a busy page): skip what
+    // was missed, rather than pile every missed event into the past at once.
+    if (next < c.currentTime) next = c.currentTime + 0.05;
+    while (next < c.currentTime + 2) next += Math.max(0.05, play(next) || 0);
   };
   schedule();
   const timer = setInterval(schedule, 400);
@@ -269,21 +277,27 @@ function bursts(c: AudioContext, param: AudioParam, level: number, { on, off }: 
   });
 }
 
-/** Birds in the canopy: short phrases of whistled notes, a few seconds apart,
- *  each bird with its own pitch and pattern. */
+/** Birds in the canopy: short phrases of whistled notes, a second or few
+ *  apart, each bird with its own pitch and pattern, and its own place in the
+ *  trees from left to right. */
 function birds(c: AudioContext, out: AudioNode) {
-  const bus = gain(c, 0.5);
+  const bus = gain(c, 0.85);
   // Deep woods: more of each call comes back off the trunks.
   route(bus, out, room(c, 3.2), gain(c, 0.5));
   bus.connect(out);
+  /** `bend` is how far each note slides, up or down. */
   const voices = [
-    { base: 2600, spread: 900, notes: [3, 6], gap: 0.13, length: 0.09 },
-    { base: 3400, spread: 500, notes: [2, 4], gap: 0.2, length: 0.16 },
-    { base: 1900, spread: 700, notes: [4, 8], gap: 0.09, length: 0.06 },
+    { base: 2600, spread: 900, notes: [3, 6], gap: 0.13, length: 0.09, bend: 0.35 },
+    { base: 3400, spread: 500, notes: [2, 4], gap: 0.2, length: 0.16, bend: 0.35 },
+    { base: 1900, spread: 700, notes: [4, 8], gap: 0.09, length: 0.06, bend: 0.35 },
     // A lower, slower song further off, like a thrush in the understorey.
-    { base: 1300, spread: 400, notes: [2, 4], gap: 0.28, length: 0.22 },
+    { base: 1300, spread: 400, notes: [2, 4], gap: 0.28, length: 0.22, bend: 0.35 },
+    // A quick bright trill, like a wren's.
+    { base: 3800, spread: 250, notes: [7, 12], gap: 0.045, length: 0.035, bend: 0.2 },
+    // A soft call that hardly bends: a dove somewhere further back.
+    { base: 820, spread: 120, notes: [2, 3], gap: 0.42, length: 0.3, bend: 0.06 },
   ];
-  const chirp = (at: number, from: number, to: number, length: number, level: number) => {
+  const chirp = (into: AudioNode, at: number, from: number, to: number, length: number, level: number) => {
     const osc = c.createOscillator();
     osc.type = "sine";
     osc.frequency.setValueAtTime(from, at);
@@ -292,21 +306,75 @@ function birds(c: AudioContext, out: AudioNode) {
     env.gain.setValueAtTime(0, at);
     env.gain.linearRampToValueAtTime(level, at + length * 0.25);
     env.gain.exponentialRampToValueAtTime(0.0001, at + length);
-    osc.connect(env).connect(bus);
+    osc.connect(env).connect(into);
     osc.start(at);
     osc.stop(at + length + 0.05);
   };
   return every(c, (at) => {
-    const v = voices[Math.floor(Math.random() * voices.length)];
+    const v = pick(voices);
     const count = v.notes[0] + Math.floor(Math.random() * (v.notes[1] - v.notes[0] + 1));
-    const level = 0.03 + Math.random() * 0.03;
+    const level = 0.035 + Math.random() * 0.035;
+    const place = c.createStereoPanner();
+    place.pan.value = jitter(1.4);
+    place.connect(bus);
     for (let i = 0; i < count; i++) {
-      const f = v.base + (Math.random() - 0.5) * v.spread;
-      const up = Math.random() < 0.5;
-      chirp(at + i * v.gap, f, f * (up ? 1.35 : 0.7), v.length, level);
+      const f = v.base + jitter(v.spread);
+      const to = Math.random() < 0.5 ? f * (1 + v.bend) : f / (1 + v.bend);
+      chirp(place, at + i * v.gap, f, to, v.length, level);
     }
-    return count * v.gap + 1.5 + Math.random() * 4;
+    return count * v.gap + 0.8 + Math.random() * 2.8;
   });
+}
+
+/**
+ * Sunlight through the canopy: a warm chord held very quietly, each note a
+ * pair a few cents apart so it shimmers as they beat, swelling and fading
+ * over half a minute, with now and then a faint glint of a note above it.
+ */
+function halo(c: AudioContext, out: AudioNode) {
+  const bus = gain(c, 0);
+  const tone = filter(c, "lowpass", 2400, 0.5);
+  bus.connect(tone);
+  route(tone, out, room(c, 3.6), gain(c, 0.7));
+  tone.connect(out);
+  // It comes up slowly, well after the birds and leaves.
+  bus.gain.setTargetAtTime(0.6, c.currentTime, 4);
+  const sources: OscillatorNode[] = [];
+  // D major with its ninth, spread wide: D4, A4, E5, F♯5, and A5.
+  for (const note of [62, 69, 76, 78, 81]) {
+    for (const cents of [-5, 5]) {
+      const osc = c.createOscillator();
+      osc.frequency.value = midiHz(note);
+      osc.detune.value = cents + jitter(2);
+      osc.connect(gain(c, note < 70 ? 0.004 : 0.0028)).connect(bus);
+      osc.start();
+      sources.push(osc);
+    }
+  }
+  // The swell, between a third of its level and all of it.
+  const lfo = c.createOscillator();
+  lfo.frequency.value = 1 / 28;
+  lfo.connect(gain(c, 0.4)).connect(bus.gain);
+  lfo.start();
+  sources.push(lfo);
+
+  const stopGlints = every(c, (at) => {
+    const osc = c.createOscillator();
+    osc.frequency.value = midiHz(pick([86, 88, 90, 93]));
+    const env = c.createGain();
+    env.gain.setValueAtTime(0, at);
+    env.gain.linearRampToValueAtTime(0.003, at + 1.2);
+    env.gain.linearRampToValueAtTime(0, at + 4);
+    osc.connect(env).connect(bus);
+    osc.start(at);
+    osc.stop(at + 4.1);
+    return 4 + Math.random() * 8;
+  });
+  return () => {
+    stopGlints();
+    const t = c.currentTime;
+    for (const s of sources) s.stop(t + 3);
+  };
 }
 
 /** Crickets: trains of quick high pulses, now near, now far, in bursts of a
@@ -597,6 +665,8 @@ function jazz(c: AudioContext, out: AudioNode) {
   };
 
   const schedule = () => {
+    // Skip any bars missed while timers were held up, as `every` does.
+    if (next < c.currentTime) next = c.currentTime + 0.1;
     // Two seconds ahead: background tabs only get timers once a second.
     while (next < c.currentTime + 2) {
       playBar(next);
@@ -613,8 +683,14 @@ function jazz(c: AudioContext, out: AudioNode) {
   return () => clearInterval(timer);
 }
 
-/** Perceived loudness is roughly the square of the gain. */
-const curve = (v: number) => v * v * 0.8;
+/**
+ * The volume slider's position as gain: an audio taper, in even steps of
+ * decibels across the top 20 dB, so every part of its travel is heard, and
+ * fading to silence over the last few percent. The top is as loud as ever.
+ * (A square law, which this replaced, left the bottom quarter all but silent.)
+ */
+const TAPER_DB = 20;
+const curve = (v: number) => 0.8 * 10 ** ((-TAPER_DB * (1 - v)) / 20) * Math.min(1, v / 0.04);
 
 /** The ambience's own level, kept so a chime's dip can return to it. */
 let volume = 0;
@@ -717,6 +793,19 @@ export function stopAmbience() {
 }
 
 /**
+ * How loud a sound over the ambience plays, as a share of its own level.
+ * Fixed levels sat far above the bed: a chime came 14 dB over it at full
+ * volume and 25 dB at the default, so with the speakers turned up for a quiet
+ * bed it arrived as a loud beep. Over the ambience they now follow its
+ * volume, to a floor that keeps a reminder from going unheard. With the
+ * ambience off they play at their own level.
+ */
+const overAmbience = () => (bed ? Math.max(0.3, (0.6 * curve(volume)) / curve(1)) : 1);
+
+/** When each chime last rang, so one asked for twice at once rings once. */
+const lastRung = new Map<string, number>();
+
+/**
  * A few sine notes with overtones and a long tail: the house bell. Plays even
  * with ambience off, and dips the ambience first when it is on, so the chime
  * is heard rather than fought over. A sound can be due on load, before any
@@ -729,8 +818,14 @@ function bell(
   if (typeof window === "undefined") return;
   const activated = navigator.userActivation?.hasBeenActive ?? true;
   if (!audioUnlocked() && !activated) return;
+  // Two of the same at once (two reminders falling due together, say) would
+  // ring in step, twice as loud, so the second is dropped.
+  const key = notes.join();
+  const now = performance.now();
+  if (now - (lastRung.get(key) ?? -Infinity) < 1500) return;
+  lastRung.set(key, now);
   const c = context();
-  const out = gain(c, level);
+  const out = gain(c, level * overAmbience());
   out.connect(c.destination);
   const last = Math.max(...notes.map(([, d]) => d));
   // Hold the dip through the notes and most of their ring.
@@ -794,3 +889,81 @@ export const playRestDone = () =>
     ],
     { level: 0.11, attack: 0.07, decay: 2.6 },
   );
+
+// ----------------------------------------------------------------- catches
+
+/** D major's pentatonic, D5 to B5, so any run of catches sounds in tune. */
+const CATCH_NOTES = [74, 76, 78, 81, 83];
+
+/** Each catch's notes, as steps up the pentatonic from a random start (five
+ *  steps to the octave), how far apart they fall, how long they ring, and how
+ *  much octave glints above them. The rarer the drop, the more it sparkles. */
+const CATCH_STYLE: Record<DropKind, { steps: number[]; gap: number; decay: number; level: number; glint: number }> = {
+  plain: { steps: [0], gap: 0, decay: 0.28, level: 0.05, glint: 0.12 },
+  golden: { steps: [0, 2], gap: 0.07, decay: 0.45, level: 0.05, glint: 0.2 },
+  rainbow: { steps: [0, 1, 2, 3, 4], gap: 0.045, decay: 0.5, level: 0.04, glint: 0.2 },
+  diamond: { steps: [0, 2, 4, 5], gap: 0.06, decay: 0.8, level: 0.045, glint: 0.3 },
+  meteor: { steps: [5, 2, 0], gap: 0.05, decay: 0.5, level: 0.045, glint: 0.15 },
+};
+
+/** Rank, so a rare catch in a chain still gets its sound. */
+const CATCH_RANK: Record<DropKind, number> = { plain: 0, golden: 1, meteor: 2, rainbow: 3, diamond: 4 };
+
+let catchRoom: { input: GainNode; context: AudioContext } | null = null;
+let lastCatch = { at: -Infinity, rank: -1 };
+
+/**
+ * Catching a drop in the garden: a soft "plip", a sine that lifts a little in
+ * pitch as it rings, the way a drop sounds landing in still water. Rarer drops
+ * add notes, ringing longer. Call it inside the click or key press, which
+ * lets the browser start the sound even with the ambience off.
+ *
+ * A chain of catches at once (Torrent, Thunderclap) plays one sound, the
+ * rarest in it, rather than stacking; and the pitch wanders over the scale so
+ * a run of catches doesn't drone.
+ */
+export function playCatch(kind: DropKind) {
+  if (typeof window === "undefined") return;
+  primeAudio();
+  const c = context();
+  const now = c.currentTime;
+  const rank = CATCH_RANK[kind];
+  if (now - lastCatch.at < 0.06 && rank <= lastCatch.rank) return;
+  lastCatch = { at: now, rank };
+
+  // One small room for every catch, made once.
+  if (catchRoom?.context !== c) {
+    const input = gain(c, 1);
+    input.connect(c.destination);
+    route(input, c.destination, room(c, 1.2), gain(c, 0.22));
+    catchRoom = { input, context: c };
+  }
+  const style = CATCH_STYLE[kind];
+  const out = gain(c, overAmbience());
+  out.connect(catchRoom.input);
+  const start = Math.floor(Math.random() * CATCH_NOTES.length);
+  style.steps.forEach((step, i) => {
+    const index = start + step;
+    const note = CATCH_NOTES[index % CATCH_NOTES.length] + 12 * Math.floor(index / CATCH_NOTES.length);
+    const f = midiHz(note);
+    const at = now + 0.005 + i * style.gap;
+    for (const [mult, share] of [
+      [1, 1],
+      [2, style.glint],
+    ]) {
+      const osc = c.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f * mult * 0.88, at);
+      osc.frequency.exponentialRampToValueAtTime(f * mult, at + 0.035);
+      const env = c.createGain();
+      env.gain.setValueAtTime(0, at);
+      env.gain.linearRampToValueAtTime(style.level * share, at + 0.004);
+      env.gain.exponentialRampToValueAtTime(0.0001, at + style.decay);
+      osc.connect(env).connect(out);
+      osc.start(at);
+      osc.stop(at + style.decay + 0.05);
+    }
+  });
+  const end = style.gap * style.steps.length + style.decay;
+  setTimeout(() => out.disconnect(), end * 1000 + 300);
+}

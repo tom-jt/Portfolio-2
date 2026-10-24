@@ -48,7 +48,12 @@ export interface ThemeMeta {
 export const THEMES: ThemeMeta[] = [
   { id: "mono", name: "mono", hint: "black and white" },
   { id: "rose", name: "rose", hint: "red and pink" },
-  { id: "glacier", name: "glacier", hint: "icy blue and white", pairsWith: "p-moonlight" },
+  {
+    id: "glacier",
+    name: "glacier",
+    hint: "icy blue and white",
+    pairsWith: "p-moonlight",
+  },
   { id: "neon", name: "neon", hint: "pink and cyan", pairsWith: "rain" },
   {
     id: "meadow",
@@ -136,6 +141,16 @@ const THEME_IDS = THEMES.map((t) => t.id);
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === "string" && THEME_IDS.includes(value as ThemeId);
 }
+
+/** The theme made for a scene: the colours it wears when following it. */
+export const sceneTheme = (scene: SceneId): ThemeId | null =>
+  THEMES.find((t) => t.pairsWith === scene)?.id ?? null;
+
+/** Each scene's own theme, for the boot script, which can't import. */
+export const SCENE_THEMES: Partial<Record<SceneId, ThemeId>> =
+  Object.fromEntries(
+    THEMES.filter((t) => t.pairsWith).map((t) => [t.pairsWith, t.id]),
+  );
 
 /** "pink and cyan, made for the rainy window" */
 export function describeTheme(t: ThemeMeta) {

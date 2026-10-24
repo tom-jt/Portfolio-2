@@ -22,7 +22,9 @@ export interface Todo {
  *  them does not bring them back. */
 export type Deleted = Record<string, number>;
 
-export const TODO_MAX_LENGTH = 140;
+/** Room for a sentence or two. Synced notes are deflated, so a full list of
+ *  tasks this long still fits on the relays. */
+export const TODO_MAX_LENGTH = 280;
 export const TODO_MAX_ITEMS = 100;
 
 /** Lists saved before sync had neither field: the array order was the order. */

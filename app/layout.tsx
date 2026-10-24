@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Syne } from "next/font/google";
 import { SiteCurtainProvider } from "@/components/shared/SiteCurtain";
+import { DEFAULT_SCENE, PREFS_KEY } from "@/lib/home/scenes";
+import { SCENE_THEMES } from "@/lib/home/themes";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,7 +56,8 @@ export const metadata: Metadata = {
  *
  * It also applies the /home scene and colour theme for the same reason: a
  * visitor who picked the sunset would otherwise see the rainy palette flash
- * first. The key must match PREFS_KEY in lib/home/scenes.ts.
+ * first. With no colours picked, the scene wears its own theme, as
+ * activeTheme in lib/home/prefs.ts works out.
  */
 const themeBootScript = `
 (function () {
@@ -66,13 +69,11 @@ const themeBootScript = `
     if (dark) document.documentElement.classList.add("dark");
   } catch (e) {}
   try {
-    var prefs = JSON.parse(localStorage.getItem("home:prefs:v1") || "null");
-    if (prefs && typeof prefs.scene === "string") {
-      document.documentElement.setAttribute("data-home-scene", prefs.scene);
-    }
-    if (prefs && typeof prefs.theme === "string") {
-      document.documentElement.setAttribute("data-home-theme", prefs.theme);
-    }
+    var prefs = JSON.parse(localStorage.getItem(${JSON.stringify(PREFS_KEY)}) || "null") || {};
+    var scene = typeof prefs.scene === "string" ? prefs.scene : ${JSON.stringify(DEFAULT_SCENE)};
+    document.documentElement.setAttribute("data-home-scene", scene);
+    var theme = typeof prefs.theme === "string" ? prefs.theme : ${JSON.stringify(SCENE_THEMES)}[scene];
+    if (theme) document.documentElement.setAttribute("data-home-theme", theme);
   } catch (e) {}
 })();
 `;

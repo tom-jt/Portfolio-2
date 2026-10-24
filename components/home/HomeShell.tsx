@@ -11,7 +11,7 @@ import {
 } from "@/lib/home/ambience";
 import { currentHoliday } from "@/lib/home/cosmetics";
 import { awayToast, noteHoliday, tick } from "@/lib/home/garden";
-import { activeAmbience, usePrefs } from "@/lib/home/prefs";
+import { activeAmbience, activeTheme, usePrefs } from "@/lib/home/prefs";
 import { useTodoSync } from "@/lib/home/sync";
 import { cn } from "@/lib/utils";
 
@@ -114,7 +114,9 @@ const HomeShell = ({
   className?: string;
   children: ReactNode;
 }) => {
-  const { scene, theme } = usePrefs();
+  const prefs = usePrefs();
+  const { scene } = prefs;
+  const theme = activeTheme(prefs);
 
   // The boot script sets these on first paint; this keeps them current when
   // the scene or colours change, or when arriving by client-side navigation.
