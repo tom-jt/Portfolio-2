@@ -1,0 +1,7 @@
+Pet sprites: "Free Pets Pack" by Frakassets, https://frakassets.itch.io/
+Licensed under Creative Commons Attribution 4.0 (CC BY 4.0):
+https://creativecommons.org/licenses/by/4.0/
+
+Changed: the 64px side-on sheets were cut down to five rows (idle, happy and
+sleep facing south; walk facing east and west), with the shine layer drawn
+over the lit one.

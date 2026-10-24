@@ -1,6 +1,7 @@
 "use client";
 
-import { useNow } from "@/lib/home/store";
+import { levelFromXp, titleFor, totalXp, useGarden } from "@/lib/home/garden";
+import { useHydrated, useNow } from "@/lib/home/store";
 import { cn } from "@/lib/utils";
 
 function greetingFor(hour: number) {
@@ -23,6 +24,9 @@ const timeFormat = new Intl.DateTimeFormat(undefined, {
 const Greeting = ({ className }: { className?: string }) => {
   const now = useNow(60_000);
   const date = now ? new Date(now) : null;
+  const garden = useGarden();
+  const hydrated = useHydrated();
+  const title = hydrated ? titleFor(levelFromXp(totalXp(garden))) : null;
 
   return (
     <div
@@ -37,6 +41,8 @@ const Greeting = ({ className }: { className?: string }) => {
       </h1>
       <p className="text-foreground/75 mt-2.5 text-[0.8rem] md:text-[0.95rem]">
         {date ? `${dateFormat.format(date)} | ${timeFormat.format(date)}` : " "}
+        {/* The title for the garden level: a new one every ten levels. */}
+        {date && title ? ` | ${title}` : ""}
       </p>
     </div>
   );

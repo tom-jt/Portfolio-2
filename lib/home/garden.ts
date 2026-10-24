@@ -28,7 +28,11 @@ export type PlantId =
   | "moonflower"
   | "lotus"
   | "willow"
-  | "cloudbloom";
+  | "cloudbloom"
+  | "rainlily"
+  | "cedar"
+  | "stormorchid"
+  | "worldtree";
 
 export interface PlantDef {
   id: PlantId;
@@ -103,6 +107,35 @@ export const PLANTS: PlantDef[] = [
     baseCost: 300_000_000,
     rate: 580_000,
     unlockLevel: 23,
+  },
+  // Long goals, spaced out along the slow climb to level 100.
+  {
+    id: "rainlily",
+    name: "Rain lily",
+    baseCost: 2_800_000_000,
+    rate: 3_600_000,
+    unlockLevel: 30,
+  },
+  {
+    id: "cedar",
+    name: "Cedar",
+    baseCost: 26_000_000_000,
+    rate: 22_000_000,
+    unlockLevel: 38,
+  },
+  {
+    id: "stormorchid",
+    name: "Storm orchid",
+    baseCost: 240_000_000_000,
+    rate: 135_000_000,
+    unlockLevel: 47,
+  },
+  {
+    id: "worldtree",
+    name: "World tree",
+    baseCost: 2_200_000_000_000,
+    rate: 820_000_000,
+    unlockLevel: 57,
   },
 ];
 
@@ -274,6 +307,8 @@ export interface GardenState {
   /** When the last ladybug was caught, and when its luck runs out. */
   ladybugAt: number;
   luckUntil: number;
+  /** While a caught rainbow drop's streak lasts (Rainbow shower). */
+  rainbowUntil: number;
   /**
    * XP earned on other linked devices, by device. `xp` is only what this
    * device earned; the level counts both. Each device's figure only grows,
@@ -289,7 +324,15 @@ const initial: GardenState = {
   plants: {},
   upgrades: {},
   lastTick: 0,
-  stats: { tasks: 0, focusMinutes: 0, sessions: 0, caught: 0, golden: 0, diamonds: 0, ladybugs: 0 },
+  stats: {
+    tasks: 0,
+    focusMinutes: 0,
+    sessions: 0,
+    caught: 0,
+    golden: 0,
+    diamonds: 0,
+    ladybugs: 0,
+  },
   achievements: [],
   gamesPlayed: [],
   daily: { day: "", tasks: 0, games: [] },
@@ -301,6 +344,7 @@ const initial: GardenState = {
   seenHolidays: [],
   ladybugAt: 0,
   luckUntil: 0,
+  rainbowUntil: 0,
   xpElsewhere: {},
 };
 
@@ -334,6 +378,7 @@ export const gardenStore = createPersistentStore<GardenState>(
       seenHolidays: Array.isArray(r.seenHolidays) ? r.seenHolidays : [],
       ladybugAt: num(r.ladybugAt),
       luckUntil: num(r.luckUntil),
+      rainbowUntil: num(r.rainbowUntil),
       xpElsewhere: Object.fromEntries(
         Object.entries(r.xpElsewhere ?? {}).filter(([, v]) => num(v) > 0),
       ),
@@ -391,16 +436,21 @@ export const upgradeCost = (def: UpgradeDef, level: number) =>
 
 /** Evergreen: +1% to all drops per garden level, up to +100%. */
 const evergreen = (s: GardenState) =>
-  skillRank(s, "evergreen") ? 1 + Math.min(100, levelFromXp(totalXp(s))) / 100 : 1;
+  skillRank(s, "evergreen")
+    ? 1 + Math.min(100, levelFromXp(totalXp(s))) / 100
+    : 1;
 
 // ---------------------------------------------------------------- ladybug
 
-/** Ladybug luck: everything the plants make is doubled for five minutes. */
-export const LUCK_MS = 5 * 60_000;
+/** Ladybug luck: everything the plants make is doubled for five minutes,
+ *  and two and a half more for each rank of Long days. */
+export const luckMs = (s: GardenState) =>
+  (5 + 2.5 * skillRank(s, "longdays")) * 60_000;
 /** No ladybug turns up within ten minutes of the last one caught. */
 export const LADYBUG_COOLDOWN_MS = 10 * 60_000;
 
-export const luckLeft = (s: GardenState, now = Date.now()) => Math.max(0, s.luckUntil - now);
+export const luckLeft = (s: GardenState, now = Date.now()) =>
+  Math.max(0, s.luckUntil - now);
 const luck = (s: GardenState) => (luckLeft(s) > 0 ? 2 : 1);
 
 export const ladybugMayAppear = (s: GardenState, now = Date.now()) =>
@@ -408,22 +458,38 @@ export const ladybugMayAppear = (s: GardenState, now = Date.now()) =>
 
 export function catchLadybug() {
   const now = Date.now();
-  if (!ladybugMayAppear(gardenStore.get(), now)) return;
+  const s = gardenStore.get();
+  if (!ladybugMayAppear(s, now)) return;
+  const minutes = luckMs(s) / 60_000;
   commit(
     (g) => ({
       ...g,
       ladybugAt: now,
-      luckUntil: now + LUCK_MS,
+      luckUntil: now + luckMs(g),
       stats: { ...g.stats, ladybugs: g.stats.ladybugs + 1 },
     }),
-    { kind: "info", title: "ladybug luck", detail: "the garden grows twice as fast for 5 minutes" },
+    {
+      kind: "info",
+      title: "ladybug luck",
+      detail: `the garden grows twice as fast for ${minutes} minutes`,
+    },
   );
 }
+
+/** Plant milestones reached across the whole garden, for Second bloom. */
+const milestones = (s: GardenState) =>
+  PLANTS.reduce(
+    (sum, p) => sum + Math.floor(owned(s, p.id) / PLANT_MILESTONE),
+    0,
+  );
 
 /** Everything that multiplies each plant's output: greenhouse, skills, luck. */
 export const plantMultiplier = (s: GardenState) =>
   (1 + 0.25 * upgradeLevel(s, "greenhouse")) *
   (1 + 0.1 * skillRank(s, "roots")) *
+  (1 + 0.15 * skillRank(s, "morningsun")) *
+  (skillRank(s, "secondbloom") ? 1 + 0.01 * milestones(s) : 1) *
+  (skillRank(s, "solstice") ? 1.5 : 1) *
   evergreen(s) *
   luck(s);
 
@@ -444,13 +510,26 @@ export const plantCount = (s: GardenState) =>
  *  stays worth doing as the garden grows. */
 export const catchValue = (s: GardenState) => {
   const jar = upgradeLevel(s, "jar");
-  const hands = 1 + 0.15 * skillRank(s, "hands");
+  const hands =
+    (1 + 0.15 * skillRank(s, "hands")) * (1 + 0.1 * skillRank(s, "wetseason"));
+  const rainbow = Date.now() < s.rainbowUntil ? 3 : 1;
   // Rate already carries Evergreen; the flat part gets it here.
-  return ((1 + 2 * jar) * evergreen(s) + rate(s) * catchSecondsAt(jar)) * hands;
+  return (
+    ((1 + 2 * jar) * evergreen(s) + rate(s) * catchSecondsAt(jar)) *
+    hands *
+    rainbow
+  );
 };
 
+/** Missed drops' share of a catch: never more than three quarters, so
+ *  catching always stays worth it. */
 export const soakShare = (s: GardenState) =>
-  soakShareAt(upgradeLevel(s, "soil")) + (skillRank(s, "puddles") ? 0.1 : 0);
+  Math.min(
+    0.75,
+    soakShareAt(upgradeLevel(s, "soil")) +
+      (skillRank(s, "puddles") ? 0.1 : 0) +
+      0.05 * skillRank(s, "deeppuddles"),
+  );
 
 const goldenChanceAt = (level: number) => 0.03 + 0.012 * level;
 export const goldenChance = (s: GardenState) =>
@@ -471,17 +550,48 @@ export const diamondValue = (s: GardenState) => goldenValue(s) * 5;
 /** Golden drops in the shower that follows a diamond. */
 export const DIAMOND_SHOWER = 6;
 
-export type DropKind = "plain" | "golden" | "diamond";
+export type DropKind = "plain" | "golden" | "diamond" | "rainbow" | "meteor";
 
 /** Milliseconds between drops appearing on the window. */
 export const spawnInterval = (s: GardenState) =>
   1100 *
   RAIN_STEP ** upgradeLevel(s, "rainmaker") *
-  0.93 ** skillRank(s, "downpour");
+  0.93 ** skillRank(s, "downpour") *
+  0.91 ** skillRank(s, "stormfront");
+
+/** Drops the window holds at once: twelve, and two more a Cloudburst rank. */
+export const maxDrops = (s: GardenState) => 12 + 2 * skillRank(s, "cloudburst");
+
+/** Rainy side, for the catch game: which of its tricks are learnt. */
+export const hasThunderclap = (s: GardenState) =>
+  skillRank(s, "thunderclap") > 0;
+export const hasTorrent = (s: GardenState) => skillRank(s, "torrent") > 0;
+export const hasRainbow = (s: GardenState) => skillRank(s, "rainbow") > 0;
+export const hasMeteors = (s: GardenState) => skillRank(s, "meteors") > 0;
+export const hasGoldenHour = (s: GardenState) => skillRank(s, "goldenhour") > 0;
+
+/** One drop in 150 is a rainbow drop, once Rainbow shower is learnt. */
+export const RAINBOW_CHANCE = 1 / 150;
+/** A caught rainbow drop makes every catch worth ×3 for this long. */
+export const RAINBOW_MS = 20_000;
+/** A meteor is worth three golden drops. */
+export const meteorValue = (s: GardenState) => goldenValue(s) * 3;
+
+/** Chance each minute of a meteor shower: three times as likely at night. */
+export function meteorChance(now = new Date()) {
+  const hour = now.getHours();
+  return hour >= 20 || hour < 6 ? 0.12 : 0.04;
+}
+
+/** Chance each minute of golden hour: doubled by Solstice. */
+export const goldenHourChance = (s: GardenState) =>
+  skillRank(s, "solstice") ? 0.1 : 0.05;
 
 /** Good habits: work pays more drops. */
 const habits = (s: GardenState) =>
   (1 + 0.2 * skillRank(s, "habits")) * evergreen(s);
+/** Make hay: tasks and focus pay more drops still. */
+const hay = (s: GardenState) => 1 + 0.25 * skillRank(s, "haymaking");
 /** Bookworm: work pays more XP. */
 const bookworm = (s: GardenState) => 1 + 0.15 * skillRank(s, "bookworm");
 
@@ -490,15 +600,18 @@ export const awayRate = (s: GardenState) =>
   Math.min(
     1,
     offlineRate(upgradeLevel(s, "nightshift")) +
-      0.05 * skillRank(s, "nightowl"),
+      0.05 * skillRank(s, "nightowl") +
+      0.1 * skillRank(s, "warmsoil"),
   );
 export const awayHours = (s: GardenState) =>
-  offlineHours(upgradeLevel(s, "nightshift")) + 4 * skillRank(s, "nightowl");
+  offlineHours(upgradeLevel(s, "nightshift")) +
+  4 * skillRank(s, "nightowl") +
+  6 * skillRank(s, "warmsoil");
 
 export const TASK_DAILY_CAP = 12;
 
 export const taskReward = (s: GardenState) => ({
-  drops: Math.round((20 + rate(s) * 60) * habits(s)),
+  drops: Math.round((20 + rate(s) * 60) * habits(s) * hay(s)),
   xp: Math.round(12 * bookworm(s)),
 });
 
@@ -507,7 +620,8 @@ export const focusReward = (s: GardenState, minutes: number) => ({
     (5 + rate(s) * 12) *
       minutes *
       (1 + DEEP_FOCUS_STEP * upgradeLevel(s, "deepfocus")) *
-      habits(s),
+      habits(s) *
+      hay(s),
   ),
   xp: Math.round((3 * minutes + 10) * bookworm(s)),
 });
@@ -524,9 +638,38 @@ export const gameReward = (s: GardenState) => ({
 
 // ---------------------------------------------------------------- levels
 
-/** Total XP needed to reach a level: 75, 200, 375, 600, 875… */
-export const xpForLevel = (level: number) =>
-  50 * (level - 1) + 25 * (level - 1) ** 2;
+/** Where the curve flattens, and the steady cost of each level after it. */
+const STEEP_UNTIL = 30;
+
+/**
+ * Total XP needed to reach a level: 75, 200, 375, 600, 875… rising steeply
+ * to level 30 (about 22,500 XP, a couple of months of daily use). After that
+ * each level costs a near-flat 1,500 XP, rising by 20 a level, so level 100
+ * (about 177,000 XP) takes roughly a year of daily tasks and focus.
+ */
+export const xpForLevel = (level: number) => {
+  const steep = (l: number) => 50 * (l - 1) + 25 * (l - 1) ** 2;
+  if (level <= STEEP_UNTIL) return steep(level);
+  const n = level - STEEP_UNTIL;
+  return steep(STEEP_UNTIL) + 1500 * n + 10 * n * (n + 1);
+};
+
+/** A title for every ten levels, shown under the greeting. */
+const TITLES = [
+  "seedling",
+  "drizzle",
+  "shower",
+  "downpour",
+  "squall",
+  "deluge",
+  "tempest",
+  "monsoon",
+  "cloudburst",
+  "stormkeeper",
+  "rainmaker",
+];
+export const titleFor = (level: number) =>
+  TITLES[Math.min(10, Math.floor(level / 10))];
 
 export const MAX_LEVEL = 999;
 
@@ -577,6 +720,10 @@ export function unlocksAt(level: number) {
     ),
     ...PLANTS.filter((p) => p.unlockLevel === level).map((p) => p.name),
     ...UPGRADES.filter((u) => u.unlockLevel === level).map((u) => u.name),
+    ...(level % 10 === 0 && level <= 100
+      ? [`the title "${titleFor(level)}"`]
+      : []),
+    ...([50, 75, 100].includes(level) ? ["+1 seed a harvest"] : []),
   ];
 }
 
@@ -846,9 +993,18 @@ export function tick(now = Date.now()) {
 export function catchDrop(kind: DropKind) {
   const s = gardenStore.get();
   const value =
-    kind === "diamond" ? diamondValue(s) : kind === "golden" ? goldenValue(s) : catchValue(s);
+    kind === "diamond"
+      ? diamondValue(s)
+      : kind === "meteor"
+        ? meteorValue(s)
+        : kind === "golden"
+          ? goldenValue(s)
+          : catchValue(s);
+  const rainbowUntil =
+    kind === "rainbow" ? Date.now() + RAINBOW_MS : s.rainbowUntil;
   commit((g) => ({
     ...addDrops(g, value),
+    rainbowUntil,
     xp: g.xp + (kind === "diamond" ? 10 : kind === "golden" ? 2 : 0),
     stats: {
       ...g.stats,
@@ -991,12 +1147,48 @@ export function buyUpgrade(id: UpgradeId) {
 /** Drops a season must earn before it can be harvested. */
 export const SEASON_MINIMUM = 1_000_000;
 
-/** Seeds a harvest pays: a square root, so a season is worth ending rather
- *  than idling in for ever, while longer ones still pay more. */
-export const seedsFor = (seasonLifetime: number) =>
-  seasonLifetime < SEASON_MINIMUM
-    ? 0
-    : Math.floor(3 * Math.sqrt(seasonLifetime / 1_000_000));
+/** How much more each season's harvest is worth than the first's. */
+const seasonFactor = (s: GardenState) => 1 + 0.25 * s.seasons;
+
+/** +1 seed a harvest at levels 50, 75 and 100. */
+const levelSeeds = (s: GardenState) => {
+  const level = levelFromXp(totalXp(s));
+  return [50, 75, 100].filter((l) => level >= l).length;
+};
+
+/** Sunlit seeds: harvests pay a share more. */
+const sunlit = (s: GardenState) => 1 + 0.15 * skillRank(s, "sunlitseeds");
+
+/**
+ * Seeds a harvest pays: 2 × the fourth root of the season's drops in
+ * millions, × 1.25 for every season already ended, plus the level bonus.
+ *
+ * The fourth root is what stops one long season paying out the tree: ten
+ * times the drops is under twice the seeds. Later seasons pay far more,
+ * because each runs on everything learnt before it, so its drops and its
+ * factor both grow; and tiny seasons can't be farmed, since a million drops
+ * is worth a few seeds at most. About ten seasons fill the tree.
+ */
+export function seedsFor(s: GardenState) {
+  if (s.seasonLifetime < SEASON_MINIMUM) return 0;
+  const base =
+    2 * (s.seasonLifetime / 1_000_000) ** 0.25 * seasonFactor(s) * sunlit(s);
+  return Math.floor(base) + levelSeeds(s);
+}
+
+/** Drops this season needs to pay `seeds`. */
+export function dropsForSeeds(seeds: number, s: GardenState) {
+  const base =
+    Math.max(1, seeds - levelSeeds(s)) / (2 * seasonFactor(s) * sunlit(s));
+  return Math.max(SEASON_MINIMUM, 1_000_000 * base ** 4);
+}
+
+/** The season tab opens once a first harvest is possible, and stays. */
+export const seasonsOpen = (s: GardenState) =>
+  s.seasons > 0 ||
+  s.seeds > 0 ||
+  Object.keys(s.skills).length > 0 ||
+  seedsFor(s) > 0;
 
 /**
  * Ends the season: drops, plants and upgrades go, seeds come in. Level, XP,
@@ -1005,7 +1197,7 @@ export const seedsFor = (seasonLifetime: number) =>
  */
 export function endSeason() {
   const s = gardenStore.get();
-  const seeds = seedsFor(s.seasonLifetime);
+  const seeds = seedsFor(s);
   if (!seeds) return;
   const plants: GardenState["plants"] = {};
   if (skillRank(s, "perennials")) {

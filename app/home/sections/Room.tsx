@@ -5,12 +5,16 @@ import { AnimatePresence, motion } from "motion/react";
 import { Eye, Gamepad2, Headphones, ListTodo, Music2, Pause, Play, Sprout, Timer as TimerIcon } from "lucide-react";
 import EyeBreak from "@/components/home/EyeBreak";
 import HudChip from "@/components/home/HudChip";
+import Pet from "@/components/home/Pet";
 import SceneSwitcher from "@/components/home/SceneSwitcher";
 import TimerEngine from "@/components/home/TimerEngine";
 import { chipButton, chipGlass } from "@/components/home/ui";
 import SiteSwitcher from "@/components/shared/SiteSwitcher";
 import { primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
+import { isUnlocked } from "@/lib/home/cosmetics";
 import { formatClock } from "@/lib/home/format";
+import { useGarden } from "@/lib/home/garden";
+import { getPet } from "@/lib/home/pets";
 import { activeAmbience, closePanels, togglePanel, usePrefs, type PanelId } from "@/lib/home/prefs";
 import { getAmbience } from "@/lib/home/scenes";
 import { spotifyHeld, toggleSpotify, useSpotifyPlaying, useSpotifyReady } from "@/lib/home/spotify";
@@ -308,7 +312,9 @@ const PANELS: Record<PanelId, typeof Tasks> = {
 
 const Room = () => {
   const wide = useWide();
-  const { openPanels } = usePrefs();
+  const { openPanels, pet } = usePrefs();
+  const garden = useGarden();
+  const showPet = pet && isUnlocked(getPet(pet).unlock, garden) ? pet : null;
   const [sheet, setSheet] = useState<PanelId | null>(null);
 
   const isOpen = (id: PanelId) => wide && openPanels.includes(id);
@@ -428,6 +434,8 @@ const Room = () => {
 
       <TasksChip open={chipOpen("tasks")} onClick={() => toggle("tasks")} />
       <div className="absolute right-8 bottom-8 hidden items-center gap-2.5 md:flex">
+        {/* The pet lives on top of these chips. */}
+        {wide && showPet && <Pet id={showPet} />}
         <button
           type="button"
           aria-label={LABEL.arcade}

@@ -11,8 +11,17 @@ import {
   DIAMOND_SHOWER,
   gardenStore,
   goldenChance,
+  goldenHourChance,
+  hasGoldenHour,
+  hasMeteors,
   hasMonsoon,
+  hasRainbow,
+  hasThunderclap,
+  hasTorrent,
   ladybugMayAppear,
+  maxDrops,
+  meteorChance,
+  RAINBOW_CHANCE,
   type DropKind,
   soakDrop,
   spawnInterval,
@@ -25,6 +34,9 @@ import {
  * then a diamond drop falls, worth five golden ones and followed by a golden
  * shower; and a ladybug may crawl along the soil, bringing luck if caught.
  *
+ * Later skills add the weather: rainbow drops, thunderclaps that catch the
+ * whole window, meteor showers crossing it, and golden hour.
+ *
  * With reduced motion the drops bead in place and fade instead of falling,
  * so the game still works without anything moving across the screen.
  */
@@ -33,6 +45,8 @@ interface Drop {
   x: number;
   y: number;
   r: number;
+  /** Sideways speed: only meteors, which cross the window at a slant. */
+  vx: number;
   vy: number;
   sway: number;
   kind: DropKind;
@@ -41,7 +55,7 @@ interface Drop {
 }
 
 /** Which palette a spark or floater is drawn in. */
-type Tone = "rain" | "gold" | "diamond" | "bug";
+type Tone = "rain" | "gold" | "diamond" | "bug" | "rainbow" | "meteor";
 
 interface Ladybug {
   x: number;
@@ -70,8 +84,11 @@ interface Floater {
   faint?: boolean;
 }
 
-const MAX_DROPS = 12;
 const DIAMOND = "#c8f6ff";
+const METEOR = "#ffd9a8";
+/** How long the weather lasts once it comes. */
+const METEOR_SHOWER_S = 25;
+const GOLDEN_HOUR_S = 45;
 const BUG = "#e5483f";
 /** Chance a ladybug appears in any second it is allowed to: one every few
  *  minutes on average. */
@@ -133,16 +150,32 @@ const CatchGame = ({ label }: { label: string }) => {
     let bug: Ladybug | null = null;
     let bugClock = 0;
 
+    // The weather, rolled for once a minute.
+    let eventClock = 0;
+    let meteorsLeft = 0;
+    let meteorClock = 0;
+    let goldenLeft = 0;
+    /** The window lights up for a moment when thunder strikes. */
+    let flash = 0;
+
     const spawn = (stagger = 0, force?: DropKind) => {
       const s = gardenStore.get();
       const roll = Math.random();
       const kind: DropKind =
-        force ?? (roll < DIAMOND_CHANCE ? "diamond" : roll < goldenChance(s) ? "golden" : "plain");
+        force ??
+        (roll < DIAMOND_CHANCE
+          ? "diamond"
+          : hasRainbow(s) && Math.random() < RAINBOW_CHANCE
+            ? "rainbow"
+            : goldenLeft > 0 || roll < goldenChance(s)
+              ? "golden"
+              : "plain");
       const r = lerp(6, 8.5, Math.random()) * (kind === "diamond" ? 1.15 : 1);
       drops.push({
         x: lerp(r * 2, w - r * 2, Math.random()),
         y: reduced ? lerp(h * 0.15, h * 0.75, Math.random()) : -r * 2 - stagger,
         r,
+        vx: 0,
         vy: reduced ? 0 : lerp(55, 95, Math.random()),
         sway: Math.random() * Math.PI * 2,
         kind,
@@ -159,22 +192,77 @@ const CatchGame = ({ label }: { label: string }) => {
       }
     };
 
-    const toneOf = (kind: DropKind): Tone => (kind === "diamond" ? "diamond" : kind === "golden" ? "gold" : "rain");
+    /** A meteor: in from the top right, slanting down and across. */
+    const spawnMeteor = () => {
+      drops.push({
+        x: lerp(w * 0.4, w * 1.1, Math.random()),
+        y: -10,
+        r: 5,
+        vx: -lerp(150, 220, Math.random()),
+        vy: lerp(120, 170, Math.random()),
+        sway: 0,
+        kind: "meteor",
+        age: 0,
+        life: Infinity,
+      });
+    };
 
-    const take = (i: number) => {
+    const TONES: Record<DropKind, Tone> = {
+      plain: "rain",
+      golden: "gold",
+      diamond: "diamond",
+      rainbow: "rainbow",
+      meteor: "meteor",
+    };
+    const toneOf = (kind: DropKind): Tone => TONES[kind];
+
+    const nearest = (x: number, y: number) => {
+      let best = -1;
+      let bestDist = Infinity;
+      drops.forEach((d, i) => {
+        const dist = Math.hypot(d.x - x, d.y - y);
+        if (dist < bestDist) {
+          best = i;
+          bestDist = dist;
+        }
+      });
+      return best;
+    };
+
+    /** `chained` for catches made by other catches, which don't chain on. */
+    const take = (i: number, chained = false) => {
       const d = drops[i];
       drops.splice(i, 1);
       const value = catchDrop(d.kind);
+      const s = gardenStore.get();
+      if (d.kind === "rainbow") {
+        floaters.push({ x: d.x, y: d.y - d.r * 4, text: "×3 for 20s", age: 0, tone: "rainbow" });
+      }
       // Showers are staggered so they fall in a ragged line, not one row. A
       // diamond always brings golden ones; Monsoon makes golden bring plain.
       if (d.kind === "diamond") {
         for (let k = 0; k < DIAMOND_SHOWER; k++) spawn(k * 22, "golden");
-      } else if (d.kind === "golden" && hasMonsoon(gardenStore.get())) {
+      } else if (d.kind === "golden" && hasMonsoon(s)) {
         for (let k = 0; k < 5; k++) spawn(k * 18, "plain");
       }
-      const big = { plain: [8, 110], golden: [14, 150], diamond: [26, 190] }[d.kind];
-      burst(d.x, d.y, toneOf(d.kind), big[0], big[1]);
+      const big: Record<DropKind, [number, number]> = {
+        plain: [8, 110],
+        golden: [14, 150],
+        diamond: [26, 190],
+        rainbow: [22, 170],
+        meteor: [18, 170],
+      };
+      burst(d.x, d.y, toneOf(d.kind), big[d.kind][0], big[d.kind][1]);
       floaters.push({ x: d.x, y: d.y - d.r * 2, text: `+${formatNumber(value)}`, age: 0, tone: toneOf(d.kind) });
+      if (chained) return;
+      // Thunderclap: a golden catch now and then strikes the whole window.
+      if (d.kind === "golden" && hasThunderclap(s) && Math.random() < 0.25) {
+        flash = 1;
+        while (drops.length) take(drops.length - 1, true);
+        return;
+      }
+      // Torrent: the nearest drop comes with it.
+      if (hasTorrent(s) && drops.length) take(nearest(d.x, d.y), true);
     };
 
     const soak = (x: number, y: number) => {
@@ -230,13 +318,60 @@ const CatchGame = ({ label }: { label: string }) => {
     const draw = (t: number) => {
       ctx.clearRect(0, 0, w, h);
 
+      // Golden hour warms the whole window; a rainbow streak arcs over it;
+      // thunder lights it up for a moment.
+      if (goldenLeft > 0) {
+        ctx.fillStyle = `rgba(255,190,90,${0.1 * Math.min(1, goldenLeft / 3)})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+      if (Date.now() < gardenStore.get().rainbowUntil) {
+        ctx.lineWidth = 3;
+        for (let k = 0; k < 5; k++) {
+          ctx.strokeStyle = `hsla(${k * 60} 90% 70% / 0.18)`;
+          ctx.beginPath();
+          ctx.arc(w / 2, h * 1.1, w * 0.62 - k * 4, Math.PI, 0);
+          ctx.stroke();
+        }
+      }
+      if (flash > 0) {
+        ctx.fillStyle = `rgba(235,240,255,${flash * 0.45})`;
+        ctx.fillRect(0, 0, w, h);
+      }
+
       for (const d of drops) {
         const x = d.x + Math.sin(t * 1.6 + d.sway) * 2.5;
         const fade = reduced ? Math.min(1, d.age * 3, (d.life - d.age) * 2) : 1;
         ctx.globalAlpha = fade;
         teardrop(ctx, x, d.y, d.r);
+        if (d.kind === "meteor") {
+          // A bright head and a tail streaming back the way it came.
+          const tail = ctx.createLinearGradient(d.x, d.y, d.x - d.vx * 0.12, d.y - d.vy * 0.12);
+          tail.addColorStop(0, "rgba(255,230,190,0.9)");
+          tail.addColorStop(1, "rgba(255,230,190,0)");
+          ctx.strokeStyle = tail;
+          ctx.lineWidth = 3;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - d.vx * 0.12, d.y - d.vy * 0.12);
+          ctx.stroke();
+          ctx.fillStyle = "#fff6e6";
+          ctx.shadowColor = METEOR;
+          ctx.shadowBlur = 14;
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.r * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          continue;
+        }
         const fill = ctx.createLinearGradient(0, d.y - d.r * 1.85, 0, d.y + d.r);
-        if (d.kind === "diamond") {
+        if (d.kind === "rainbow") {
+          // Its colours turn as it falls.
+          const hue = (t * 120 + d.sway * 60) % 360;
+          for (let k = 0; k <= 4; k++) fill.addColorStop(k / 4, `hsl(${(hue + k * 72) % 360} 90% 72%)`);
+          ctx.shadowColor = "#ffffff";
+          ctx.shadowBlur = 16;
+        } else if (d.kind === "diamond") {
           fill.addColorStop(0, "#ffffff");
           fill.addColorStop(0.5, DIAMOND);
           fill.addColorStop(1, "#b9a8ff");
@@ -324,7 +459,18 @@ const CatchGame = ({ label }: { label: string }) => {
 
       for (const p of particles) {
         ctx.globalAlpha = 1 - p.age / p.life;
-        ctx.fillStyle = p.tone === "gold" ? gold : p.tone === "diamond" ? DIAMOND : p.tone === "bug" ? BUG : rain;
+        ctx.fillStyle =
+          p.tone === "gold"
+            ? gold
+            : p.tone === "diamond"
+              ? DIAMOND
+              : p.tone === "bug"
+                ? BUG
+                : p.tone === "meteor"
+                  ? METEOR
+                  : p.tone === "rainbow"
+                    ? `hsl(${(p.x * 3 + p.age * 400) % 360} 90% 70%)`
+                    : rain;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
         ctx.fill();
@@ -334,7 +480,18 @@ const CatchGame = ({ label }: { label: string }) => {
       for (const f of floaters) {
         ctx.font = `${f.faint ? 11 : 16}px ${pixelFont}`;
         ctx.globalAlpha = Math.max(0, 1 - f.age / 0.9) * (f.faint ? 0.55 : 1);
-        ctx.fillStyle = f.tone === "gold" ? gold : f.tone === "diamond" ? DIAMOND : f.tone === "bug" ? "#ffb3ad" : "#eaf6fb";
+        ctx.fillStyle =
+          f.tone === "gold"
+            ? gold
+            : f.tone === "diamond"
+              ? DIAMOND
+              : f.tone === "bug"
+                ? "#ffb3ad"
+                : f.tone === "meteor"
+                  ? METEOR
+                  : f.tone === "rainbow"
+                    ? `hsl(${(t * 200) % 360} 90% 75%)`
+                    : "#eaf6fb";
         ctx.fillText(f.text, f.x, f.y - f.age * 34);
       }
       ctx.globalAlpha = 1;
@@ -349,12 +506,37 @@ const CatchGame = ({ label }: { label: string }) => {
         readColours();
       }
 
+      const s = gardenStore.get();
       spawnClock += dt * 1000;
-      const interval = spawnInterval(gardenStore.get());
+      const interval = spawnInterval(s);
       if (spawnClock >= interval) {
         spawnClock = 0;
-        if (drops.length < MAX_DROPS && w > 0) spawn();
+        if (drops.length < maxDrops(s) && w > 0) spawn();
       }
+
+      // The weather: rolled for once a minute, if its skill is learnt.
+      eventClock += dt;
+      if (eventClock >= 60 && !reduced) {
+        eventClock = 0;
+        if (!meteorsLeft && hasMeteors(s) && Math.random() < meteorChance()) {
+          meteorsLeft = METEOR_SHOWER_S;
+          floaters.push({ x: w / 2, y: h * 0.3, text: "meteor shower", age: 0, tone: "meteor" });
+        }
+        if (!goldenLeft && hasGoldenHour(s) && Math.random() < goldenHourChance(s)) {
+          goldenLeft = GOLDEN_HOUR_S;
+          floaters.push({ x: w / 2, y: h * 0.3, text: "golden hour", age: 0, tone: "gold" });
+        }
+      }
+      if (meteorsLeft > 0) {
+        meteorsLeft = Math.max(0, meteorsLeft - dt);
+        meteorClock += dt;
+        if (meteorClock >= 1.4) {
+          meteorClock = 0;
+          spawnMeteor();
+        }
+      }
+      goldenLeft = Math.max(0, goldenLeft - dt);
+      flash = Math.max(0, flash - dt * 2.5);
 
       // Once a second, maybe a ladybug: never within ten minutes of the last.
       bugClock += dt;
@@ -377,6 +559,12 @@ const CatchGame = ({ label }: { label: string }) => {
         const d = drops[i];
         d.age += dt;
         d.y += d.vy * dt;
+        d.x += d.vx * dt;
+        // A meteor missed is gone: it burns out rather than landing.
+        if (d.kind === "meteor") {
+          if (d.y > h || d.x < -20) drops.splice(i, 1);
+          continue;
+        }
         if (d.y + d.r >= h) {
           burst(d.x, h - 1, toneOf(d.kind), 5, 70);
           drops.splice(i, 1);

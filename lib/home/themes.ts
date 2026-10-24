@@ -127,6 +127,10 @@ for (const t of THEMES) {
   if (!t.unlock && level > 1) t.unlock = { level };
 }
 
+// Shown in the order they open up, which for the scene-made ones is also
+// the order of the scenes. Sorting is stable, so ties keep the order above.
+THEMES.sort((a, b) => (a.unlock?.level ?? 1) - (b.unlock?.level ?? 1));
+
 const THEME_IDS = THEMES.map((t) => t.id);
 
 export function isThemeId(value: unknown): value is ThemeId {

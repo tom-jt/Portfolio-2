@@ -1,18 +1,21 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import {
   Bean,
+  CloudRain,
   Droplet,
   Flame,
   Lock,
   Sprout,
   Star,
+  Sun,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
 import CatchGame from "@/components/home/CatchGame";
+import { FrameRing, frameShape } from "@/components/home/Frames";
 import GardenDecor from "@/components/home/GardenDecor";
 import PlantSprite, { stageFor } from "@/components/home/PlantSprite";
 import {
@@ -20,10 +23,13 @@ import {
   Panel,
   Segmented,
   type PanelChrome,
+  textButton,
 } from "@/components/home/ui";
 import {
   DECOR,
   describeUnlock,
+  FRAMES,
+  GOLD_LEAF,
   isUnlocked,
   POTS,
   resolveDecor,
@@ -41,11 +47,13 @@ import {
   currentStreak,
   endSeason,
   levelProgress,
+  titleFor,
   totalXp,
   luckLeft,
   maxAffordable,
   milestoneStep,
   nextUnlock,
+  unlocksAt,
   plantCost,
   plantCostScale,
   plantCount,
@@ -55,7 +63,9 @@ import {
   plantBoost,
   plantRate,
   PLANT_MILESTONE,
+  dropsForSeeds,
   SEASON_MINIMUM,
+  seasonsOpen,
   seedsFor,
   skillStatus,
   upgradeCost,
@@ -64,7 +74,9 @@ import {
   useGarden,
   type GardenState,
 } from "@/lib/home/garden";
+import { PETS } from "@/lib/home/pets";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
+import { THEMES } from "@/lib/home/themes";
 import {
   BRANCHES,
   getSkill,
@@ -272,6 +284,8 @@ const BRANCH_ICON: Record<BranchId, LucideIcon> = {
   roots: Sprout,
   rain: Droplet,
   hearth: Flame,
+  rainy: CloudRain,
+  sunny: Sun,
 };
 
 /** Node centres in a branch: columns at 22%, 50% and 78%, rows 54px apart. */
@@ -292,10 +306,12 @@ const SkillNode = ({
 }) => {
   const def = getSkill(id);
   const status = skillStatus(garden, id);
+  // Capstones sit centred below the rest of their branch.
+  const capstone = def.at[0] === 0.5 && def.at[1] > 0;
   const Icon =
     status.state === "locked" && status.rank === 0
       ? Lock
-      : def.at[1] === 3
+      : capstone
         ? Star
         : BRANCH_ICON[def.branch];
   const affordable = status.state === "open" && status.cost <= garden.seeds;
@@ -344,9 +360,9 @@ const Branch = ({
   onPick: (id: SkillId) => void;
 }) => {
   const skills = SKILLS.filter((k) => k.branch === branch);
-  const height = rowY(3) + 26;
+  const height = rowY(Math.max(...skills.map((k) => k.at[1]))) + 26;
   return (
-    <div className="relative" style={{ height }}>
+    <div className="relative mt-2" style={{ height }}>
       <svg
         className="absolute inset-0 size-full"
         viewBox={`0 0 100 ${height}`}
@@ -354,23 +370,27 @@ const Branch = ({
         aria-hidden="true"
       >
         {skills.flatMap((k) =>
-          (Object.keys(k.needs) as SkillId[]).map((need) => {
-            const from = getSkill(need);
-            const lit = (garden.skills[k.id] ?? 0) > 0;
-            return (
-              <line
-                key={`${need}-${k.id}`}
-                x1={colX(from.at[0])}
-                y1={rowY(from.at[1])}
-                x2={colX(k.at[0])}
-                y2={rowY(k.at[1])}
-                stroke={lit ? "var(--glow)" : "currentColor"}
-                strokeOpacity={lit ? 0.7 : 0.14}
-                strokeWidth="1.5"
-                vectorEffect="non-scaling-stroke"
-              />
-            );
-          }),
+          // Only within the branch: a side's first skill needs capstones from
+          // the branches above, which its caption names instead.
+          (Object.keys(k.needs) as SkillId[])
+            .filter((need) => getSkill(need).branch === branch)
+            .map((need) => {
+              const from = getSkill(need);
+              const lit = (garden.skills[k.id] ?? 0) > 0;
+              return (
+                <line
+                  key={`${need}-${k.id}`}
+                  x1={colX(from.at[0])}
+                  y1={rowY(from.at[1])}
+                  x2={colX(k.at[0])}
+                  y2={rowY(k.at[1])}
+                  stroke={lit ? "var(--glow)" : "currentColor"}
+                  strokeOpacity={lit ? 0.7 : 0.14}
+                  strokeWidth="1.5"
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            }),
         )}
       </svg>
       {skills.map((k) => (
@@ -404,9 +424,14 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
-  const harvest = seedsFor(garden.seasonLifetime);
+  const harvest = seedsFor(garden);
   const def = getSkill(picked);
   const status = skillStatus(garden, picked);
+  const sides = BRANCHES.filter((b) => {
+    if (!b.side) return false;
+    const first = SKILLS.find((k) => k.branch === b.id && k.at[1] === 0);
+    return first ? skillStatus(garden, first.id).state !== "locked" : false;
+  });
 
   const onEnd = () => {
     clearTimeout(confirmTimer.current);
@@ -438,9 +463,10 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
         <p className="text-muted-foreground mt-2 text-xs">
           {harvest ? (
             <>
-              ending it now harvests <SeedCount n={harvest} />. drops, plants,
-              and upgrades start over; level, achievements, skills, and
-              cosmetics stay.
+              ending it now harvests <SeedCount n={harvest} />, or {harvest + 1}{" "}
+              at {formatNumber(dropsForSeeds(harvest + 1, garden))} drops.
+              drops, plants, and upgrades start over; level, achievements,
+              skills, and cosmetics stay.
             </>
           ) : (
             `earn ${formatNumber(SEASON_MINIMUM)} drops in a season to harvest seeds from it.`
@@ -464,7 +490,7 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-1">
-        {BRANCHES.map((b) => (
+        {BRANCHES.filter((b) => !b.side).map((b) => (
           <div key={b.id}>
             <Eyebrow className="text-center">{b.name}</Eyebrow>
             <Branch
@@ -476,6 +502,40 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
           </div>
         ))}
       </div>
+
+      {/* The rainy and sunny sides, each out of sight until its first skill
+          can be learnt. */}
+      {sides.length > 0 && (
+        <div
+          className={cn(
+            "border-glass-edge mt-3 grid gap-2 border-t pt-3",
+            sides.length > 1 ? "grid-cols-2" : "grid-cols-1",
+          )}
+        >
+          {sides.map((b) => {
+            const first = SKILLS.find(
+              (k) => k.branch === b.id && k.at[1] === 0,
+            )!;
+            return (
+              <div key={b.id}>
+                <Eyebrow className="text-center">{b.name}</Eyebrow>
+                <p className="text-muted-foreground text-center text-[0.65rem]">
+                  opens with{" "}
+                  {(Object.keys(first.needs) as SkillId[])
+                    .map((n) => getSkill(n).name.toLowerCase())
+                    .join(" and ")}
+                </p>
+                <Branch
+                  branch={b.id}
+                  garden={garden}
+                  picked={picked}
+                  onPick={setPicked}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div
         className="border-glass-edge mt-2 rounded-2xl border bg-white/3 p-3"
@@ -536,7 +596,8 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
   const auto = resolveDecor("auto", prefs.scene, garden);
   const sceneDecor = resolveDecor("scene", prefs.scene, garden);
   const scenePot = resolvePot("scene", prefs.scene, garden);
-  const decorName = (id: string | null) => DECOR.find((d) => d.id === id)?.name ?? "none";
+  const decorName = (id: string | null) =>
+    DECOR.find((d) => d.id === id)?.name ?? "none";
 
   return (
     <>
@@ -544,7 +605,12 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
       <ul className="mt-2 grid grid-cols-4 gap-1">
         {[
           // Follows the scene: its own pot, once that's unlocked.
-          { id: "scene" as PotPick, name: "match scene", unlock: undefined, shows: scenePot },
+          {
+            id: "scene" as PotPick,
+            name: "match scene",
+            unlock: undefined,
+            shows: scenePot,
+          },
           ...POTS.map((p) => ({ ...p, id: p.id as PotPick, shows: p.id })),
         ].map((pot) => {
           const locked = !isUnlocked(pot.unlock, garden);
@@ -577,6 +643,57 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
                 >
                   {pot.name}
                 </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <Eyebrow>gilded plants</Eyebrow>
+        {isUnlocked(GOLD_LEAF, garden) ? (
+          <button
+            type="button"
+            aria-pressed={prefs.goldLeaf}
+            onClick={() => setPrefs({ goldLeaf: !prefs.goldLeaf })}
+            className={cn(
+              textButton,
+              "text-xs",
+              prefs.goldLeaf ? "text-glow" : "text-muted-foreground",
+            )}
+          >
+            {prefs.goldLeaf ? "on" : "off"}
+          </button>
+        ) : (
+          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+            <Lock className="size-3" />
+            {how(GOLD_LEAF)}
+          </span>
+        )}
+      </div>
+
+      <Eyebrow className="mt-4">frame</Eyebrow>
+      <ul className="mt-2 grid grid-cols-3 gap-1.5">
+        {FRAMES.map((f) => {
+          const locked = !isUnlocked(f.unlock, garden);
+          const active = prefs.frame === f.id;
+          return (
+            <li key={f.id}>
+              <button
+                type="button"
+                disabled={locked}
+                aria-pressed={active}
+                title={locked ? `${f.name}: ${how(f.unlock)}` : f.name}
+                onClick={() => setPrefs({ frame: f.id })}
+                className={cn(
+                  "focus-visible:ring-ring flex h-full w-full cursor-pointer items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center text-[0.7rem] leading-tight transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+                  active
+                    ? "border-glow/60 bg-glow/12 text-foreground"
+                    : "border-glass-edge text-muted-foreground enabled:hover:text-foreground bg-white/3 enabled:hover:bg-white/8",
+                )}
+              >
+                {locked && <Lock className="size-3 shrink-0" />}
+                {f.name}
               </button>
             </li>
           );
@@ -718,6 +835,113 @@ const JournalTab = ({ garden }: { garden: GardenState }) => {
 const TAB_TRIGGER =
   "text-muted-foreground data-[state=active]:text-foreground data-[state=active]:border-glow focus-visible:ring-ring shrink-0 cursor-pointer border-b-2 border-transparent px-1 pb-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:outline-none";
 
+// --------------------------------------------------------------- levels
+
+/** Every reward each level opens, from the same lists the game unlocks by. */
+function levelRewards() {
+  const byLevel = new Map<number, string[]>();
+  const add = (level: number | undefined, item: string) => {
+    if (!level || level < 2) return;
+    byLevel.set(level, [...(byLevel.get(level) ?? []), item]);
+  };
+  for (let l = 2; l <= 100; l++) for (const item of unlocksAt(l)) add(l, item);
+  for (const t of THEMES) add(t.unlock?.level, `${t.name} colours`);
+  for (const p of POTS) add(p.unlock?.level, `${p.name} pot`);
+  for (const d of DECOR) add(d.unlock?.level, `${d.name} decor`);
+  for (const f of FRAMES) add(f.unlock?.level, `${f.name} frame`);
+  for (const p of PETS) add(p.unlock.level, `a ${p.name}`);
+  add(GOLD_LEAF.level, "gold leaf on every plant");
+  return [...byLevel.entries()].sort(([a], [b]) => a - b);
+}
+
+const LEVEL_REWARDS = levelRewards();
+
+/**
+ * Every level that opens something, as a timeline: a line down the side
+ * with a dot for each, filled once reached. Opens over the garden from its
+ * level badge, scrolled to the next one ahead.
+ */
+const LevelTimeline = ({
+  level,
+  onClose,
+}: {
+  level: number;
+  onClose: () => void;
+}) => {
+  const next = useRef<HTMLLIElement>(null);
+  useEffect(() => next.current?.scrollIntoView({ block: "center" }), []);
+  const upcoming = LEVEL_REWARDS.find(([l]) => l > level)?.[0];
+
+  return (
+    <div className="bg-glass-strong absolute inset-x-0 top-16 bottom-0 z-20 flex flex-col rounded-b-[1.75rem] px-5 pb-5">
+      <div className="flex items-center justify-between gap-3 pt-3 pb-3">
+        <Eyebrow>every level, and what it opens</Eyebrow>
+        <button
+          type="button"
+          onClick={onClose}
+          className={cn(textButton, "text-muted-foreground text-xs")}
+        >
+          back to the garden
+        </button>
+      </div>
+      {/* The list scrolls; the line lives on the list inside, so it runs the
+          whole length rather than just the first screenful. */}
+      <div className="min-h-0 flex-1 overflow-y-auto pr-2">
+        <ol className="relative pl-6">
+          {/* The timeline's line, through every dot. */}
+          <span
+            aria-hidden="true"
+            className="bg-glow/70 absolute top-2 bottom-5 left-[0.55rem] w-[3px] rounded-full"
+          />
+          {LEVEL_REWARDS.map(([l, items]) => {
+            const reached = l <= level;
+            return (
+              <li
+                key={l}
+                ref={l === upcoming ? next : undefined}
+                className="relative pb-3.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute top-1 -left-[1.2rem] size-2.5 rounded-full border",
+                    reached
+                      ? "bg-glow border-glow shadow-[0_0_8px_var(--glow)]"
+                      : l === upcoming
+                        ? "border-glow bg-glass-strong"
+                        : "border-glass-edge bg-glass-strong",
+                  )}
+                />
+                <p className="flex items-baseline gap-2">
+                  <span
+                    className={cn(
+                      "font-pixel text-xs",
+                      reached ? "text-glow" : "text-muted-foreground",
+                    )}
+                  >
+                    lv {l}
+                  </span>
+                  {l === upcoming && (
+                    <span className="text-glow text-[0.65rem]">next</span>
+                  )}
+                </p>
+                <p
+                  className={cn(
+                    "text-xs leading-snug",
+                    reached ? "text-foreground/85" : "text-muted-foreground",
+                  )}
+                >
+                  {items.join(", ")}
+                </p>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </div>
+  );
+};
+
 const Garden = ({
   className,
   chrome,
@@ -728,8 +952,12 @@ const Garden = ({
   const garden = useGarden();
   const prefs = usePrefs();
   const hydrated = useHydrated();
-  const decor = hydrated ? resolveDecor(prefs.decor, prefs.scene, garden) : null;
+  const [levels, setLevels] = useState(false);
+  const decor = hydrated
+    ? resolveDecor(prefs.decor, prefs.scene, garden)
+    : null;
   const pot = resolvePot(prefs.pot, prefs.scene, garden);
+  const goldLeaf = prefs.goldLeaf && isUnlocked(GOLD_LEAF, garden);
   const lucky = luckLeft(garden) > 0;
   const now = useNow(1000, lucky);
   const luck = lucky && now ? luckLeft(garden, now) : 0;
@@ -746,9 +974,15 @@ const Garden = ({
       className={className}
       chrome={chrome}
       actions={
-        <span className="font-pixel border-glow/40 text-glow rounded-full border px-2.5 py-0.5 text-xs">
-          Lv {level}
-        </span>
+        <button
+          type="button"
+          aria-expanded={levels}
+          onClick={() => setLevels((v) => !v)}
+          title="every level, and what it opens"
+          className="font-pixel border-glow/40 text-glow hover:bg-glow/10 focus-visible:ring-ring cursor-pointer rounded-full border px-2.5 py-0.5 text-xs transition focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Lv {level} | {titleFor(level)}
+        </button>
       }
     >
       <div
@@ -773,18 +1007,7 @@ const Garden = ({
               </span>{" "}
               per catch
             </p>
-            {luck > 0 && (
-              <p className="mt-1 flex items-center gap-1.5 text-xs text-[#ffb3ad]">
-                <span
-                  aria-hidden="true"
-                  className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]"
-                />
-                ladybug luck: plants ×2 for{" "}
-                <span className="font-pixel tabular-nums">
-                  {formatClock(luck)}
-                </span>
-              </p>
-            )}
+
           </div>
         </div>
 
@@ -816,7 +1039,24 @@ const Garden = ({
       </div>
 
       {/* The window. Drops run down it and the plants sit on its sill. */}
-      <div className="border-glass-edge relative mt-4 h-[min(14rem,22dvh)] min-h-28 shrink-0 overflow-hidden rounded-2xl border bg-[linear-gradient(to_bottom,rgb(255_255_255/0.04),rgb(0_0_0/0.18))]">
+      <div
+        className={cn(
+          "relative mt-4 h-[min(14rem,22dvh)] min-h-28 shrink-0 overflow-hidden bg-[linear-gradient(to_bottom,rgb(255_255_255/0.04),rgb(0_0_0/0.18))]",
+          frameShape(prefs.frame),
+        )}
+      >
+        <FrameRing id={prefs.frame} />
+        {/* Ladybug luck, pinned in the window's corner so it moves nothing
+            when it comes and goes. */}
+        {luck > 0 && (
+          <p
+            aria-live="polite"
+            className="bg-glass-strong/85 pointer-events-none absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] text-[#ffb3ad]"
+          >
+            <span aria-hidden="true" className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]" />
+            luck ×2 <span className="font-pixel tabular-nums">{formatClock(luck)}</span>
+          </p>
+        )}
         <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/6" />
         {decor && <GardenDecor decor={decor} />}
         <div className="absolute inset-x-0 top-0 bottom-3.5">
@@ -836,6 +1076,7 @@ const Garden = ({
                   stage={stageFor(have)}
                   size={40}
                   pot={pot}
+                  gold={goldLeaf}
                 />
                 {have > 1 && (
                   <span className="font-pixel bg-glass-strong absolute -top-1 -right-1 rounded-full px-1 text-[0.6rem] leading-4">
@@ -871,9 +1112,12 @@ const Garden = ({
           <Tabs.Trigger value="upgrades" className={TAB_TRIGGER}>
             Upgrades
           </Tabs.Trigger>
-          <Tabs.Trigger value="season" className={TAB_TRIGGER}>
-            Season
-          </Tabs.Trigger>
+          {/* Hidden until a first harvest is possible. */}
+          {seasonsOpen(garden) && (
+            <Tabs.Trigger value="season" className={TAB_TRIGGER}>
+              Season
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger value="shed" className={TAB_TRIGGER}>
             Shed
           </Tabs.Trigger>
@@ -899,6 +1143,9 @@ const Garden = ({
           </Tabs.Content>
         </div>
       </Tabs.Root>
+      {levels && (
+        <LevelTimeline level={level} onClose={() => setLevels(false)} />
+      )}
     </Panel>
   );
 };

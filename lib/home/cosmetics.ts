@@ -22,16 +22,24 @@ export function isUnlocked(unlock: Unlock | undefined, s: GardenState) {
   if (!unlock || DEV_UNLOCKS) return true;
   if (unlock.level && levelFromXp(totalXp(s)) < unlock.level) return false;
   if (unlock.seasons && s.seasons < unlock.seasons) return false;
-  if (unlock.achievement && !s.achievements.includes(unlock.achievement)) return false;
+  if (unlock.achievement && !s.achievements.includes(unlock.achievement))
+    return false;
   if (unlock.holiday && !s.seenHolidays.includes(unlock.holiday)) return false;
   return true;
 }
 
 /** "level 6", "end 2 seasons", "be here for halloween": how to earn it. */
-export function describeUnlock(unlock: Unlock, achievementName?: (id: string) => string | undefined) {
+export function describeUnlock(
+  unlock: Unlock,
+  achievementName?: (id: string) => string | undefined,
+) {
   if (unlock.level) return `level ${unlock.level}`;
-  if (unlock.seasons) return unlock.seasons === 1 ? "end a season" : `end ${unlock.seasons} seasons`;
-  if (unlock.achievement) return `achievement: ${achievementName?.(unlock.achievement) ?? unlock.achievement}`;
+  if (unlock.seasons)
+    return unlock.seasons === 1
+      ? "end a season"
+      : `end ${unlock.seasons} seasons`;
+  if (unlock.achievement)
+    return `achievement: ${achievementName?.(unlock.achievement) ?? unlock.achievement}`;
   if (unlock.holiday) return `visit during ${getHoliday(unlock.holiday).name}`;
   return "";
 }
@@ -51,7 +59,7 @@ export type PotId =
   | "slick"
   | "daisy"
   | "dusk"
-  | "stoneware"
+  | "marble"
   | "borealis"
   | "bark"
   | "nebula"
@@ -59,7 +67,12 @@ export type PotId =
   | "enamel"
   | "maple"
   | "ashen"
-  | "frost";
+  | "frost"
+  // Made to match the frames.
+  | "wood"
+  | "stained"
+  | "brass"
+  | "gothic";
 
 export interface PotMeta {
   id: PotId;
@@ -80,7 +93,7 @@ export const POTS: PotMeta[] = [
   // Made for a scene each, in the order they open up.
   { id: "slick", name: "rain-slick", unlock: { level: 3 } },
   { id: "daisy", name: "daisy glaze", unlock: { level: 5 } },
-  { id: "stoneware", name: "café stoneware", unlock: { level: 6 } },
+  { id: "marble", name: "café marble", unlock: { level: 6 } },
   { id: "dusk", name: "dusk glaze", unlock: { level: 8 } },
   { id: "bark", name: "bark", unlock: { level: 9 } },
   { id: "enamel", name: "alpine enamel", unlock: { level: 11 } },
@@ -90,13 +103,51 @@ export const POTS: PotMeta[] = [
   { id: "frost", name: "frost", unlock: { level: 17 } },
   { id: "ashen", name: "ashen", unlock: { level: 21 } },
   { id: "nebula", name: "nebula", unlock: { level: 24 } },
+  // The long-haul ones, each with the frame of the same name.
+  { id: "wood", name: "oak", unlock: { level: 35 } },
+  { id: "stained", name: "stained glass", unlock: { level: 50 } },
+  { id: "brass", name: "brass", unlock: { level: 65 } },
+  { id: "gothic", name: "gothic stone", unlock: { level: 85 } },
 ];
 
 export const isPotId = (v: unknown): v is PotId => POTS.some((p) => p.id === v);
 
 /** A pot pick: one pot, or whichever suits the scene. */
 export type PotPick = PotId | "scene";
-export const isPotPick = (v: unknown): v is PotPick => v === "scene" || isPotId(v);
+export const isPotPick = (v: unknown): v is PotPick =>
+  v === "scene" || isPotId(v);
+
+// ---------------------------------------------------------------- frames
+
+/**
+ * Frames for the garden window: one to match every pot, sharing its id,
+ * name and unlock, so a pot and its frame always come as a pair. "Mixed"
+ * pots have no single look, so their match is the plain frame.
+ */
+export type FrameId = "plain" | Exclude<PotId, "classic">;
+
+export interface FrameMeta {
+  id: FrameId;
+  name: string;
+  unlock?: Unlock;
+}
+
+export const FRAMES: FrameMeta[] = [
+  { id: "plain", name: "plain" },
+  ...POTS.filter((p): p is PotMeta & { id: FrameId } => p.id !== "classic").map(
+    ({ id, name, unlock }) => ({
+      id,
+      name,
+      unlock,
+    }),
+  ),
+];
+
+export const isFrameId = (v: unknown): v is FrameId =>
+  FRAMES.some((f) => f.id === v);
+
+/** Gold leaf on every plant: the reward for reaching level 100. */
+export const GOLD_LEAF: Unlock = { level: 100 };
 
 // -------------------------------------------------------------- holidays
 
@@ -128,7 +179,8 @@ export function currentHoliday(now = new Date()): HolidayId | null {
   for (const h of HOLIDAYS) {
     const from = h.from[0] * 100 + h.from[1];
     const to = h.to[0] * 100 + h.to[1];
-    const on = from <= to ? today >= from && today <= to : today >= from || today <= to;
+    const on =
+      from <= to ? today >= from && today <= to : today >= from || today <= to;
     if (on) return h.id;
   }
   return null;
@@ -190,14 +242,17 @@ export const DECOR: DecorMeta[] = [
 export type DecorPick = DecorId | "auto" | "scene" | "none";
 
 export const isDecorPick = (v: unknown): v is DecorPick =>
-  v === "auto" || v === "scene" || v === "none" || DECOR.some((d) => d.id === v);
+  v === "auto" ||
+  v === "scene" ||
+  v === "none" ||
+  DECOR.some((d) => d.id === v);
 
 /** The decor and pot made for each scene. */
 export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
   rain: { decor: "streaks", pot: "slick" },
   hill: { decor: "dandelions", pot: "daisy" },
   sunset: { decor: "gulls", pot: "dusk" },
-  cafe: { decor: "cosy", pot: "stoneware" },
+  cafe: { decor: "cosy", pot: "marble" },
   "p-aurora": { decor: "ribbons", pot: "borealis" },
   "p-forest": { decor: "sunbeams", pot: "bark" },
   "p-space": { decor: "starfield", pot: "nebula" },
@@ -209,10 +264,16 @@ export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
 };
 
 /** The pot to draw for a pick: the scene's own if it's unlocked, else mixed. */
-export function resolvePot(pick: PotPick, scene: SceneId, s: GardenState): PotId {
+export function resolvePot(
+  pick: PotPick,
+  scene: SceneId,
+  s: GardenState,
+): PotId {
   if (pick !== "scene") return pick;
   const pot = SCENE_STYLE[scene].pot;
-  return isUnlocked(POTS.find((p) => p.id === pot)?.unlock, s) ? pot : "classic";
+  return isUnlocked(POTS.find((p) => p.id === pot)?.unlock, s)
+    ? pot
+    : "classic";
 }
 
 /**
@@ -231,18 +292,45 @@ function southern() {
 }
 
 /** The season outside, for the auto decor. */
-export function currentSeason(now = new Date()): "spring" | "summer" | "autumn" | "winter" {
-  const north = ["winter", "winter", "spring", "spring", "spring", "summer", "summer", "summer", "autumn", "autumn", "autumn", "winter"] as const;
+export function currentSeason(
+  now = new Date(),
+): "spring" | "summer" | "autumn" | "winter" {
+  const north = [
+    "winter",
+    "winter",
+    "spring",
+    "spring",
+    "spring",
+    "summer",
+    "summer",
+    "summer",
+    "autumn",
+    "autumn",
+    "autumn",
+    "winter",
+  ] as const;
   const season = north[now.getMonth()];
   if (!southern()) return season;
-  return ({ spring: "autumn", summer: "winter", autumn: "spring", winter: "summer" } as const)[season];
+  return (
+    {
+      spring: "autumn",
+      summer: "winter",
+      autumn: "spring",
+      winter: "summer",
+    } as const
+  )[season];
 }
 
 /**
  * The decor to draw for a pick: the holiday or season when on auto; the
  * scene's own when matching the scene, if it's unlocked, else the calendar's.
  */
-export function resolveDecor(pick: DecorPick, scene: SceneId, s: GardenState, now = new Date()): DecorId | null {
+export function resolveDecor(
+  pick: DecorPick,
+  scene: SceneId,
+  s: GardenState,
+  now = new Date(),
+): DecorId | null {
   if (pick === "none") return null;
   if (pick === "scene") {
     const decor = SCENE_STYLE[scene].decor;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, Lock, Palette } from "lucide-react";
+import { Ban, Check, Lock, Palette } from "lucide-react";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
 import { levelFromXp, totalXp, useGarden } from "@/lib/home/garden";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
@@ -12,6 +12,7 @@ import {
   type SceneId,
   type SceneMeta,
 } from "@/lib/home/scenes";
+import { PET_ROWS, PETS, petSheet } from "@/lib/home/pets";
 import { describeTheme, THEMES } from "@/lib/home/themes";
 import { cn } from "@/lib/utils";
 import { ScenePreview } from "./scenes/previews";
@@ -119,7 +120,7 @@ const SceneRow = ({
  * them. Colours stay open on a pick, so they can be tried one after another.
  */
 const SceneSwitcher = () => {
-  const { scene, theme } = usePrefs();
+  const { scene, theme, pet } = usePrefs();
   const garden = useGarden();
   const level = levelFromXp(totalXp(garden));
   const [open, setOpen] = useState(false);
@@ -253,6 +254,85 @@ const SceneSwitcher = () => {
                 {theme
                   ? describeTheme(THEMES.find((t) => t.id === theme)!)
                   : "following the scene"}
+              </p>
+
+              <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium">
+                pets
+              </p>
+              <ul className="grid grid-cols-4 gap-1">
+                <li>
+                  <Swatch
+                    name="none"
+                    title="no pet"
+                    active={!pet}
+                    onClick={() => setPrefs({ pet: null })}
+                  >
+                    <span
+                      className={cn(
+                        TILE,
+                        "grid place-items-center bg-white/4",
+                        !pet && "ring-glow ring-2",
+                      )}
+                    >
+                      <Ban className="text-muted-foreground size-4" />
+                    </span>
+                  </Swatch>
+                </li>
+                {PETS.map((p) => {
+                  const locked = !isUnlocked(p.unlock, garden);
+                  return (
+                    <li key={p.id}>
+                      <Swatch
+                        name={p.name}
+                        title={
+                          locked
+                            ? `${p.name}: ${describeUnlock(p.unlock)}`
+                            : p.name
+                        }
+                        active={pet === p.id}
+                        disabled={locked}
+                        onClick={() => setPrefs({ pet: p.id })}
+                      >
+                        <span
+                          className={cn(
+                            TILE,
+                            "bg-white/4",
+                            pet === p.id && "ring-glow ring-2",
+                          )}
+                        >
+                          {/* Its first idle frame, facing you, at the tile's size. */}
+                          <span
+                            className="absolute inset-0"
+                            style={{
+                              backgroundImage: `url(${petSheet(p.id)})`,
+                              backgroundSize: `${12 * 40}px ${PET_ROWS * 40}px`,
+                              backgroundPosition: "0 0",
+                              imageRendering: "pixelated",
+                            }}
+                          />
+                          {locked && (
+                            <span className="absolute inset-0 grid place-items-center bg-black/45">
+                              <Lock className="size-3.5 text-white/85" />
+                            </span>
+                          )}
+                        </span>
+                      </Swatch>
+                    </li>
+                  );
+                })}
+              </ul>
+              {/* The sprites are CC BY 4.0, which asks for this credit. */}
+              <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-[0.65rem] normal-case">
+                pets by{" "}
+                <a
+                  href="https://frakassets.itch.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-current/35 underline-offset-[3px] hover:decoration-current"
+                >
+                  Frakassets
+                </a>{" "}
+                (CC BY 4.0)
               </p>
             </div>
           </motion.div>

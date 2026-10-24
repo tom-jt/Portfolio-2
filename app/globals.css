@@ -1272,6 +1272,31 @@ html:has([data-site="home"]) {
   }
 }
 
+/* Frost spreading over a pane and thawing back, round and round. */
+@keyframes home-frost {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.82);
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1.18);
+  }
+}
+
+/* Fog of condensation drifting across the glass. */
+@keyframes home-fog {
+  from {
+    transform: translate3d(-8%, 0, 0);
+  }
+  to {
+    transform: translate3d(8%, -3%, 0);
+  }
+}
+
 /* The nebula turning gently. Scaled up so its corners never show. */
 /* Clouds drifting to and fro, by --dx each way. */
 @keyframes home-drift {
@@ -1305,7 +1330,8 @@ html:has([data-site="home"]) {
   }
   100% {
     opacity: 0;
-    transform: translate3d(var(--drift, 0px), var(--fall, 70vh), 0) rotate(var(--spin, 180deg));
+    transform: translate3d(var(--drift, 0px), var(--fall, 70vh), 0)
+      rotate(var(--spin, 180deg));
   }
 }
 

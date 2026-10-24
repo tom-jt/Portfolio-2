@@ -39,6 +39,8 @@ function useGardenEngine() {
       payOut();
       if (document.hidden) return;
       if (awayFor > 300 && awayGain >= 1) awayToast(awayGain, awayFor);
+      // The pet sleeps through a long absence, and wakes a minute after.
+      if (awayFor > 300) window.dispatchEvent(new CustomEvent("home:back-from-away"));
       awayFor = 0;
       awayGain = 0;
     };

@@ -577,7 +577,7 @@ function Frost({ id }: { id: PhotoId }) {
         src={photoSrc(id)}
         alt=""
         draggable={false}
-        className="absolute inset-0 size-full scale-105 object-cover blur-[12px] brightness-110 saturate-[0.8] select-none"
+        className="absolute inset-0 size-full scale-105 object-cover blur-[8px] brightness-110 saturate-[0.8] select-none"
         style={{ maskImage: FROST_EDGE, WebkitMaskImage: FROST_EDGE }}
       />
       <span
@@ -591,6 +591,55 @@ function Frost({ id }: { id: PhotoId }) {
         }}
       />
       <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgb(225_238_255/0.16)_100%)]" />
+      <FrostBlooms />
+    </>
+  );
+}
+
+/** Where frost gathers across the pane, and how long each patch takes. */
+const BLOOMS = [
+  { x: 30, y: 38, size: 34, period: 23, delay: 0 },
+  { x: 62, y: 58, size: 40, period: 29, delay: -9 },
+  { x: 48, y: 22, size: 26, period: 19, delay: -14 },
+  { x: 18, y: 70, size: 30, period: 26, delay: -5 },
+  { x: 80, y: 32, size: 28, period: 31, delay: -20 },
+  { x: 50, y: 80, size: 36, period: 24, delay: -12 },
+];
+
+/**
+ * Frost across the whole pane, not only its edges: a faint grain over all
+ * the glass, patches of crystals that slowly spread and thaw in turn, and
+ * a fog of condensation drifting over it. Transform and opacity only.
+ */
+function FrostBlooms() {
+  const grain = `url("${FROST_GRAIN}")`;
+  return (
+    <>
+      <span className="absolute inset-0 mix-blend-screen" style={{ backgroundImage: grain, backgroundSize: "240px", opacity: 0.16 }} />
+      <span
+        className="absolute -inset-[10%] bg-[radial-gradient(ellipse_at_30%_40%,rgb(220_235_255/0.14),transparent_55%),radial-gradient(ellipse_at_70%_65%,rgb(220_235_255/0.12),transparent_50%)]"
+        style={{ animation: "home-fog 40s ease-in-out infinite alternate" }}
+      />
+      {BLOOMS.map((b, i) => {
+        const mask = "radial-gradient(circle, black 20%, rgb(0 0 0 / 0.5) 45%, transparent 70%)";
+        return (
+          <span
+            key={i}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.size}%`, aspectRatio: "1" }}
+          >
+            <span
+              className="absolute inset-0 mix-blend-screen"
+              style={{
+                background: `${grain} 0 0 / 200px, radial-gradient(circle, rgb(235 244 255 / 0.28), rgb(235 244 255 / 0.08) 55%, transparent 70%)`,
+                maskImage: mask,
+                WebkitMaskImage: mask,
+                animation: `home-frost ${b.period}s ease-in-out ${b.delay}s infinite alternate`,
+              }}
+            />
+          </span>
+        );
+      })}
     </>
   );
 }
@@ -608,12 +657,26 @@ const MOTION: Partial<Record<PhotoId, string>> = {
   moonlight: "home-slow-zoom 130s ease-in-out infinite alternate",
 };
 
+/**
+ * Photos seen through glass go soft, as the rainy window's city does; what's
+ * layered on them (snow, frost) stays sharp, on or near the pane. Scaled up a
+ * little so the blur never shows a soft edge.
+ */
+const BEHIND_GLASS: Partial<Record<PhotoId, string>> = {
+  moonlight: "scale-[1.05] blur-[3px] saturate-[1.1]",
+};
+
 const PhotoScene = ({ id }: { id: PhotoId }) => (
   <div data-home-photo className="absolute inset-0 overflow-hidden">
     <CoverBox id={id}>
       <div className="absolute inset-0 origin-center" style={{ animation: MOTION[id] }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a full-bleed background; next/image adds nothing here */}
-        <img src={photoSrc(id)} alt="" draggable={false} className="absolute inset-0 size-full object-cover select-none" />
+        <img
+          src={photoSrc(id)}
+          alt=""
+          draggable={false}
+          className={`absolute inset-0 size-full object-cover select-none ${BEHIND_GLASS[id] ?? ""}`}
+        />
         {OVERLAY[id]()}
       </div>
     </CoverBox>

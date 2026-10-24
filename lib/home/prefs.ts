@@ -10,7 +10,8 @@ import {
   type AmbienceKind,
   type SceneId,
 } from "./scenes";
-import { isDecorPick, isPotPick, type DecorPick, type PotPick } from "./cosmetics";
+import { isDecorPick, isFrameId, isPotPick, type DecorPick, type FrameId, type PotPick } from "./cosmetics";
+import { isPetId, type PetId } from "./pets";
 import { isThemeId, type ThemeId } from "./themes";
 
 /** Every card on /home, each opened from its own chip. */
@@ -40,6 +41,11 @@ export interface HomePrefs {
   /** The garden's pots, and the decor in its window. */
   pot: PotPick;
   decor: DecorPick;
+  /** The garden window's frame, and gold-leaf foliage (once earned). */
+  frame: FrameId;
+  goldLeaf: boolean;
+  /** The pet on the chips, or none. */
+  pet: PetId | null;
 }
 
 const initial: HomePrefs = {
@@ -54,6 +60,9 @@ const initial: HomePrefs = {
   hideDone: false,
   pot: "classic",
   decor: "auto",
+  frame: "plain",
+  goldLeaf: false,
+  pet: null,
 };
 
 export const prefsStore = createPersistentStore<HomePrefs>(
@@ -65,6 +74,9 @@ export const prefsStore = createPersistentStore<HomePrefs>(
     if (!isThemeId(merged.theme)) merged.theme = null;
     if (!isPotPick(merged.pot)) merged.pot = init.pot;
     if (!isDecorPick(merged.decor)) merged.decor = init.decor;
+    if (!isFrameId(merged.frame)) merged.frame = init.frame;
+    merged.goldLeaf = merged.goldLeaf === true;
+    if (!isPetId(merged.pet)) merged.pet = null;
     merged.ambienceVolume = Math.min(1, Math.max(0, +merged.ambienceVolume || 0));
     if (!isAmbienceKind(merged.ambience)) merged.ambience = null;
     merged.openPanels = Array.isArray(merged.openPanels)
