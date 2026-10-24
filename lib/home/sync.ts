@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import type { Event } from "nostr-tools/pure";
+import { gardenStore, mergeXpElsewhere, totalXp } from "./garden";
 import { createPersistentStore, useStore } from "./store";
 import {
   applyTodoSnapshot,
@@ -13,8 +14,8 @@ import {
 } from "./todos";
 
 /**
- * Keeps the task list the same on every device that shares a sync code,
- * with no account and no server of our own.
+ * Keeps the task list, and the garden's level, the same on every device that
+ * shares a sync code, with no account and no server of our own.
  *
  * The code is the only secret. A Nostr key is derived from it, and the list
  * is kept on a few public Nostr relays as that key's one replaceable "app
@@ -23,6 +24,11 @@ import {
  * writes back the merge when that adds anything, so devices need not be
  * open at the same time. Relays promise nothing about keeping data, but
  * every device holds the whole list, and any of them puts it back.
+ *
+ * The level travels as each device's own XP, by device id. A device's figure
+ * only grows, so merging keeps the larger, and the level counts them all:
+ * nothing is lost or counted twice when two devices earn at once. Drops,
+ * plants and upgrades stay on each device; a shared purse can't be merged.
  */
 
 const RELAYS = [
@@ -98,14 +104,52 @@ function joinFromHash() {
   history.replaceState(null, "", location.pathname + location.search);
 }
 
-/** The same list always serialises the same way, so copies compare as text. */
-const serialise = (s: TodoSnapshot) => JSON.stringify({ v: 1, todos: s.todos, deleted: s.deleted });
+/** This device's id, made once and kept, to file its XP under. */
+function deviceId() {
+  const KEY = "home:device:v1";
+  try {
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return "this-device";
+  }
+}
 
-function parse(text: string): TodoSnapshot | null {
+/** What the synced note holds: the list, and each device's XP. */
+interface Shared extends TodoSnapshot {
+  xp: Record<string, number>;
+}
+
+const NO_TODOS: TodoSnapshot = { todos: [], deleted: {} };
+
+/** Each device's XP, keys in order, so equal tables serialise equally. */
+const sortedXp = (xp: Record<string, number>) =>
+  Object.fromEntries(Object.entries(xp).sort(([a], [b]) => (a < b ? -1 : 1)));
+
+/** This device's copy: its list, and every device's XP as far as it knows. */
+function localShared(me: string): Shared {
+  const g = gardenStore.get();
+  return { ...mergeTodos(todoSnapshot(), NO_TODOS), xp: sortedXp({ ...g.xpElsewhere, [me]: g.xp }) };
+}
+
+/** The same copy always serialises the same way, so copies compare as text. */
+const serialise = (s: Shared) =>
+  JSON.stringify({ v: 1, todos: s.todos, deleted: s.deleted, xp: s.xp });
+
+function parse(text: string): Shared | null {
   try {
     const raw = JSON.parse(text);
     if (raw?.v !== 1 || !Array.isArray(raw.todos) || typeof raw.deleted !== "object") return null;
-    return { todos: raw.todos, deleted: raw.deleted ?? {} };
+    // Notes from before the level was synced have no XP table.
+    const xp: Record<string, number> = {};
+    for (const [device, value] of Object.entries(raw.xp ?? {})) {
+      if (typeof value === "number" && Number.isFinite(value) && value > 0) xp[device] = value;
+    }
+    return { todos: raw.todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp) };
   } catch {
     return null;
   }
@@ -123,6 +167,7 @@ async function connect(code: string) {
   const key = nip44.utils.getConversationKey(secret, pubkey);
 
   const pool = new SimplePool();
+  const me = deviceId();
   /** What the relays are known to hold, sent or read, to skip sending it back. */
   let remote = "";
   /** Newest note seen. A note older than the one a relay holds is ignored,
@@ -132,8 +177,7 @@ async function connect(code: string) {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const publish = async () => {
-    const merged = mergeTodos(todoSnapshot(), { todos: [], deleted: {} });
-    const text = serialise(merged);
+    const text = serialise(localShared(me));
     if (text === remote) return setStatus("synced");
     remote = text;
     lastCreated = Math.max(Math.floor(Date.now() / 1000), lastCreated + 1);
@@ -158,16 +202,17 @@ async function connect(code: string) {
 
   const onEvent = (event: Event) => {
     lastCreated = Math.max(lastCreated, event.created_at);
-    let snapshot: TodoSnapshot | null = null;
+    let snapshot: Shared | null = null;
     try {
       snapshot = parse(nip44.decrypt(event.content, key));
     } catch {
       return;
     }
     if (!snapshot) return;
-    remote = serialise(mergeTodos(snapshot, { todos: [], deleted: {} }));
-    // Applying the merge fires the store listeners, which write it back if
-    // this copy added anything.
+    remote = serialise({ ...mergeTodos(snapshot, NO_TODOS), xp: snapshot.xp });
+    // Applying the merges fires the store listeners, which write it back if
+    // this copy added anything: a task, or XP the note didn't have.
+    mergeXpElsewhere(snapshot.xp, me);
     applyTodoSnapshot(mergeTodos(todoSnapshot(), snapshot));
     if (caughtUp) setStatus("synced");
   };
@@ -194,6 +239,15 @@ async function connect(code: string) {
   listen();
   const offTodos = todoStore.subscribe(schedule);
   const offDeleted = deletedStore.subscribe(schedule);
+  // The garden changes every second as plants pay out; only XP is synced.
+  let xpSeen = "";
+  const offGarden = gardenStore.subscribe(() => {
+    const g = gardenStore.get();
+    const now = `${g.xp}:${totalXp(g)}`;
+    if (now === xpSeen) return;
+    xpSeen = now;
+    schedule();
+  });
   // Phones drop sockets in the background; catch up on return.
   const onVisible = () => !document.hidden && listen();
   document.addEventListener("visibilitychange", onVisible);
@@ -204,6 +258,7 @@ async function connect(code: string) {
     sub?.close();
     offTodos();
     offDeleted();
+    offGarden();
     document.removeEventListener("visibilitychange", onVisible);
     window.removeEventListener("online", listen);
     pool.destroy();

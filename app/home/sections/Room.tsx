@@ -2,7 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Eye, Gamepad2, Headphones, ListTodo, Pause, Play, Sprout, Timer as TimerIcon } from "lucide-react";
+import { Eye, Gamepad2, Headphones, ListTodo, Music2, Pause, Play, Sprout, Timer as TimerIcon } from "lucide-react";
 import EyeBreak from "@/components/home/EyeBreak";
 import HudChip from "@/components/home/HudChip";
 import SceneSwitcher from "@/components/home/SceneSwitcher";
@@ -13,7 +13,7 @@ import { primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
 import { formatClock } from "@/lib/home/format";
 import { activeAmbience, closePanels, togglePanel, usePrefs, type PanelId } from "@/lib/home/prefs";
 import { getAmbience } from "@/lib/home/scenes";
-import { useSpotifyPlaying } from "@/lib/home/spotify";
+import { spotifyHeld, toggleSpotify, useSpotifyPlaying, useSpotifyReady } from "@/lib/home/spotify";
 import { useHydrated, useNow } from "@/lib/home/store";
 import { MODE_LABEL, pause, start, timeLeft, useTimer } from "@/lib/home/timer";
 import { sortTodos, useTodos } from "@/lib/home/todos";
@@ -23,7 +23,7 @@ import Eyes, { useEyeStatus } from "./Eyes";
 import FocusTimer from "./FocusTimer";
 import Garden from "./Garden";
 import Greeting from "./Greeting";
-import Sound, { Equaliser } from "./Sound";
+import Sound, { Equaliser, toggleAmbience } from "./Sound";
 import Tasks from "./Tasks";
 
 /**
@@ -164,20 +164,64 @@ const TimerChip = ({ open, onOpen }: { open: boolean; onOpen: () => void }) => {
   );
 };
 
+/** A small round play/pause inside a chip. */
+const ChipPlay = ({
+  playing,
+  label,
+  onClick,
+  children,
+  ...rest
+}: {
+  playing: boolean;
+  label: string;
+  onClick: () => void;
+  children?: ReactNode;
+  "data-ambience-toggle"?: boolean;
+}) => (
+  <button
+    type="button"
+    aria-pressed={playing}
+    aria-label={`${playing ? "Pause" : "Play"} ${label}`}
+    title={`${playing ? "Pause" : "Play"} ${label}`}
+    onClick={onClick}
+    className="focus-visible:ring-ring relative grid size-10 shrink-0 cursor-pointer place-items-center rounded-xl transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
+    {...rest}
+  >
+    {playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+    {children}
+  </button>
+);
+
+/**
+ * The sound card's chip: opens the card, and plays or pauses the ambience
+ * without opening it. Once Spotify's player is loaded (the card has been
+ * open, or it's playing with the card shut), Spotify gets a button too.
+ */
 const SoundChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
   const prefs = usePrefs();
   const playing = useAmbiencePlaying();
+  const spotifyReady = useSpotifyReady();
+  const spotifyPlaying = useSpotifyPlaying();
   return (
-    <button
-      type="button"
-      aria-expanded={open}
-      aria-label={LABEL.sound}
-      onClick={onClick}
-      className={cn(chipButton, "flex h-13 items-center gap-2.5 rounded-[1.1rem] px-4", open && "border-glow/55")}
-    >
-      <Equaliser on={playing} />
-      <span className="text-sm">{getAmbience(activeAmbience(prefs)).short}</span>
-    </button>
+    <div className={cn(chipGlass, "flex h-13 items-center gap-0.5 rounded-[1.1rem] p-1.5", open && "border-glow/55")}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-label={LABEL.sound}
+        onClick={onClick}
+        className="focus-visible:ring-ring flex h-full cursor-pointer items-center gap-2.5 rounded-xl px-2.5 transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <Equaliser on={playing} />
+        <span className="text-sm">{getAmbience(activeAmbience(prefs)).short}</span>
+      </button>
+      {/* Marked so the resume-on-first-click listener leaves it be. */}
+      <ChipPlay data-ambience-toggle playing={playing} label="ambience" onClick={() => toggleAmbience(playing)} />
+      {spotifyReady && (
+        <ChipPlay playing={spotifyPlaying} label="Spotify" onClick={toggleSpotify}>
+          <Music2 className="text-glow absolute top-1 right-1 size-2.5" />
+        </ChipPlay>
+      )}
+    </div>
   );
 };
 
@@ -276,10 +320,12 @@ const Room = () => {
 
   const rightColumn = isOpen("garden") || isOpen("timer") || isOpen("eyes");
   const SheetPanel = sheet ? PANELS[sheet] : null;
-  // Closing the sound card would stop Spotify mid-song, so while it plays
-  // the card only hides. With nothing playing it unmounts as usual, which
-  // frees the heavy embed.
-  const keepSound = useSpotifyPlaying();
+  // Closing the sound card would stop Spotify mid-song, so while it plays,
+  // and for a while after a pause (to resume from the chip), the card only
+  // hides. Otherwise it unmounts as usual, which frees the heavy embed.
+  const spotifyPlaying = useSpotifyPlaying();
+  const now = useNow(30_000, !spotifyPlaying);
+  const keepSound = spotifyHeld(now);
 
   // Only a press that starts and ends on the scene closes the cards. Cards
   // and chips sit over it, so the target says which was clicked, and

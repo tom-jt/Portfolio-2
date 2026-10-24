@@ -41,6 +41,7 @@ import {
   currentStreak,
   endSeason,
   levelProgress,
+  totalXp,
   luckLeft,
   maxAffordable,
   milestoneStep,
@@ -732,7 +733,7 @@ const Garden = ({
   const lucky = luckLeft(garden) > 0;
   const now = useNow(1000, lucky);
   const luck = lucky && now ? luckLeft(garden, now) : 0;
-  const { level, into, span } = levelProgress(garden.xp);
+  const { level, into, span } = levelProgress(totalXp(garden));
   const next = nextUnlock(level);
   const perSecond = rate(garden);
   const sill = PLANTS.filter((p) => (garden.plants[p.id] ?? 0) > 0);

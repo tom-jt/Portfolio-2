@@ -62,9 +62,9 @@ export const AMBIENCES: AmbienceMeta[] = [
   { id: "hill", label: "hilltop rain", short: "hill" },
   { id: "storm", label: "thunderstorm", short: "storm" },
   { id: "waves", label: "ocean waves", short: "waves" },
-  { id: "wind", label: "wind and drizzle", short: "wind", unlock: { level: 6 } },
-  { id: "leaves", label: "rain on the leaves", short: "leaves", unlock: { level: 9 } },
-  { id: "deluge", label: "downpour", short: "deluge", unlock: { level: 13 } },
+  { id: "wind", label: "wind and drizzle", short: "wind" },
+  { id: "leaves", label: "rain on the leaves", short: "leaves" },
+  { id: "deluge", label: "downpour", short: "deluge" },
   // The picture scenes' own sounds.
   { id: "lake", label: "night by the lake", short: "lake" },
   { id: "woods", label: "forest birdsong", short: "birds" },
@@ -100,15 +100,16 @@ export const SCENES: SceneMeta[] = [
   { id: "hill", name: "rain on the hill", unlockLevel: 2, ambience: "hill" },
   { id: "sunset", name: "sunset over the sea", unlockLevel: 3, ambience: "waves" },
   { id: "cafe", name: "late-night café", unlockLevel: 4, ambience: "cafe" },
-  // Picture scenes: photographs with motion layered on. Open from the start.
-  { id: "p-aurora", name: "aurora lake", unlockLevel: 1, ambience: "lake", photo: "aurora" },
-  { id: "p-forest", name: "sunlit forest", unlockLevel: 1, ambience: "woods", photo: "forest" },
-  { id: "p-space", name: "nebula", unlockLevel: 1, ambience: "cosmos", photo: "space" },
-  { id: "p-sunset", name: "tropical sunset", unlockLevel: 1, ambience: "shore", photo: "sunset" },
-  { id: "p-alps", name: "alpine hill", unlockLevel: 1, ambience: "hill", photo: "alps" },
-  { id: "p-autumn", name: "autumn path", unlockLevel: 1, ambience: "woods", photo: "autumn" },
-  { id: "p-majula", name: "majula", unlockLevel: 1, ambience: "majula", photo: "majula" },
-  { id: "p-moonlight", name: "moonlight", unlockLevel: 1, ambience: "snow", photo: "moonlight" },
+  // Picture scenes: photographs with motion layered on. The first opens at
+  // level 5, then one every two levels.
+  { id: "p-aurora", name: "aurora lake", unlockLevel: 5, ambience: "lake", photo: "aurora" },
+  { id: "p-forest", name: "sunlit forest", unlockLevel: 7, ambience: "woods", photo: "forest" },
+  { id: "p-space", name: "nebula", unlockLevel: 9, ambience: "cosmos", photo: "space" },
+  { id: "p-sunset", name: "tropical sunset", unlockLevel: 11, ambience: "shore", photo: "sunset" },
+  { id: "p-alps", name: "alpine hill", unlockLevel: 13, ambience: "hill", photo: "alps" },
+  { id: "p-autumn", name: "autumn path", unlockLevel: 15, ambience: "woods", photo: "autumn" },
+  { id: "p-majula", name: "majula", unlockLevel: 17, ambience: "majula", photo: "majula" },
+  { id: "p-moonlight", name: "moonlight", unlockLevel: 19, ambience: "snow", photo: "moonlight" },
 ];
 
 export const DEFAULT_SCENE: SceneId = "rain";

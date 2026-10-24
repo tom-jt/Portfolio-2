@@ -28,11 +28,23 @@ export function spotifyUri(link: string) {
 let playing = false;
 const listeners = new Set<() => void>();
 
+/** When it last stopped playing, so a pause can be resumed for a while. */
+let pausedAt = 0;
+
 export function setSpotifyPlaying(next: boolean) {
   if (next === playing) return;
+  if (playing && !next) pausedAt = Date.now();
   playing = next;
   listeners.forEach((l) => l());
 }
+
+/** After a pause the player stays loaded this long, to be resumed from the
+ *  chip, before it's let go to free the memory. */
+export const SPOTIFY_HOLD_MS = 10 * 60_000;
+
+/** Whether the player should stay loaded with its card closed. */
+export const spotifyHeld = (now: number) =>
+  playing || (pausedAt > 0 && now - pausedAt < SPOTIFY_HOLD_MS);
 
 const subscribe = (l: () => void) => {
   listeners.add(l);
@@ -44,8 +56,31 @@ export const useSpotifyPlaying = () =>
 
 export interface SpotifyController {
   addListener: (event: "playback_update", cb: (e: { data: { isPaused: boolean } }) => void) => void;
+  togglePlay?: () => void;
   destroy?: () => void;
 }
+
+/* The player that's loaded, if any, so controls outside the sound card (the
+   collapsed chip) can play and pause it. */
+let controller: SpotifyController | null = null;
+const controllerListeners = new Set<() => void>();
+
+export function setSpotifyController(next: SpotifyController | null) {
+  if (next === controller) return;
+  controller = next;
+  controllerListeners.forEach((l) => l());
+}
+
+const subscribeController = (l: () => void) => {
+  controllerListeners.add(l);
+  return () => controllerListeners.delete(l);
+};
+
+/** Whether a Spotify player is loaded and can be played or paused. */
+export const useSpotifyReady = () =>
+  useSyncExternalStore(subscribeController, () => !!controller?.togglePlay, () => false);
+
+export const toggleSpotify = () => controller?.togglePlay?.();
 
 interface SpotifyIframeApi {
   createController: (

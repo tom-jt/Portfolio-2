@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Lock, Palette } from "lucide-react";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
-import { levelFromXp, useGarden } from "@/lib/home/garden";
+import { levelFromXp, totalXp, useGarden } from "@/lib/home/garden";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
 import {
   getAmbience,
@@ -121,7 +121,7 @@ const SceneRow = ({
 const SceneSwitcher = () => {
   const { scene, theme } = usePrefs();
   const garden = useGarden();
-  const level = levelFromXp(garden.xp);
+  const level = levelFromXp(totalXp(garden));
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const pick = (id: SceneId) => {

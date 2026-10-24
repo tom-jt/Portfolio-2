@@ -274,6 +274,12 @@ export interface GardenState {
   /** When the last ladybug was caught, and when its luck runs out. */
   ladybugAt: number;
   luckUntil: number;
+  /**
+   * XP earned on other linked devices, by device. `xp` is only what this
+   * device earned; the level counts both. Each device's figure only grows,
+   * so merging keeps the larger, and nothing is counted twice.
+   */
+  xpElsewhere: Record<string, number>;
 }
 
 const initial: GardenState = {
@@ -295,6 +301,7 @@ const initial: GardenState = {
   seenHolidays: [],
   ladybugAt: 0,
   luckUntil: 0,
+  xpElsewhere: {},
 };
 
 const num = (v: unknown, fallback = 0) =>
@@ -327,6 +334,9 @@ export const gardenStore = createPersistentStore<GardenState>(
       seenHolidays: Array.isArray(r.seenHolidays) ? r.seenHolidays : [],
       ladybugAt: num(r.ladybugAt),
       luckUntil: num(r.luckUntil),
+      xpElsewhere: Object.fromEntries(
+        Object.entries(r.xpElsewhere ?? {}).filter(([, v]) => num(v) > 0),
+      ),
     };
   },
 );
@@ -381,7 +391,7 @@ export const upgradeCost = (def: UpgradeDef, level: number) =>
 
 /** Evergreen: +1% to all drops per garden level, up to +100%. */
 const evergreen = (s: GardenState) =>
-  skillRank(s, "evergreen") ? 1 + Math.min(100, levelFromXp(s.xp)) / 100 : 1;
+  skillRank(s, "evergreen") ? 1 + Math.min(100, levelFromXp(totalXp(s))) / 100 : 1;
 
 // ---------------------------------------------------------------- ladybug
 
@@ -520,6 +530,10 @@ export const xpForLevel = (level: number) =>
 
 export const MAX_LEVEL = 999;
 
+/** XP from this device and every linked one: what the level counts. */
+export const totalXp = (s: GardenState) =>
+  s.xp + Object.values(s.xpElsewhere).reduce((sum, v) => sum + v, 0);
+
 /**
  * Development builds play at the top level, so every scene, plant and
  * upgrade can be tried without grinding. Only the reading changes: the save
@@ -650,7 +664,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "Seasoned",
     detail: "Reach level 5.",
     reward: 1000,
-    test: (s) => levelFromXp(s.xp) >= 5,
+    test: (s) => levelFromXp(totalXp(s)) >= 5,
   },
   {
     id: "focus-300",
@@ -771,8 +785,8 @@ function commit(
     );
   }
 
-  const before = levelFromXp(prev.xp);
-  const after = levelFromXp(next.xp);
+  const before = levelFromXp(totalXp(prev));
+  const after = levelFromXp(totalXp(next));
   let bonus = 0;
   for (let l = before + 1; l <= after; l++) bonus += levelBonus(l);
   if (bonus) next = addDrops(next, bonus);
@@ -947,7 +961,7 @@ export function rewardGamePlay(id: string, title: string) {
 export function buyPlant(id: PlantId, count: number) {
   const def = PLANTS.find((p) => p.id === id);
   const s = gardenStore.get();
-  if (!def || count < 1 || levelFromXp(s.xp) < def.unlockLevel) return;
+  if (!def || count < 1 || levelFromXp(totalXp(s)) < def.unlockLevel) return;
   const cost = plantCost(def, owned(s, id), count, plantCostScale(s));
   if (cost > s.drops) return;
   commit((g) => ({
@@ -960,7 +974,7 @@ export function buyPlant(id: PlantId, count: number) {
 export function buyUpgrade(id: UpgradeId) {
   const def = UPGRADES.find((u) => u.id === id);
   const s = gardenStore.get();
-  if (!def || levelFromXp(s.xp) < def.unlockLevel) return;
+  if (!def || levelFromXp(totalXp(s)) < def.unlockLevel) return;
   const level = upgradeLevel(s, id);
   if (level >= def.max) return;
   const cost = upgradeCost(def, level);
@@ -1056,6 +1070,24 @@ export function buySkill(id: SkillId) {
     seeds: g.seeds - status.cost,
     skills: { ...g.skills, [id]: skillRank(g, id) + 1 },
   }));
+}
+
+/**
+ * Takes in other devices' XP from sync, keeping the larger figure for each.
+ * Goes through commit, so a level reached on the phone levels up here too,
+ * with its toast, bonus and achievements. Returns whether anything changed.
+ */
+export function mergeXpElsewhere(remote: Record<string, number>, me: string) {
+  const s = gardenStore.get();
+  const merged = { ...s.xpElsewhere };
+  let changed = false;
+  for (const [device, xp] of Object.entries(remote)) {
+    if (device === me || !(num(xp) > (merged[device] ?? 0))) continue;
+    merged[device] = xp;
+    changed = true;
+  }
+  if (changed) commit((g) => ({ ...g, xpElsewhere: merged }));
+  return changed;
 }
 
 /** Notes that the garden was open during a holiday, unlocking its decor. */

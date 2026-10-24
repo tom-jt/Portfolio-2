@@ -2,7 +2,7 @@
 
 import { Droplet } from "lucide-react";
 import { formatNumber } from "@/lib/home/format";
-import { levelProgress, useGarden } from "@/lib/home/garden";
+import { levelProgress, totalXp, useGarden } from "@/lib/home/garden";
 import { useHydrated } from "@/lib/home/store";
 import { cn } from "@/lib/utils";
 import { chipButton } from "./ui";
@@ -11,7 +11,7 @@ import { chipButton } from "./ui";
 const HudChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
   const garden = useGarden();
   const hydrated = useHydrated();
-  const { level, into, span } = levelProgress(garden.xp);
+  const { level, into, span } = levelProgress(totalXp(garden));
   const r = 13;
   const c = 2 * Math.PI * r;
 

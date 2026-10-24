@@ -7,7 +7,8 @@
  *   1. add its id and entry here,
  *   2. add a palette block for it in globals.css
  *      (html[data-home-theme="<id>"] [data-site="home"], [data-home-swatch="<id>"]),
- *   3. give it an `unlock` if it has to be earned.
+ *   3. give it an `unlock` if it has to be earned. A theme made for a scene
+ *      needs none: it opens at the same level as its scene.
  */
 
 import type { Unlock } from "./cosmetics";
@@ -104,23 +105,27 @@ export const THEMES: ThemeMeta[] = [
     name: "ember",
     hint: "embers and ash",
     pairsWith: "p-majula",
-    unlock: { level: 11 },
   },
   {
     id: "aurora",
     name: "aurora",
     hint: "green and violet lights",
     pairsWith: "p-aurora",
-    unlock: { level: 15 },
   },
   {
     id: "iridescent",
     name: "iridescent",
     hint: "space blue and turquoise",
     pairsWith: "p-space",
-    unlock: { level: 20 },
   },
 ];
+
+// A theme made for a scene opens with it, so the colours never arrive
+// before the scene they were made for.
+for (const t of THEMES) {
+  const level = t.pairsWith ? getScene(t.pairsWith).unlockLevel : 1;
+  if (!t.unlock && level > 1) t.unlock = { level };
+}
 
 const THEME_IDS = THEMES.map((t) => t.id);
 

@@ -30,16 +30,30 @@ import { DEFAULT_SPOTIFY_URL } from "@/data/home/config";
 import { playAmbience, primeAudio, useAmbienceStatus } from "@/lib/home/ambience";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
 import { useGarden } from "@/lib/home/garden";
-import { activeAmbience, setPrefs, usePrefs } from "@/lib/home/prefs";
+import { activeAmbience, prefsStore, setPrefs, usePrefs } from "@/lib/home/prefs";
 import { AMBIENCES, getAmbience, getScene, type AmbienceKind } from "@/lib/home/scenes";
 import {
   loadSpotifyApi,
+  setSpotifyController,
   setSpotifyPlaying,
   spotifyEmbedUrl,
   spotifyUri,
   type SpotifyController,
 } from "@/lib/home/spotify";
 import { cn } from "@/lib/utils";
+
+/**
+ * Plays or pauses the ambience, from the sound card or the collapsed chip.
+ * Must run inside the click, so Safari lets the audio start. Saved as on but
+ * not yet allowed to play (no click since the page loaded), it starts now.
+ */
+export function toggleAmbience(playing: boolean) {
+  if (playing) return setPrefs({ ambienceOn: false });
+  primeAudio();
+  const prefs = prefsStore.get();
+  if (prefs.ambienceOn) playAmbience(activeAmbience(prefs), prefs.ambienceVolume);
+  else setPrefs({ ambienceOn: true });
+}
 
 /** Three bars bouncing while ambience plays. */
 export const Equaliser = ({ on }: { on: boolean }) => (
@@ -96,6 +110,7 @@ const SpotifyPlayer = ({ link, embed }: { link: string; embed: string }) => {
         api.createController(target, { uri, width: "100%", height: 152 }, (c) => {
           if (cancelled) return c.destroy?.();
           controller = c;
+          setSpotifyController(c);
           c.addListener("playback_update", (e) => setSpotifyPlaying(!e.data.isPaused));
         });
       },
@@ -103,6 +118,7 @@ const SpotifyPlayer = ({ link, embed }: { link: string; embed: string }) => {
     );
     return () => {
       cancelled = true;
+      setSpotifyController(null);
       controller?.destroy?.();
       root.replaceChildren();
       setSpotifyPlaying(false);
@@ -169,13 +185,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           data-ambience-toggle
           aria-pressed={playing}
           aria-label={`${playing ? "Pause" : "Play"} ${ambience.label}`}
-          onClick={() => {
-            if (playing) return setPrefs({ ambienceOn: false });
-            // Inside the click, so Safari lets the audio start.
-            primeAudio();
-            if (waiting) playAmbience(kind, prefs.ambienceVolume);
-            else setPrefs({ ambienceOn: true });
-          }}
+          onClick={() => toggleAmbience(playing)}
           className="bg-glow-2/15 text-glow-2 hover:bg-glow-2/25 focus-visible:ring-glow-2 grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition focus-visible:ring-2 focus-visible:outline-none"
         >
           {playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}

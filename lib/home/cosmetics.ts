@@ -1,6 +1,6 @@
 "use client";
 
-import { DEV_UNLOCKS, levelFromXp, type GardenState } from "./garden";
+import { DEV_UNLOCKS, levelFromXp, totalXp, type GardenState } from "./garden";
 import type { SceneId } from "./scenes";
 
 /**
@@ -20,7 +20,7 @@ export interface Unlock {
 
 export function isUnlocked(unlock: Unlock | undefined, s: GardenState) {
   if (!unlock || DEV_UNLOCKS) return true;
-  if (unlock.level && levelFromXp(s.xp) < unlock.level) return false;
+  if (unlock.level && levelFromXp(totalXp(s)) < unlock.level) return false;
   if (unlock.seasons && s.seasons < unlock.seasons) return false;
   if (unlock.achievement && !s.achievements.includes(unlock.achievement)) return false;
   if (unlock.holiday && !s.seenHolidays.includes(unlock.holiday)) return false;
