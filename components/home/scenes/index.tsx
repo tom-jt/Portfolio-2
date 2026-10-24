@@ -26,6 +26,10 @@ const BACKGROUNDS: Record<SceneId, ComponentType> = {
   "p-forest": photo("forest"),
   "p-space": photo("space"),
   "p-sunset": photo("sunset"),
+  "p-alps": photo("alps"),
+  "p-autumn": photo("autumn"),
+  "p-majula": photo("majula"),
+  "p-moonlight": photo("moonlight"),
 };
 
 /**

@@ -23,7 +23,11 @@ export type SceneId =
   | "p-aurora"
   | "p-forest"
   | "p-space"
-  | "p-sunset";
+  | "p-sunset"
+  | "p-alps"
+  | "p-autumn"
+  | "p-majula"
+  | "p-moonlight";
 
 /** Ambient sounds. Each scene has a default, and the visitor can pick another.
  *  Their recipes are in lib/home/ambience.ts. */
@@ -39,7 +43,9 @@ export type AmbienceKind =
   | "lake"
   | "woods"
   | "cosmos"
-  | "shore";
+  | "shore"
+  | "majula"
+  | "snow";
 
 export interface AmbienceMeta {
   id: AmbienceKind;
@@ -64,6 +70,8 @@ export const AMBIENCES: AmbienceMeta[] = [
   { id: "woods", label: "forest birdsong", short: "birds" },
   { id: "cosmos", label: "deep space", short: "space" },
   { id: "shore", label: "warm shore", short: "shore" },
+  { id: "majula", label: "majula bonfire", short: "majula" },
+  { id: "snow", label: "falling snow", short: "snow" },
 ];
 
 const AMBIENCE_IDS = AMBIENCES.map((a) => a.id);
@@ -97,6 +105,10 @@ export const SCENES: SceneMeta[] = [
   { id: "p-forest", name: "sunlit forest", unlockLevel: 1, ambience: "woods", photo: "forest" },
   { id: "p-space", name: "nebula", unlockLevel: 1, ambience: "cosmos", photo: "space" },
   { id: "p-sunset", name: "tropical sunset", unlockLevel: 1, ambience: "shore", photo: "sunset" },
+  { id: "p-alps", name: "alpine hill", unlockLevel: 1, ambience: "hill", photo: "alps" },
+  { id: "p-autumn", name: "autumn path", unlockLevel: 1, ambience: "woods", photo: "autumn" },
+  { id: "p-majula", name: "majula", unlockLevel: 1, ambience: "majula", photo: "majula" },
+  { id: "p-moonlight", name: "moonlight", unlockLevel: 1, ambience: "snow", photo: "moonlight" },
 ];
 
 export const DEFAULT_SCENE: SceneId = "rain";

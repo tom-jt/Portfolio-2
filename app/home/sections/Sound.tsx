@@ -8,6 +8,7 @@ import {
   CloudRain,
   CloudRainWind,
   Coffee,
+  Flame,
   Headphones,
   Leaf,
   Lock,
@@ -18,6 +19,7 @@ import {
   Play,
   Volume1,
   Volume2,
+  Snowflake,
   Sunset,
   Waves,
   Wind,
@@ -65,6 +67,8 @@ const ICONS: Record<AmbienceKind, LucideIcon> = {
   woods: Bird,
   cosmos: Orbit,
   shore: Sunset,
+  majula: Flame,
+  snow: Snowflake,
 };
 
 /**

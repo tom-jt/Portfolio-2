@@ -564,6 +564,76 @@ html[data-home-scene="p-sunset"] [data-site="home"] {
   --nav-fg-hover: #ffa36b;
 }
 
+html[data-home-scene="p-alps"] [data-site="home"] {
+  --background: #2a5d8f;
+  --muted-foreground: #bccfdc;
+  --primary: #8fd3ff;
+  --primary-foreground: #0a2133;
+  --ring: #8fd3ff;
+  --accent-text: #8fd3ff;
+  --glass: rgb(14 34 46 / 78%);
+  --glass-strong: rgb(12 30 41 / 93%);
+  --glass-edge: rgb(215 240 255 / 16%);
+  --glass-highlight: rgb(240 250 255 / 9%);
+  --glow: #8fd3ff; /* the sky */
+  --glow-2: #c8f08a; /* the meadow */
+  --glow-3: #f5d7a8; /* sun on the rock */
+  --nav-fg-hover: #8fd3ff;
+}
+
+html[data-home-scene="p-autumn"] [data-site="home"] {
+  --background: #3a1a0e;
+  --muted-foreground: #dcbfa8;
+  --primary: #ff8a3d;
+  --primary-foreground: #2c1206;
+  --ring: #ff8a3d;
+  --accent-text: #ff8a3d;
+  --glass: rgb(44 20 12 / 80%);
+  --glass-strong: rgb(38 17 10 / 93%);
+  --glass-edge: rgb(255 210 170 / 15%);
+  --glass-highlight: rgb(255 232 210 / 9%);
+  --glow: #ff8a3d; /* the leaves */
+  --glow-2: #ffd27a; /* the light through them */
+  --glow-3: #e0503a; /* the reds */
+  --nav-fg-hover: #ff8a3d;
+}
+
+/* Majula wears the ember theme's colours, and moonlight glacier's: close
+   enough to what each photo needed that a near-copy would add nothing. */
+html[data-home-scene="p-majula"] [data-site="home"] {
+  --background: #2a1c14;
+  --muted-foreground: #c2aea4;
+  --primary: #ff7a45;
+  --primary-foreground: #2a0d04;
+  --ring: #ff7a45;
+  --accent-text: #ff7a45;
+  --glass: rgb(28 18 15 / 81%);
+  --glass-strong: rgb(24 15 12 / 94%);
+  --glass-edge: rgb(255 200 170 / 13%);
+  --glass-highlight: rgb(255 225 205 / 7%);
+  --glow: #ff7a45; /* the bonfire */
+  --glow-2: #cfc6bf; /* its ash */
+  --glow-3: #ffb35c;
+  --nav-fg-hover: #ff7a45;
+}
+
+html[data-home-scene="p-moonlight"] [data-site="home"] {
+  --background: #0c1a2a;
+  --muted-foreground: #a8bdd3;
+  --primary: #9ed6ff;
+  --primary-foreground: #082030;
+  --ring: #9ed6ff;
+  --accent-text: #9ed6ff;
+  --glass: rgb(12 28 46 / 80%);
+  --glass-strong: rgb(11 25 41 / 93%);
+  --glass-edge: rgb(212 234 255 / 16%);
+  --glass-highlight: rgb(236 246 255 / 9%);
+  --glow: #9ed6ff; /* the moon */
+  --glow-2: #eef7ff; /* the snow */
+  --glow-3: #93aaff;
+  --nav-fg-hover: #9ed6ff;
+}
+
 /* ---------------------------------------------------------------
    Home colour themes. They recolour the chrome (glass, text and glows) and
    leave the scene and its ground alone, so they sit at the same specificity
@@ -722,6 +792,38 @@ html[data-home-theme="tropic"] [data-site="home"],
   --glow-2: #c79bff;
   --glow-3: #ffd27a;
   --nav-fg: #f0d2dc;
+}
+
+/* Made for the alpine hill: its sky, the meadow, and sun on the rock. */
+html[data-home-theme="alpine"] [data-site="home"],
+[data-home-swatch="alpine"] {
+  --foreground: #f2f9ff;
+  --muted-foreground: #bccfdc;
+  --primary-foreground: #0a2133;
+  --glass: rgb(14 34 46 / 78%);
+  --glass-strong: rgb(12 30 41 / 93%);
+  --glass-edge: rgb(215 240 255 / 16%);
+  --glass-highlight: rgb(240 250 255 / 9%);
+  --glow: #8fd3ff;
+  --glow-2: #c8f08a;
+  --glow-3: #f5d7a8;
+  --nav-fg: #d2e2ec;
+}
+
+/* Made for the autumn path: rust, gold and the last reds. */
+html[data-home-theme="maple"] [data-site="home"],
+[data-home-swatch="maple"] {
+  --foreground: #fff3ea;
+  --muted-foreground: #dcbfa8;
+  --primary-foreground: #2c1206;
+  --glass: rgb(44 20 12 / 80%);
+  --glass-strong: rgb(38 17 10 / 93%);
+  --glass-edge: rgb(255 210 170 / 15%);
+  --glass-highlight: rgb(255 232 210 / 9%);
+  --glow: #ff8a3d;
+  --glow-2: #ffd27a;
+  --glow-3: #e0503a;
+  --nav-fg: #ecd2bf;
 }
 
 /* Earned themes. Sakura: blossom on a warm dusk. */
@@ -1151,12 +1253,65 @@ html:has([data-site="home"]) {
 }
 
 /* The nebula turning gently. Scaled up so its corners never show. */
-@keyframes home-turn {
+/* Clouds drifting to and fro, by --dx each way. */
+@keyframes home-drift {
   from {
-    transform: scale(1.12) rotate(-2deg);
+    transform: translate3d(calc(var(--dx, 10%) * -1), 0, 0);
   }
   to {
-    transform: scale(1.12) rotate(2deg);
+    transform: translate3d(var(--dx, 10%), 0, 0);
+  }
+}
+
+/* A sheet of rain or snow sliding down by whole tiles (--tile). */
+@keyframes home-fall-sheet {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, var(--tile, 400px), 0);
+  }
+}
+
+/* A falling leaf: down and across, turning, fading in and out. */
+@keyframes home-leaf {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  10%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift, 0px), var(--fall, 70vh), 0) rotate(var(--spin, 180deg));
+  }
+}
+
+/* A leaf rocking and tipping over as it falls. */
+@keyframes home-flutter {
+  from {
+    transform: rotate(-35deg) scaleX(1);
+  }
+  to {
+    transform: rotate(35deg) scaleX(0.35);
+  }
+}
+
+/* A tongue of flame licking up and settling. */
+@keyframes home-flame {
+  0% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(0.92, 0.82) skewX(-3deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.04, 1.12) skewX(2deg);
+  }
+  100% {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(0.96, 0.95) skewX(4deg);
   }
 }
 

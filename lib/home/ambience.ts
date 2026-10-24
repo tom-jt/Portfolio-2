@@ -141,6 +141,8 @@ interface Layer {
   lowpass?: number;
   /** Seconds into the loop to start, so a recording used twice doesn't line up. */
   offset?: number;
+  /** Heard only now and then: fades in for a few seconds, then away for a while. */
+  bursts?: { on: [min: number, max: number]; off: [min: number, max: number] };
 }
 
 interface Recipe {
@@ -194,12 +196,13 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
       { file: "waves", gain: 0.32, lowpass: 900 },
       { file: "wind", gain: 0.14, offset: 30 },
     ],
-    extra: (c, out) => crickets(c, out, 0.5),
+    extra: (c, out) => crickets(c, out, 1.1),
   },
   woods: {
     layers: [
-      { file: "rain-on-leaves", gain: 0.16, lowpass: 2500, offset: 14 },
-      { file: "wind", gain: 0.3, offset: 8 },
+      { file: "rain-on-leaves", gain: 0.14, lowpass: 2500, offset: 14 },
+      // The canopy rustling overhead, rather than wind in the open.
+      { file: "wind-in-trees", gain: 0.34, offset: 8 },
     ],
     extra: birds,
   },
@@ -211,8 +214,21 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
     layers: [
       { file: "waves", gain: 0.85 },
       { file: "wind", gain: 0.16, offset: 40 },
+      { file: "seagulls", gain: 0.3, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
     ],
     extra: (c, out) => crickets(c, out, 0.25),
+  },
+  majula: {
+    layers: [
+      { file: "majula", gain: 0.9 },
+      { file: "campfire", gain: 0.9 },
+    ],
+  },
+  snow: {
+    layers: [
+      { file: "howling-wind", gain: 0.75 },
+      { file: "wind", gain: 0.2, lowpass: 1200, offset: 25 },
+    ],
   },
   cafe: {
     layers: [
@@ -240,16 +256,31 @@ function every(c: AudioContext, play: (at: number) => number) {
   return () => clearInterval(timer);
 }
 
+/** Swells `param` up to `level` for a few seconds at a time, with long
+ *  quiet spells between. Returns a stop function. */
+function bursts(c: AudioContext, param: AudioParam, level: number, { on, off }: NonNullable<Layer["bursts"]>) {
+  const span = ([min, max]: [number, number]) => min + Math.random() * (max - min);
+  return every(c, (at) => {
+    const hold = span(on);
+    param.setTargetAtTime(level, at, 0.8);
+    param.setTargetAtTime(0, at + hold, 1.2);
+    return hold + span(off);
+  });
+}
+
 /** Birds in the canopy: short phrases of whistled notes, a few seconds apart,
  *  each bird with its own pitch and pattern. */
 function birds(c: AudioContext, out: AudioNode) {
   const bus = gain(c, 0.5);
-  route(bus, out, room(c, 2.4), gain(c, 0.35));
+  // Deep woods: more of each call comes back off the trunks.
+  route(bus, out, room(c, 3.2), gain(c, 0.5));
   bus.connect(out);
   const voices = [
     { base: 2600, spread: 900, notes: [3, 6], gap: 0.13, length: 0.09 },
     { base: 3400, spread: 500, notes: [2, 4], gap: 0.2, length: 0.16 },
     { base: 1900, spread: 700, notes: [4, 8], gap: 0.09, length: 0.06 },
+    // A lower, slower song further off, like a thrush in the understorey.
+    { base: 1300, spread: 400, notes: [2, 4], gap: 0.28, length: 0.22 },
   ];
   const chirp = (at: number, from: number, to: number, length: number, level: number) => {
     const osc = c.createOscillator();
@@ -277,14 +308,23 @@ function birds(c: AudioContext, out: AudioNode) {
   });
 }
 
-/** Crickets: trains of quick high pulses, now near, now far. */
+/** Crickets: trains of quick high pulses, now near, now far, in bursts of a
+ *  few seconds with quiet between, the way a chorus starts and stops. */
 function crickets(c: AudioContext, out: AudioNode, level: number) {
   const bus = gain(c, level);
   route(bus, out, filter(c, "highpass", 2500, 0.7));
+  // Opens mid-chorus, so there's something to hear straight away.
+  let left = 6;
   return every(c, (at) => {
+    if (left === 0) {
+      // Start the next burst after a lull.
+      left = 5 + Math.floor(Math.random() * 9);
+      return 3 + Math.random() * 6;
+    }
+    left -= 1;
     const f = 4200 + Math.random() * 900;
     const pulses = 3 + Math.floor(Math.random() * 4);
-    const near = 0.008 + Math.random() * 0.012;
+    const near = 0.012 + Math.random() * 0.016;
     for (let i = 0; i < pulses; i++) {
       const t = at + i * 0.045;
       const osc = c.createOscillator();
@@ -297,7 +337,7 @@ function crickets(c: AudioContext, out: AudioNode, level: number) {
       osc.start(t);
       osc.stop(t + 0.04);
     }
-    return 0.35 + Math.random() * 0.9;
+    return 0.25 + Math.random() * 0.45;
   });
 }
 
@@ -626,7 +666,7 @@ export function playAmbience(kind: AmbienceKind, v: number) {
   const files = recipe.layers.map((l) => l.file);
   for (const file of recordings.keys()) if (!files.includes(file)) recordings.delete(file);
   const sources: AudioBufferSourceNode[] = [];
-  let stopExtra = () => {};
+  const stoppers: (() => void)[] = [];
   let stopped = false;
   setStatus("loading");
 
@@ -639,11 +679,13 @@ export function playAmbience(kind: AmbienceKind, v: number) {
         src.buffer = buffer;
         src.loop = true;
         const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
-        route(src, bus, ...chain, gain(c, layer.gain));
+        const level = gain(c, layer.bursts ? 0 : layer.gain);
+        route(src, bus, ...chain, level);
         src.start(0, (layer.offset ?? 0) % buffer.duration);
         sources.push(src);
+        if (layer.bursts) stoppers.push(bursts(c, level.gain, layer.gain, layer.bursts));
       });
-      if (recipe.extra) stopExtra = recipe.extra(c, bus);
+      if (recipe.extra) stoppers.push(recipe.extra(c, bus));
       bus.gain.setTargetAtTime(1, c.currentTime, FADE / 3);
       setStatus("playing");
     },
@@ -656,7 +698,7 @@ export function playAmbience(kind: AmbienceKind, v: number) {
     kind,
     stop: () => {
       stopped = true;
-      stopExtra();
+      stoppers.forEach((s) => s());
       bus.gain.setTargetAtTime(0, c.currentTime, FADE / 3);
       const end = c.currentTime + FADE * 2;
       sources.forEach((s) => s.stop(end));

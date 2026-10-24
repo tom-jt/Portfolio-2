@@ -27,7 +27,9 @@ export type ThemeId =
   | "pastel"
   | "iridescent"
   | "canopy"
-  | "tropic";
+  | "tropic"
+  | "alpine"
+  | "maple";
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -45,7 +47,7 @@ export interface ThemeMeta {
 export const THEMES: ThemeMeta[] = [
   { id: "mono", name: "mono", hint: "black and white" },
   { id: "rose", name: "rose", hint: "red and pink" },
-  { id: "glacier", name: "glacier", hint: "icy blue and white" },
+  { id: "glacier", name: "glacier", hint: "icy blue and white", pairsWith: "p-moonlight" },
   { id: "neon", name: "neon", hint: "pink and cyan", pairsWith: "rain" },
   {
     id: "meadow",
@@ -72,6 +74,18 @@ export const THEMES: ThemeMeta[] = [
     hint: "coral and twilight violet",
     pairsWith: "p-sunset",
   },
+  {
+    id: "alpine",
+    name: "alpine",
+    hint: "sky, meadow and sunlit rock",
+    pairsWith: "p-alps",
+  },
+  {
+    id: "maple",
+    name: "maple",
+    hint: "rust, gold and red leaves",
+    pairsWith: "p-autumn",
+  },
   // Earned: a third row that fills in as the garden grows.
   {
     id: "pastel",
@@ -85,7 +99,13 @@ export const THEMES: ThemeMeta[] = [
     hint: "blossom and cream",
     unlock: { level: 8 },
   },
-  { id: "ember", name: "ember", hint: "embers and ash", unlock: { level: 11 } },
+  {
+    id: "ember",
+    name: "ember",
+    hint: "embers and ash",
+    pairsWith: "p-majula",
+    unlock: { level: 11 },
+  },
   {
     id: "aurora",
     name: "aurora",

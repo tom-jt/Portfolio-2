@@ -13,13 +13,17 @@ import { lerp, seeded } from "./canvas";
  * never repainted.
  */
 
-export type PhotoId = "aurora" | "forest" | "space" | "sunset";
+export type PhotoId = "aurora" | "forest" | "space" | "sunset" | "alps" | "autumn" | "majula" | "moonlight";
 
 const ASPECT: Record<PhotoId, number> = {
   aurora: 16 / 9,
   forest: 2560 / 1667,
   space: 16 / 9,
   sunset: 16 / 9,
+  alps: 16 / 9,
+  autumn: 3 / 2,
+  majula: 16 / 9,
+  moonlight: 16 / 9,
 };
 
 export const photoSrc = (id: PhotoId) => `/home/scenes/${id}.webp`;
@@ -264,6 +268,178 @@ const SpaceVeil = () => (
   </span>
 );
 
+/**
+ * A long soft streak of cloud drifting to and fro across the sky, blended
+ * onto the photo so it thickens what's there rather than pasting over it.
+ */
+const CloudStreak = ({
+  x,
+  y,
+  width,
+  height,
+  color,
+  period,
+  delay = 0,
+  travel = 12,
+}: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  period: number;
+  delay?: number;
+  /** How far it drifts each way, in % of its own width. */
+  travel?: number;
+}) => (
+  <span
+    className="absolute -translate-x-1/2 -translate-y-1/2"
+    style={{ left: `${x}%`, top: `${y}%`, width: `${width}%`, height: `${height}%` }}
+  >
+    <span
+      className="absolute inset-0 mix-blend-screen"
+      style={
+        {
+          background: `radial-gradient(ellipse closest-side, ${color}, transparent)`,
+          "--dx": `${travel}%`,
+          animation: `home-drift ${period}s ease-in-out ${delay}s infinite alternate`,
+        } as CSSProperties
+      }
+    />
+  </span>
+);
+
+/** Tiles for falling rain and snow, drawn once as SVG. 200px square, so a
+ *  layer sliding down by whole tiles loops without a seam. */
+const svgTile = (body: string) =>
+  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>${body}</svg>`)}")`;
+
+const RAIN_TILE = svgTile(
+  points(71, 14, [0, 0, 100, 100])
+    .map((p) => `<line x1='${p.x * 2}' y1='${p.y * 2}' x2='${p.x * 2}' y2='${p.y * 2 + 18 + p.a * 22}' stroke='white' stroke-opacity='${(0.25 + p.b * 0.4).toFixed(2)}' stroke-width='1'/>`)
+    .join(""),
+);
+
+const snowTile = (seed: number, count: number, size: [number, number]) =>
+  svgTile(
+    points(seed, count, [0, 0, 100, 100])
+      .map((p) => `<circle cx='${p.x * 2}' cy='${p.y * 2}' r='${lerp(size[0], size[1], p.a).toFixed(1)}' fill='white' fill-opacity='${(0.5 + p.b * 0.5).toFixed(2)}'/>`)
+      .join(""),
+  );
+
+/**
+ * A sheet of falling rain or snow: a tile repeated over the scene, sliding
+ * down two tiles a loop. `scale` sizes the tile, so a nearer layer can have
+ * bigger, faster drops; `sway` swings snow gently side to side.
+ */
+const Fall = ({
+  tile,
+  period,
+  scale = 1,
+  opacity = 1,
+  sway,
+}: {
+  tile: string;
+  period: number;
+  scale?: number;
+  opacity?: number;
+  sway?: number;
+}) => {
+  const size = 200 * scale;
+  return (
+    <span
+      className="absolute -inset-x-[5%] inset-y-0 overflow-hidden"
+      style={sway ? ({ "--drift": `${sway}px`, animation: `home-wander ${period * 1.7}s ease-in-out infinite` } as CSSProperties) : undefined}
+    >
+      <span
+        className="absolute inset-x-0 bottom-0"
+        style={
+          {
+            top: -size * 2,
+            opacity,
+            backgroundImage: tile,
+            backgroundSize: `${size}px ${size}px`,
+            "--tile": `${size * 2}px`,
+            animation: `home-fall-sheet ${period}s linear infinite`,
+          } as CSSProperties
+        }
+      />
+    </span>
+  );
+};
+
+/** Leaves drifting down, each turning over as it falls. */
+const Leaves = ({ seed, count, box }: { seed: number; count: number; box: [number, number, number, number] }) => {
+  const colours = ["#ff6a2a", "#ffa733", "#d9441f", "#ffd25a", "#b8391c"];
+  return (
+    <>
+      {points(seed, count, box).map((p, i) => {
+        const d = lerp(10, 20, p.b);
+        const s = lerp(12, 22, p.a);
+        return (
+          <span
+            key={i}
+            className="absolute"
+            style={
+              {
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                "--drift": `${lerp(-120, 160, p.a)}px`,
+                "--fall": `${lerp(55, 90, p.b)}vh`,
+                "--spin": `${lerp(-300, 300, p.b)}deg`,
+                animation: `home-leaf ${d}s linear ${-p.a * d}s infinite`,
+              } as CSSProperties
+            }
+          >
+            <span
+              className="block"
+              style={{
+                width: s,
+                height: s * 0.7,
+                background: colours[i % colours.length],
+                borderRadius: "0 80% 0 80%",
+                // A dark edge, so it stands out from the leaves still on the trees.
+                boxShadow: "0 1px 4px rgb(30 10 0 / 0.6)",
+                animation: `home-flutter ${lerp(1.2, 2.4, p.a)}s ease-in-out ${-p.b * 2}s infinite alternate`,
+              }}
+            />
+          </span>
+        );
+      })}
+    </>
+  );
+};
+
+/**
+ * A bonfire: tongues of flame licking upward from its base, each flickering
+ * at its own pace, over a glow that breathes with them. (x, y) is the base
+ * of the fire, `size` its height, all in % of the photo.
+ */
+const Fire = ({ x, y, size }: { x: number; y: number; size: number }) => (
+  <span className="absolute" style={{ left: `${x}%`, top: `${y}%`, width: 0, height: 0 }}>
+    {[
+      { dx: 0, w: 0.55, h: 1, color: "255 190 90", period: 0.9, delay: 0 },
+      { dx: -0.22, w: 0.4, h: 0.72, color: "255 140 50", period: 0.7, delay: -0.3 },
+      { dx: 0.24, w: 0.38, h: 0.66, color: "255 150 60", period: 0.8, delay: -0.5 },
+      { dx: 0.05, w: 0.28, h: 0.55, color: "255 240 190", period: 0.6, delay: -0.2 },
+    ].map((f, i) => (
+      <span
+        key={i}
+        className="absolute bottom-0 origin-bottom mix-blend-screen"
+        style={{
+          left: `${f.dx * size}vh`,
+          width: `${f.w * size}vh`,
+          height: `${f.h * size}vh`,
+          transform: "translateX(-50%)",
+          background: `radial-gradient(ellipse 50% 60% at 50% 70%, rgb(${f.color} / 0.95), rgb(${f.color} / 0.45) 45%, transparent 70%)`,
+          borderRadius: "50% 50% 45% 45% / 70% 70% 30% 30%",
+          animation: `home-flame ${f.period}s ease-in-out ${f.delay}s infinite alternate`,
+        }}
+      />
+    ))}
+  </span>
+);
+
 // The sea in the sunset, traced inside the shoreline and the rocks.
 const SUNSET_WATER: Pt[] = [
   [20, 45],
@@ -319,9 +495,55 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
         <span
           key={i}
           className="absolute h-px w-24 bg-[linear-gradient(to_left,transparent,white)]"
-          style={{ left: `${60 + i * 12}%`, top: `${12 + i * 14}%`, animation: `home-shoot 17s ease-out ${delay}s infinite` }}
+          // Hidden unless animating: with reduced motion they'd sit there as lines.
+          style={{ left: `${60 + i * 12}%`, top: `${12 + i * 14}%`, opacity: 0, animation: `home-shoot 17s ease-out ${delay}s infinite` }}
         />
       ))}
+    </>
+  ),
+  alps: () => (
+    <>
+      {/* Long streaks of cloud drifting over the peaks. */}
+      <CloudStreak x={30} y={9} width={70} height={9} color="rgb(255 255 255 / 0.45)" period={70} />
+      <CloudStreak x={72} y={17} width={60} height={8} color="rgb(240 248 255 / 0.4)" period={90} delay={-30} />
+      <CloudStreak x={50} y={30} width={80} height={7} color="rgb(255 255 255 / 0.3)" period={110} delay={-55} />
+      <CloudStreak x={15} y={36} width={50} height={6} color="rgb(235 245 255 / 0.28)" period={80} delay={-12} />
+      {/* A light rain, two sheets deep. */}
+      <Fall tile={RAIN_TILE} period={1.6} opacity={0.35} />
+      <Fall tile={RAIN_TILE} period={1.1} scale={1.6} opacity={0.25} />
+    </>
+  ),
+  autumn: () => (
+    <>
+      {/* Warm light wandering through the canopy and over the path. */}
+      <Glow x={48} y={42} size={42} color="rgb(255 190 110 / 0.35)" period={9} />
+      <Glow x={22} y={28} size={30} color="rgb(255 140 60 / 0.3)" period={12} delay={-4} />
+      <Glow x={70} y={60} size={34} color="rgb(255 110 60 / 0.25)" period={14} delay={-7} />
+      <Glow x={45} y={85} size={40} color="rgb(255 120 70 / 0.25)" period={11} delay={-2} />
+      <Motes seed={83} count={14} box={[30, 40, 70, 80]} color="rgb(255 215 150 / 0.7)" rise={-90} />
+      <Leaves seed={89} count={34} box={[0, -8, 100, 40]} />
+    </>
+  ),
+  majula: () => (
+    <>
+      {/* The bonfire's light on the stones, breathing with the flames. */}
+      <Glow x={43.5} y={74} size={34} color="rgb(255 160 70 / 0.45)" period={1.7} />
+      <Glow x={43.5} y={76} size={14} color="rgb(255 210 130 / 0.55)" period={0.9} delay={-0.4} />
+      <Fire x={43.5} y={78} size={9} />
+      <Motes seed={97} count={26} box={[40, 58, 47, 76]} color="rgb(255 150 60 / 0.95)" rise={-260} />
+      <Motes seed={101} count={10} box={[41, 62, 46, 74]} color="rgb(255 220 150 / 0.9)" rise={-180} />
+    </>
+  ),
+  moonlight: () => (
+    <>
+      <Glow x={60} y={21} size={22} color="rgb(210 230 255 / 0.4)" period={8} />
+      {/* Streaks of white cloud moving past the moon. */}
+      <CloudStreak x={40} y={12} width={70} height={8} color="rgb(230 240 255 / 0.32)" period={80} />
+      <CloudStreak x={70} y={24} width={55} height={7} color="rgb(220 235 255 / 0.3)" period={100} delay={-40} />
+      <CloudStreak x={25} y={32} width={60} height={6} color="rgb(230 240 255 / 0.22)" period={95} delay={-20} />
+      {/* Snow, a far sheet of fine flakes and a nearer one of bigger flakes. */}
+      <Fall tile={snowTile(103, 26, [0.6, 1.4])} period={16} opacity={0.6} sway={18} />
+      <Fall tile={snowTile(107, 12, [1.2, 2.4])} period={10} scale={1.5} opacity={0.75} sway={30} />
     </>
   ),
   sunset: () => (
@@ -334,11 +556,17 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
 };
 
-/** How each photo moves as a whole: a slow zoom, or for the nebula a turn. */
+/**
+ * How each photo moves as a whole: a slow zoom and pan. (Never a rotation:
+ * Chrome draws a turning layer tile by tile, and on a dark photo the seams
+ * between tiles show as faint straight lines.)
+ */
 const MOTION: Partial<Record<PhotoId, string>> = {
   sunset: "home-slow-zoom 120s ease-in-out infinite alternate",
   aurora: "home-slow-zoom 140s ease-in-out infinite alternate",
-  space: "home-turn 60s ease-in-out infinite alternate",
+  space: "home-slow-zoom 90s ease-in-out infinite alternate",
+  alps: "home-slow-zoom 150s ease-in-out infinite alternate",
+  moonlight: "home-slow-zoom 130s ease-in-out infinite alternate",
 };
 
 const PhotoScene = ({ id }: { id: PhotoId }) => (
