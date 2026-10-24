@@ -154,7 +154,7 @@ export const SKILLS: SkillDef[] = [
     name: "Good habits",
     costs: RAMP,
     needs: {},
-    effect: (r) => `+${20 * r}% drops from tasks, focus, breaks and games`,
+    effect: (r) => `+${20 * r}% drops from tasks, focus, breaks, and games`,
     at: [0.5, 0],
   },
   {

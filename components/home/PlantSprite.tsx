@@ -193,6 +193,173 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
           </g>
         ),
       };
+
+    // Made for each scene.
+    case "slick":
+      // Rainy window: wet, glossy navy, with drops running down it.
+      return {
+        fill: `url(#${gid})`,
+        gradient: ["#34508a", "#141c33"],
+        detail: (
+          <g fill="#ffffff">
+            <rect x="12.5" y="36.5" width="1.4" height="8" rx="0.7" opacity="0.35" />
+            <ellipse cx="22" cy="39" rx="0.8" ry="1.1" opacity="0.6" />
+            <ellipse cx="25.5" cy="42.5" rx="0.7" ry="1" opacity="0.5" />
+          </g>
+        ),
+      };
+    case "daisy":
+      // The hill: meadow-green glaze, painted with daisies.
+      return {
+        fill: "#7fb77e",
+        detail: (
+          <g>
+            {[
+              [15, 40],
+              [24.5, 42.5],
+            ].map(([x, y]) => (
+              <g key={x}>
+                {[0, 72, 144, 216, 288].map((d) => (
+                  <circle key={d} cx={x + 1.5 * Math.cos((d * Math.PI) / 180)} cy={y + 1.5 * Math.sin((d * Math.PI) / 180)} r="0.9" fill="#ffffff" />
+                ))}
+                <circle cx={x} cy={y} r="0.8" fill="#ffd34d" />
+              </g>
+            ))}
+          </g>
+        ),
+      };
+    case "dusk":
+      // The sunset: glazed from sun-orange down to evening violet.
+      return { fill: `url(#${gid})`, gradient: ["#ffa06b", "#6b3a8a"] };
+    case "stoneware":
+      // The café: speckled cream stoneware with a brown dipped rim.
+      return {
+        fill: "#e9dcc6",
+        detail: (
+          <g>
+            <rect x="8" y="31" width="24" height="2.4" rx="1" fill="#7a4a2a" />
+            {[
+              [13, 38],
+              [18, 42],
+              [23, 37.5],
+              [26, 41],
+              [15.5, 44],
+              [21, 40],
+            ].map(([x, y]) => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="0.45" fill="#8a6a4a" />
+            ))}
+          </g>
+        ),
+      };
+    case "borealis":
+      // The aurora lake: deep teal into violet, a band of light across it.
+      return {
+        fill: `url(#${gid})`,
+        gradient: ["#2a7a74", "#3f2a74"],
+        detail: (
+          <path d="M10 40 Q14 37 18 40 T26 40 T31 39" stroke="#8ff5cf" strokeWidth="1.1" fill="none" opacity="0.8" />
+        ),
+      };
+    case "bark":
+      // The sunlit forest: a hollowed log, grain and a knot.
+      return {
+        fill: "#6b4a32",
+        detail: (
+          <g stroke="#4a3221" strokeWidth="0.6" fill="none">
+            <path d="M13 36 Q12.5 41 14 46 M18 36 Q19 41 17.5 46 M24 36 Q23 41 24.5 46 M28 36 Q28.5 40 27 45" />
+            <ellipse cx="21" cy="41" rx="1.4" ry="1" />
+          </g>
+        ),
+      };
+    case "nebula":
+      // The nebula: violet into deep blue, stars and a drift of pink gas.
+      return {
+        fill: `url(#${gid})`,
+        gradient: ["#4a2f8a", "#121a44"],
+        detail: (
+          <g>
+            <ellipse cx="19" cy="40" rx="6" ry="2.4" fill="#ff8fd0" opacity="0.28" />
+            {[
+              [13, 38],
+              [24, 37.5],
+              [27, 42],
+              [16, 43.5],
+              [21, 44.5],
+            ].map(([x, y]) => (
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="0.45" fill="#ffffff" />
+            ))}
+          </g>
+        ),
+      };
+    case "coral":
+      // The tropical sunset: coral pink, ridged like a shell.
+      return {
+        fill: "#ff8a73",
+        detail: (
+          <g stroke="#ffc2b2" strokeWidth="0.6" fill="none" opacity="0.8">
+            <path d="M13 36 Q15 41 14 46 M17 36 Q18 41 17.5 46 M21 36 V46 M25 36 Q24 41 24.5 46 M28.5 36 Q27 41 27 45" />
+          </g>
+        ),
+      };
+    case "enamel":
+      // The alpine hill: white enamel with a blue rim and an edelweiss.
+      return {
+        fill: "#f4f6f8",
+        detail: (
+          <g>
+            <rect x="8" y="31" width="24" height="4.5" rx="1.2" fill="#2f5fa8" />
+            <rect x="9" y="32.2" width="22" height="0.7" fill="#ffffff" opacity="0.3" />
+            {[0, 60, 120, 180, 240, 300].map((d) => (
+              <ellipse
+                key={d}
+                cx={20 + 1.8 * Math.cos((d * Math.PI) / 180)}
+                cy={40.5 + 1.8 * Math.sin((d * Math.PI) / 180)}
+                rx="1.1"
+                ry="0.6"
+                transform={`rotate(${d} ${20 + 1.8 * Math.cos((d * Math.PI) / 180)} ${40.5 + 1.8 * Math.sin((d * Math.PI) / 180)})`}
+                fill="#dfe6e0"
+                stroke="#b8c4bb"
+                strokeWidth="0.2"
+              />
+            ))}
+            <circle cx="20" cy="40.5" r="0.9" fill="#e8d35a" />
+          </g>
+        ),
+      };
+    case "maple":
+      // The autumn path: rust glaze with a gold maple leaf.
+      return {
+        fill: "#b5532a",
+        detail: (
+          <path
+            d="M20 36.5 l0.8 2.2 1.5 -0.8 -0.4 2 2.1 -0.3 -1.2 1.6 1.4 0.8 -2.6 0.2 0.3 1.2 -1.6 -0.7 V45 h-0.6 v-2.3 l-1.6 0.7 0.3 -1.2 -2.6 -0.2 1.4 -0.8 -1.2 -1.6 2.1 0.3 -0.4 -2 1.5 0.8 Z"
+            fill="#f2b33d"
+          />
+        ),
+      };
+    case "ashen":
+      // Majula: grey stone, cracked, with an ember glowing inside.
+      return {
+        fill: "#5b5753",
+        detail: (
+          <g>
+            <path d="M15 35.5 L17 39 L15.5 41.5 L18.5 46" stroke="#ff9a3c" strokeWidth="0.8" fill="none" style={{ filter: "drop-shadow(0 0 1.5px #ff7a2a)" }} />
+            <path d="M25 37 L23.5 40 L25.5 43" stroke="#ff9a3c" strokeWidth="0.6" fill="none" opacity="0.8" />
+          </g>
+        ),
+      };
+    case "frost":
+      // Moonlight: icy blue, rimed with frost.
+      return {
+        fill: `url(#${gid})`,
+        gradient: ["#eef7ff", "#9cc4e8"],
+        detail: (
+          <g stroke="#ffffff" strokeWidth="0.45" opacity="0.85">
+            <path d="M13 38 l2 2 M15 38 l-2 2 M14 37.6 v2.8 M25 41 l2 2 M27 41 l-2 2 M26 40.6 v2.8" />
+            <rect x="8" y="31" width="24" height="1.4" rx="0.7" fill="#ffffff" stroke="none" opacity="0.7" />
+          </g>
+        ),
+      };
   }
 }
 

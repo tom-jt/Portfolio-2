@@ -544,6 +544,7 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       {/* Snow, a far sheet of fine flakes and a nearer one of bigger flakes. */}
       <Fall tile={snowTile(103, 26, [0.6, 1.4])} period={16} opacity={0.6} sway={18} />
       <Fall tile={snowTile(107, 12, [1.2, 2.4])} period={10} scale={1.5} opacity={0.75} sway={30} />
+      <Frost id="moonlight" />
     </>
   ),
   sunset: () => (
@@ -555,6 +556,44 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
     </>
   ),
 };
+
+/** Fine white speckle for frost on glass: sparse grains from fractal noise. */
+const FROST_GRAIN =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.7 -0.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E";
+
+/** Where the frost gathers: thick at the edges of the pane, clear in the middle. */
+const FROST_EDGE = "radial-gradient(ellipse at center, transparent 42%, rgb(0 0 0 / 0.55) 68%, black 92%)";
+
+/**
+ * Frost on the window: the view goes soft and pale towards the edges of the
+ * pane, with a fine grain of ice crystals over it. The blurred copy is drawn
+ * once and only moves with the photo, so the snow never makes it repaint.
+ */
+function Frost({ id }: { id: PhotoId }) {
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- a blurred copy of the background */}
+      <img
+        src={photoSrc(id)}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 size-full scale-105 object-cover blur-[12px] brightness-110 saturate-[0.8] select-none"
+        style={{ maskImage: FROST_EDGE, WebkitMaskImage: FROST_EDGE }}
+      />
+      <span
+        className="absolute inset-0 mix-blend-screen"
+        style={{
+          backgroundImage: `url("${FROST_GRAIN}")`,
+          backgroundSize: "240px",
+          opacity: 0.5,
+          maskImage: FROST_EDGE,
+          WebkitMaskImage: FROST_EDGE,
+        }}
+      />
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgb(225_238_255/0.16)_100%)]" />
+    </>
+  );
+}
 
 /**
  * How each photo moves as a whole: a slow zoom and pan. (Never a rotation:

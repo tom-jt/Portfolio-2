@@ -6,7 +6,12 @@ import { Check, Lock, Palette } from "lucide-react";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
 import { levelFromXp, useGarden } from "@/lib/home/garden";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
-import { getAmbience, SCENES, type SceneId, type SceneMeta } from "@/lib/home/scenes";
+import {
+  getAmbience,
+  SCENES,
+  type SceneId,
+  type SceneMeta,
+} from "@/lib/home/scenes";
 import { describeTheme, THEMES } from "@/lib/home/themes";
 import { cn } from "@/lib/utils";
 import { ScenePreview } from "./scenes/previews";
@@ -41,13 +46,19 @@ const Swatch = ({
     )}
   >
     {children}
-    <span className={cn("text-[0.7rem]", active ? "text-foreground" : "text-muted-foreground")}>
+    <span
+      className={cn(
+        "text-[0.7rem]",
+        active ? "text-foreground" : "text-muted-foreground",
+      )}
+    >
       {name}
     </span>
   </button>
 );
 
-const TILE = "border-glass-edge relative size-10 overflow-hidden rounded-lg border";
+const TILE =
+  "border-glass-edge relative size-10 overflow-hidden rounded-lg border";
 
 /** One scene in the picker: its thumbnail, name and sound, or its lock. */
 const SceneRow = ({
@@ -150,72 +161,100 @@ const SceneSwitcher = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.16 }}
-            className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 max-h-[calc(100dvh-5rem)] w-72 origin-top-right overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)]"
+            // Scenes and colours side by side where there's room, each
+            // scrolling on its own; stacked, scrolling together, on phones.
+            className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 flex max-h-[calc(100dvh-5rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-right flex-col gap-2 overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] md:w-[40rem] md:flex-row md:overflow-hidden"
           >
-            <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
-              classic scenes
-            </p>
-            <ul className="flex flex-col gap-1">
-              {SCENES.filter((s) => !s.photo).map((s) => (
-                <SceneRow key={s.id} s={s} level={level} active={s.id === scene} onPick={() => pick(s.id)} />
-              ))}
-            </ul>
-            <p className="text-muted-foreground px-2.5 pt-4 pb-2 text-xs font-medium">
-              picture scenes
-            </p>
-            <ul className="flex flex-col gap-1">
-              {SCENES.filter((s) => s.photo).map((s) => (
-                <SceneRow key={s.id} s={s} level={level} active={s.id === scene} onPick={() => pick(s.id)} />
-              ))}
-            </ul>
+            <div className="md:w-72 md:shrink-0 md:overflow-y-auto">
+              <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
+                classic scenes
+              </p>
+              <ul className="flex flex-col gap-1">
+                {SCENES.filter((s) => !s.photo).map((s) => (
+                  <SceneRow
+                    key={s.id}
+                    s={s}
+                    level={level}
+                    active={s.id === scene}
+                    onPick={() => pick(s.id)}
+                  />
+                ))}
+              </ul>
+              <p className="text-muted-foreground px-2.5 pt-4 pb-2 text-xs font-medium">
+                picture scenes
+              </p>
+              <ul className="flex flex-col gap-1">
+                {SCENES.filter((s) => s.photo).map((s) => (
+                  <SceneRow
+                    key={s.id}
+                    s={s}
+                    level={level}
+                    active={s.id === scene}
+                    onPick={() => pick(s.id)}
+                  />
+                ))}
+              </ul>
+            </div>
 
-            <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium">
-              colours
-            </p>
-            <ul className="grid grid-cols-4 gap-1">
-              <li>
-                <Swatch
-                  name="scene"
-                  title="the scene's own colours"
-                  active={!theme}
-                  onClick={() => setPrefs({ theme: null })}
-                >
-                  <span className={cn(TILE, !theme && "ring-glow ring-2")}>
-                    <ScenePreview scene={scene} className="size-full" />
-                  </span>
-                </Swatch>
-              </li>
-              {THEMES.map((t) => {
-                const locked = !isUnlocked(t.unlock, garden);
-                return (
-                  <li key={t.id}>
-                    <Swatch
-                      name={t.name}
-                      title={locked && t.unlock ? `${t.name}: ${describeUnlock(t.unlock)}` : describeTheme(t)}
-                      active={theme === t.id}
-                      disabled={locked}
-                      onClick={() => setPrefs({ theme: t.id })}
-                    >
-                      <span
-                        data-home-swatch={t.id}
-                        className={cn(TILE, "bg-glass-strong grid place-items-center", theme === t.id && "ring-glow ring-2")}
+            <div className="md:border-glass-edge md:min-w-0 md:flex-1 md:overflow-y-auto md:border-l md:pl-2">
+              <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium md:pt-1.5">
+                colours
+              </p>
+              <ul className="grid grid-cols-4 gap-1">
+                <li>
+                  <Swatch
+                    name="scene"
+                    title="the scene's own colours"
+                    active={!theme}
+                    onClick={() => setPrefs({ theme: null })}
+                  >
+                    <span className={cn(TILE, !theme && "ring-glow ring-2")}>
+                      <ScenePreview scene={scene} className="size-full" />
+                    </span>
+                  </Swatch>
+                </li>
+                {THEMES.map((t) => {
+                  const locked = !isUnlocked(t.unlock, garden);
+                  return (
+                    <li key={t.id}>
+                      <Swatch
+                        name={t.name}
+                        title={
+                          locked && t.unlock
+                            ? `${t.name}: ${describeUnlock(t.unlock)}`
+                            : describeTheme(t)
+                        }
+                        active={theme === t.id}
+                        disabled={locked}
+                        onClick={() => setPrefs({ theme: t.id })}
                       >
-                        {/* Locked ones still show their colours, as a preview. */}
-                        <span className="size-5 rounded-full bg-[linear-gradient(135deg,var(--glow)_50%,var(--glow-2)_50%)]" />
-                        {locked && (
-                          <span className="absolute inset-0 grid place-items-center bg-black/45">
-                            <Lock className="size-3.5 text-white/85" />
-                          </span>
-                        )}
-                      </span>
-                    </Swatch>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
-              {theme ? describeTheme(THEMES.find((t) => t.id === theme)!) : "following the scene"}
-            </p>
+                        <span
+                          data-home-swatch={t.id}
+                          className={cn(
+                            TILE,
+                            "bg-glass-strong grid place-items-center",
+                            theme === t.id && "ring-glow ring-2",
+                          )}
+                        >
+                          {/* Locked ones still show their colours, as a preview. */}
+                          <span className="size-5 rounded-full bg-[linear-gradient(135deg,var(--glow)_50%,var(--glow-2)_50%)]" />
+                          {locked && (
+                            <span className="absolute inset-0 grid place-items-center bg-black/45">
+                              <Lock className="size-3.5 text-white/85" />
+                            </span>
+                          )}
+                        </span>
+                      </Swatch>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
+                {theme
+                  ? describeTheme(THEMES.find((t) => t.id === theme)!)
+                  : "following the scene"}
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

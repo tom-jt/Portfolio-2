@@ -278,7 +278,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
                 setError(false);
               }}
               placeholder="paste a spotify link…"
-              aria-label="Spotify playlist, album or track link"
+              aria-label="Spotify playlist, album, or track link"
               aria-invalid={error}
               className={cn(
                 "border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case outline-none",
@@ -292,7 +292,7 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           <p className={cn("mt-1.5 text-xs", error ? "text-destructive" : "text-muted-foreground")}>
             {error
               ? "That doesn't look like a Spotify link."
-              : "any playlist, album or track"}
+              : "any playlist, album, or track"}
             {prefs.spotifyUrl && !error && (
               <>
                 {" "}

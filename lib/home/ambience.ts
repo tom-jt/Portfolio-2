@@ -221,13 +221,14 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
   majula: {
     layers: [
       { file: "majula", gain: 0.9 },
-      { file: "campfire", gain: 0.9 },
+      { file: "campfire", gain: 0.7 },
     ],
   },
   snow: {
+    // Calm: the howling gusts are kept low and muffled under a steady wind.
     layers: [
-      { file: "howling-wind", gain: 0.75 },
-      { file: "wind", gain: 0.2, lowpass: 1200, offset: 25 },
+      { file: "howling-wind", gain: 0.35, lowpass: 1100 },
+      { file: "wind", gain: 0.3, lowpass: 1200, offset: 25 },
     ],
   },
   cafe: {

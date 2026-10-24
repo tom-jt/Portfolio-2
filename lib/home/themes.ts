@@ -77,20 +77,20 @@ export const THEMES: ThemeMeta[] = [
   {
     id: "alpine",
     name: "alpine",
-    hint: "sky, meadow and sunlit rock",
+    hint: "sky, meadow, and sunlit rock",
     pairsWith: "p-alps",
   },
   {
     id: "maple",
     name: "maple",
-    hint: "rust, gold and red leaves",
+    hint: "rust, gold, and red leaves",
     pairsWith: "p-autumn",
   },
   // Earned: a third row that fills in as the garden grows.
   {
     id: "pastel",
     name: "pastel",
-    hint: "soft pinks, blues and lilacs",
+    hint: "soft pinks, blues, and lilacs",
     unlock: { level: 6 },
   },
   {

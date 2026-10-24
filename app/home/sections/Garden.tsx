@@ -27,6 +27,8 @@ import {
   isUnlocked,
   POTS,
   resolveDecor,
+  resolvePot,
+  type PotPick,
   type Unlock,
 } from "@/lib/home/cosmetics";
 import { formatClock, formatMinutes, formatNumber } from "@/lib/home/format";
@@ -435,9 +437,9 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
         <p className="text-muted-foreground mt-2 text-xs">
           {harvest ? (
             <>
-              ending it now harvests <SeedCount n={harvest} />. drops, plants
-              and upgrades start over; level, achievements, skills and cosmetics
-              stay.
+              ending it now harvests <SeedCount n={harvest} />. drops, plants,
+              and upgrades start over; level, achievements, skills, and
+              cosmetics stay.
             </>
           ) : (
             `earn ${formatNumber(SEASON_MINIMUM)} drops in a season to harvest seeds from it.`
@@ -530,13 +532,20 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
     ACHIEVEMENTS.find((a) => a.id === id)?.name.toLowerCase();
   const how = (u: Unlock | undefined) =>
     u ? describeUnlock(u, achievementName) : "";
-  const auto = resolveDecor("auto");
+  const auto = resolveDecor("auto", prefs.scene, garden);
+  const sceneDecor = resolveDecor("scene", prefs.scene, garden);
+  const scenePot = resolvePot("scene", prefs.scene, garden);
+  const decorName = (id: string | null) => DECOR.find((d) => d.id === id)?.name ?? "none";
 
   return (
     <>
       <Eyebrow>pots</Eyebrow>
       <ul className="mt-2 grid grid-cols-4 gap-1">
-        {POTS.map((pot) => {
+        {[
+          // Follows the scene: its own pot, once that's unlocked.
+          { id: "scene" as PotPick, name: "match scene", unlock: undefined, shows: scenePot },
+          ...POTS.map((p) => ({ ...p, id: p.id as PotPick, shows: p.id })),
+        ].map((pot) => {
           const locked = !isUnlocked(pot.unlock, garden);
           const active = prefs.pot === pot.id;
           return (
@@ -556,7 +565,7 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
                 )}
               >
                 <span className="relative">
-                  <PlantSprite id="fern" pot={pot.id} size={30} />
+                  <PlantSprite id="fern" pot={pot.shows} size={30} />
                   {locked && <LockedOverlay />}
                 </span>
                 <span
@@ -578,7 +587,12 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
         {[
           {
             id: "auto" as const,
-            name: `auto: ${DECOR.find((d) => d.id === auto)?.name ?? "none"}`,
+            name: `auto: ${decorName(auto)}`,
+            unlock: undefined,
+          },
+          {
+            id: "scene" as const,
+            name: `match scene: ${decorName(sceneDecor)}`,
             unlock: undefined,
           },
           { id: "none" as const, name: "bare window", unlock: undefined },
@@ -713,7 +727,8 @@ const Garden = ({
   const garden = useGarden();
   const prefs = usePrefs();
   const hydrated = useHydrated();
-  const decor = hydrated ? resolveDecor(prefs.decor) : null;
+  const decor = hydrated ? resolveDecor(prefs.decor, prefs.scene, garden) : null;
+  const pot = resolvePot(prefs.pot, prefs.scene, garden);
   const lucky = luckLeft(garden) > 0;
   const now = useNow(1000, lucky);
   const luck = lucky && now ? luckLeft(garden, now) : 0;
@@ -819,7 +834,7 @@ const Garden = ({
                   id={p.id}
                   stage={stageFor(have)}
                   size={40}
-                  pot={prefs.pot}
+                  pot={pot}
                 />
                 {have > 1 && (
                   <span className="font-pixel bg-glass-strong absolute -top-1 -right-1 rounded-full px-1 text-[0.6rem] leading-4">

@@ -1169,6 +1169,26 @@ html:has([data-site="home"]) {
   }
 }
 
+/* Something crossing the garden window: a cloud, a gull. */
+@keyframes home-cross {
+  from {
+    transform: translate3d(-40px, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--across, 400px), var(--bob, 0px), 0);
+  }
+}
+
+/* A butterfly's wings beating. */
+@keyframes home-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.25);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-home-decor] * {
     animation: none !important;
