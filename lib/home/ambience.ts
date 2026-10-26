@@ -218,10 +218,9 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
   shore: {
     layers: [
       { file: "waves", gain: 0.85 },
-      { file: "wind", gain: 0.16, offset: 40 },
       { file: "seagulls", gain: 0.3, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
     ],
-    extra: (c, out) => crickets(c, out, 0.25),
+    // No crickets: their pure 4–5 kHz pulses read as a whine over surf.
   },
   majula: {
     layers: [
@@ -694,44 +693,73 @@ const curve = (v: number) => 0.8 * 10 ** ((-TAPER_DB * (1 - v)) / 20) * Math.min
 
 /** The ambience's own level, kept so a chime's dip can return to it. */
 let volume = 0;
-/** When the current dip under a chime ends, in context time. */
-let duckUntil = 0;
-/** Ambience dips to this share of its level under a chime… */
+/** Ambience dips to this share of its level under a chime: easing down over
+ *  a second, resting there two before the chime rings and two after it has
+ *  faded, then easing back up over a second. */
 const DUCK = 0.3;
-/** …and is most of the way down this many seconds after the dip starts. */
-const DUCK_LEAD = 0.25;
+const DUCK_EASE = 1;
+const DUCK_HOLD = 2;
+/** When the current dip is all the way down, and when it starts back up,
+ *  in context time. */
+let duckDown = 0;
+let duckUntil = 0;
 
-/**
- * Dips the ambience under a chime for `seconds` from now, then lets it swell
- * back. Returns whether there was any to dip.
- */
-function duck(seconds: number) {
-  if (!ctx || !master || !bed) return false;
-  const t = ctx.currentTime;
-  duckUntil = Math.max(duckUntil, t + seconds);
-  const g = master.gain;
+/** Draws the dip from now: down by `duckDown`, resting until `duckUntil`,
+ *  then back up. Redrawn whole, so a later chime or a volume change mid-dip
+ *  carries on from wherever the level is. */
+function shapeDip(t: number) {
+  const g = master!.gain;
+  const down = curve(volume) * DUCK;
+  const rise = Math.max(duckDown, duckUntil);
   g.cancelScheduledValues(t);
   g.setValueAtTime(g.value, t);
-  g.setTargetAtTime(curve(volume) * DUCK, t, DUCK_LEAD / 3);
-  g.setTargetAtTime(curve(volume), duckUntil, 0.5);
-  return true;
+  g.linearRampToValueAtTime(down, Math.max(t + 0.08, duckDown));
+  g.setValueAtTime(down, rise);
+  g.linearRampToValueAtTime(curve(volume), rise + DUCK_EASE);
 }
 
+/**
+ * Dips the ambience for a chime that rings for `ring` seconds, and returns
+ * how long to wait before ringing it: long enough for the ambience to ease
+ * down and rest there first. A chime while it's already dipped waits only for
+ * what's left of that rest, and stretches the dip rather than starting
+ * another. Null when there's no ambience to dip.
+ */
+function duck(ring: number): number | null {
+  if (!ctx || !master || !bed) return null;
+  const t = ctx.currentTime;
+  // Not dipped, or already on the way back up: ease down afresh.
+  if (t >= duckUntil) duckDown = t + DUCK_EASE;
+  const lead = Math.max(0, duckDown + DUCK_HOLD - t);
+  duckUntil = Math.max(duckUntil, t + lead + ring + DUCK_HOLD);
+  shapeDip(t);
+  return lead;
+}
+
+/** Down, or on the way down, under a chime. */
 const ducking = () => !!ctx && ctx.currentTime < duckUntil;
+
+/** Glides to the ambience's own level, from wherever it is, even mid-rise. */
+function settle(c: AudioContext, seconds: number) {
+  const g = master!.gain;
+  g.cancelScheduledValues(c.currentTime);
+  g.setValueAtTime(g.value, c.currentTime);
+  g.setTargetAtTime(curve(volume), c.currentTime, seconds);
+}
 
 export function setAmbienceVolume(v: number) {
   volume = v;
   if (!ctx || !master || !bed) return;
   // Mid-dip, move the dip's level and where it returns to instead.
-  if (ducking()) duck(0);
-  else master.gain.setTargetAtTime(curve(v), ctx.currentTime, 0.08);
+  if (ducking()) shapeDip(ctx.currentTime);
+  else settle(ctx, 0.08);
 }
 
 export function playAmbience(kind: AmbienceKind, v: number) {
   const c = context();
   if (!master) return;
   volume = v;
-  if (!ducking()) master.gain.setTargetAtTime(curve(v), c.currentTime, 0.15);
+  if (!ducking()) settle(c, 0.15);
   if (bed?.kind === kind) return;
 
   // Crossfade: the old bed fades out on its own bus while the new one fades
@@ -828,8 +856,9 @@ function bell(
   const out = gain(c, level * overAmbience());
   out.connect(c.destination);
   const last = Math.max(...notes.map(([, d]) => d));
-  // Hold the dip through the notes and most of their ring.
-  const lead = duck(DUCK_LEAD + last + decay * 0.6) ? DUCK_LEAD : 0;
+  // The dip holds through the notes and their ring, until it's faded out
+  // (by 0.6 of the decay it's down 48 dB); the chime waits for the dip.
+  const lead = duck(last + decay * 0.6) ?? 0;
   for (const [freq, at] of notes) {
     const delay = at + lead;
     for (const [mult, amount] of [

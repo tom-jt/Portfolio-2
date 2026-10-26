@@ -10,6 +10,7 @@ import {
 import {
   Check,
   ChevronDown,
+  CircleAlert,
   Cloud,
   CloudOff,
   Droplet,
@@ -27,7 +28,7 @@ import {
   type PanelChrome,
 } from "@/components/home/ui";
 import { dayKey, formatNumber } from "@/lib/home/format";
-import { TASK_DAILY_CAP, taskReward, useGarden } from "@/lib/home/garden";
+import { TASK_DAILY_CAP, taskReward, useGardenValue } from "@/lib/home/garden";
 import { setPrefs, usePrefs } from "@/lib/home/prefs";
 import { useHydrated } from "@/lib/home/store";
 import { useSync, useSyncStatus } from "@/lib/home/sync";
@@ -40,6 +41,7 @@ import {
   reorderOpen,
   sortTodos,
   TODO_MAX_LENGTH,
+  toggleImportant,
   toggleTodo,
   useTodos,
   type Todo,
@@ -64,6 +66,10 @@ const GRIP_SLOT = "-ml-1 grid size-5 shrink-0 place-items-center";
 
 const ACTION =
   "grid size-5 cursor-pointer place-items-center rounded text-muted-foreground";
+
+/** An important open task: a red tint, and a red edge down its left side. */
+const IMPORTANT_ROW =
+  "bg-destructive/10 shadow-[inset_2px_0_0_var(--destructive)] hover:bg-destructive/15";
 
 /** Checkbox, text (double-click to edit) and actions: everything but the grip. */
 const TodoRow = ({ todo }: { todo: Todo }) => {
@@ -122,6 +128,26 @@ const TodoRow = ({ todo }: { todo: Todo }) => {
         </span>
       )}
 
+      {/* Always in its slot, so marking a task never shifts the row; shown
+          on hover like the other actions, and always once it's marked. */}
+      <button
+        type="button"
+        aria-label={`mark "${todo.text}" important`}
+        aria-pressed={!!todo.important}
+        onClick={() => toggleImportant(todo.id)}
+        className={cn(
+          ACTION,
+          "transition",
+          todo.important
+            ? todo.done
+              ? "text-destructive/50 hover:text-destructive"
+              : "text-destructive"
+            : "hover:text-destructive opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-60",
+        )}
+      >
+        <CircleAlert className="size-3.5" />
+      </button>
+
       {!editing && (
         <div className="flex shrink-0 gap-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
           {!todo.done && (
@@ -164,7 +190,7 @@ const OpenTodo = ({ todo }: { todo: Todo }) => {
       dragControls={controls}
       {...ITEM_MOTION}
       whileDrag={{ scale: 1.02 }}
-      className={cn(ROW, "relative")}
+      className={cn(ROW, "relative", todo.important && IMPORTANT_ROW)}
     >
       <button
         type="button"
@@ -196,7 +222,6 @@ const Tasks = ({
   chrome?: PanelChrome;
 }) => {
   const todos = useTodos();
-  const garden = useGarden();
   const hydrated = useHydrated();
   const [draft, setDraft] = useState("");
   const [syncView, setSyncView] = useState(false);
@@ -207,8 +232,13 @@ const Tasks = ({
   const sorted = sortTodos(todos);
   const openTodos = sorted.filter((t) => !t.done);
   const doneTodos = sorted.filter((t) => t.done);
-  const reward = taskReward(garden);
-  const rewardedToday = garden.daily.day === dayKey() ? garden.daily.tasks : 0;
+  const reward = {
+    drops: useGardenValue((s) => taskReward(s).drops),
+    xp: useGardenValue((s) => taskReward(s).xp),
+  };
+  const rewardedToday = useGardenValue((s) =>
+    s.daily.day === dayKey() ? s.daily.tasks : 0,
+  );
 
   return (
     <Panel

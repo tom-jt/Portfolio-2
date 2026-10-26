@@ -541,10 +541,19 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       <CloudStreak x={40} y={12} width={70} height={8} color="rgb(230 240 255 / 0.32)" period={80} />
       <CloudStreak x={70} y={24} width={55} height={7} color="rgb(220 235 255 / 0.3)" period={100} delay={-40} />
       <CloudStreak x={25} y={32} width={60} height={6} color="rgb(230 240 255 / 0.22)" period={95} delay={-20} />
-      {/* Snow, a far sheet of fine flakes and a nearer one of bigger flakes. */}
-      <Fall tile={snowTile(103, 26, [0.6, 1.4])} period={16} opacity={0.6} sway={18} />
-      <Fall tile={snowTile(107, 12, [1.2, 2.4])} period={10} scale={1.5} opacity={0.75} sway={30} />
-      <Frost id="moonlight" />
+      {/* Snow, a far sheet of fine flakes and a nearer one of bigger flakes,
+          on tiles big enough (700 and 900px) that their repeat doesn't show. */}
+      <Fall tile={snowTile(103, 320, [0.6 / 3.5, 1.4 / 3.5])} period={16 * 3.5} scale={3.5} opacity={0.6} sway={18} />
+      <Fall tile={snowTile(107, 108, [1.2 / 4.5, 2.4 / 4.5])} period={10 * 3} scale={4.5} opacity={0.75} sway={30} />
+      {/* The frost round the edge of the glass, over the snow: the blurred
+          photo with its tint, baked with transparency (see PANE). */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- a full-bleed layer */}
+      <img
+        src="/home/scenes/moonlight-frost.webp"
+        alt=""
+        draggable={false}
+        className="absolute inset-0 size-full scale-[1.05] object-cover select-none"
+      />
     </>
   ),
   sunset: () => (
@@ -557,44 +566,12 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
 };
 
-/** Fine white speckle for frost on glass: sparse grains from fractal noise. */
-const FROST_GRAIN =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.7 -0.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E";
+/** Fine white speckle for frost on glass: a tile drawn at twice its size,
+ *  so it stays sharp on sharp screens. */
+const FROST_GRAIN = "url(/home/scenes/frost-grain.png)";
 
-/** Where the frost gathers: thick at the edges of the pane, clear in the middle. */
+/** Where frost gathers: thick at the edges of the pane, clear in the middle. */
 const FROST_EDGE = "radial-gradient(ellipse at center, transparent 42%, rgb(0 0 0 / 0.55) 68%, black 92%)";
-
-/**
- * Frost on the window: the view goes soft and pale towards the edges of the
- * pane, with a fine grain of ice crystals over it. The blurred copy is drawn
- * once and only moves with the photo, so the snow never makes it repaint.
- */
-function Frost({ id }: { id: PhotoId }) {
-  return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element -- a blurred copy of the background */}
-      <img
-        src={photoSrc(id)}
-        alt=""
-        draggable={false}
-        className="absolute inset-0 size-full scale-105 object-cover blur-[8px] brightness-110 saturate-[0.8] select-none"
-        style={{ maskImage: FROST_EDGE, WebkitMaskImage: FROST_EDGE }}
-      />
-      <span
-        className="absolute inset-0 mix-blend-screen"
-        style={{
-          backgroundImage: `url("${FROST_GRAIN}")`,
-          backgroundSize: "240px",
-          opacity: 0.5,
-          maskImage: FROST_EDGE,
-          WebkitMaskImage: FROST_EDGE,
-        }}
-      />
-      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgb(225_238_255/0.16)_100%)]" />
-      <FrostBlooms />
-    </>
-  );
-}
 
 /** Where frost gathers across the pane, and how long each patch takes. */
 const BLOOMS = [
@@ -607,15 +584,27 @@ const BLOOMS = [
 ];
 
 /**
- * Frost across the whole pane, not only its edges: a faint grain over all
- * the glass, patches of crystals that slowly spread and thaw in turn, and
- * a fog of condensation drifting over it. Transform and opacity only.
+ * Frost on the glass itself, so it stays still while the view behind it
+ * slowly moves: ice crystals thick round the edge and faint over the rest,
+ * patches of them that slowly spread and thaw in turn, and a fog of
+ * condensation drifting over it all. Transform and opacity only. (White over
+ * anything looks the same plainly laid on as screen-blended, so nothing is
+ * blended.)
  */
-function FrostBlooms() {
-  const grain = `url("${FROST_GRAIN}")`;
+function FrostPane() {
   return (
     <>
-      <span className="absolute inset-0 mix-blend-screen" style={{ backgroundImage: grain, backgroundSize: "240px", opacity: 0.16 }} />
+      <span
+        className="absolute inset-0"
+        style={{
+          backgroundImage: FROST_GRAIN,
+          backgroundSize: "240px",
+          opacity: 0.5,
+          maskImage: FROST_EDGE,
+          WebkitMaskImage: FROST_EDGE,
+        }}
+      />
+      <span className="absolute inset-0" style={{ backgroundImage: FROST_GRAIN, backgroundSize: "240px", opacity: 0.16 }} />
       <span
         className="absolute -inset-[10%] bg-[radial-gradient(ellipse_at_30%_40%,rgb(220_235_255/0.14),transparent_55%),radial-gradient(ellipse_at_70%_65%,rgb(220_235_255/0.12),transparent_50%)]"
         style={{ animation: "home-fog 40s ease-in-out infinite alternate" }}
@@ -629,9 +618,9 @@ function FrostBlooms() {
             style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.size}%`, aspectRatio: "1" }}
           >
             <span
-              className="absolute inset-0 mix-blend-screen"
+              className="absolute inset-0"
               style={{
-                background: `${grain} 0 0 / 200px, radial-gradient(circle, rgb(235 244 255 / 0.28), rgb(235 244 255 / 0.08) 55%, transparent 70%)`,
+                background: `${FROST_GRAIN} 0 0 / 200px, radial-gradient(circle, rgb(235 244 255 / 0.28), rgb(235 244 255 / 0.08) 55%, transparent 70%)`,
                 maskImage: mask,
                 WebkitMaskImage: mask,
                 animation: `home-frost ${b.period}s ease-in-out ${b.delay}s infinite alternate`,
@@ -659,11 +648,19 @@ const MOTION: Partial<Record<PhotoId, string>> = {
 
 /**
  * Photos seen through glass go soft, as the rainy window's city does; what's
- * layered on them (snow, frost) stays sharp, on or near the pane. Scaled up a
- * little so the blur never shows a soft edge.
+ * layered on them (snow, frost) stays sharp, on or near the pane. The softness
+ * and the frost at the edges are baked into a copy of the photo by
+ * scripts/bake-frost.py, since blurring a whole screen live, every frame the
+ * scene moves, was most of what made it slow. Scaled up a little, as the
+ * live blur was, so it frames the same.
  */
-const BEHIND_GLASS: Partial<Record<PhotoId, string>> = {
-  moonlight: "scale-[1.05] blur-[3px] saturate-[1.1]",
+const PANE: Partial<Record<PhotoId, { src: string; className: string }>> = {
+  moonlight: { src: "/home/scenes/moonlight-glass.webp", className: "scale-[1.05]" },
+};
+
+/** What's on the glass rather than beyond it, so it stays still. */
+const ON_GLASS: Partial<Record<PhotoId, () => ReactNode>> = {
+  moonlight: () => <FrostPane />,
 };
 
 const PhotoScene = ({ id }: { id: PhotoId }) => (
@@ -672,13 +669,14 @@ const PhotoScene = ({ id }: { id: PhotoId }) => (
       <div className="absolute inset-0 origin-center" style={{ animation: MOTION[id] }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a full-bleed background; next/image adds nothing here */}
         <img
-          src={photoSrc(id)}
+          src={PANE[id]?.src ?? photoSrc(id)}
           alt=""
           draggable={false}
-          className={`absolute inset-0 size-full object-cover select-none ${BEHIND_GLASS[id] ?? ""}`}
+          className={`absolute inset-0 size-full object-cover select-none ${PANE[id]?.className ?? ""}`}
         />
         {OVERLAY[id]()}
       </div>
+      {ON_GLASS[id]?.()}
     </CoverBox>
     {/* A little weight at the edges, where the cards sit. */}
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(0_0_0/0.35)_100%)]" />

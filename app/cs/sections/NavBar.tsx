@@ -62,6 +62,7 @@ const NavBar = ({ children, className }: NavBarProps) => {
           <MobileNavHeader>
             <NavbarLogo />
             <div className="text-nav-fg flex items-center gap-4">
+              <SiteSwitcher to="home" />
               <SiteSwitcher to="law" />
               <NavBarIconButton>
                 <AnimatedThemeToggler className="cursor-pointer" />
@@ -93,7 +94,6 @@ const NavBar = ({ children, className }: NavBarProps) => {
             ))}
             <div className="border-border text-nav-fg mt-2 flex w-full flex-col gap-4 border-t px-4 pt-4">
               <SiteSwitcher to="law" withLabel className="text-sm" />
-              <SiteSwitcher to="home" withLabel className="text-sm" />
             </div>
           </MobileNavMenu>
         </MobileNav>

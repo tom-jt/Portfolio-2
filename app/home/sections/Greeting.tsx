@@ -1,6 +1,11 @@
 "use client";
 
-import { levelFromXp, titleFor, totalXp, useGarden } from "@/lib/home/garden";
+import {
+  levelFromXp,
+  titleFor,
+  totalXp,
+  useGardenValue,
+} from "@/lib/home/garden";
 import { useHydrated, useNow } from "@/lib/home/store";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +29,9 @@ const timeFormat = new Intl.DateTimeFormat(undefined, {
 const Greeting = ({ className }: { className?: string }) => {
   const now = useNow(60_000);
   const date = now ? new Date(now) : null;
-  const garden = useGarden();
   const hydrated = useHydrated();
-  const title = hydrated ? titleFor(levelFromXp(totalXp(garden))) : null;
+  const level = useGardenValue((s) => levelFromXp(totalXp(s)));
+  const title = hydrated ? titleFor(level) : null;
 
   return (
     <div

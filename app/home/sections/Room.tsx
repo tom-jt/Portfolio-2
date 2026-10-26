@@ -1,8 +1,24 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Eye, Gamepad2, Headphones, ListTodo, Music2, Pause, Play, Sprout, Timer as TimerIcon } from "lucide-react";
+import {
+  Eye,
+  Gamepad2,
+  Headphones,
+  ListTodo,
+  Music2,
+  Pause,
+  Play,
+  Sprout,
+  Timer as TimerIcon,
+} from "lucide-react";
 import EyeBreak from "@/components/home/EyeBreak";
 import HudChip from "@/components/home/HudChip";
 import Pet from "@/components/home/Pet";
@@ -13,11 +29,22 @@ import SiteSwitcher from "@/components/shared/SiteSwitcher";
 import { primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
 import { isUnlocked } from "@/lib/home/cosmetics";
 import { formatClock } from "@/lib/home/format";
-import { useGarden } from "@/lib/home/garden";
+import { useGardenValue } from "@/lib/home/garden";
 import { getPet } from "@/lib/home/pets";
-import { activeAmbience, closePanels, togglePanel, usePrefs, type PanelId } from "@/lib/home/prefs";
+import {
+  activeAmbience,
+  closePanels,
+  togglePanel,
+  usePrefs,
+  type PanelId,
+} from "@/lib/home/prefs";
 import { getAmbience } from "@/lib/home/scenes";
-import { spotifyHeld, toggleSpotify, useSpotifyPlaying, useSpotifyReady } from "@/lib/home/spotify";
+import {
+  spotifyHeld,
+  toggleSpotify,
+  useSpotifyPlaying,
+  useSpotifyReady,
+} from "@/lib/home/spotify";
 import { useHydrated, useNow } from "@/lib/home/store";
 import { MODE_LABEL, pause, start, timeLeft, useTimer } from "@/lib/home/timer";
 import { sortTodos, useTodos } from "@/lib/home/todos";
@@ -62,13 +89,21 @@ function subscribeWide(onChange: () => void) {
 /** Desktop or phone layout. False on the server, so cards and the sheet
  *  only appear once the client knows which it is. */
 const useWide = () =>
-  useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false);
+  useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
 
 function useClock() {
   const timer = useTimer();
   const running = timer.status === "running";
   const now = useNow(250, running);
-  return { timer, running, clock: formatClock(running && now ? timeLeft(timer, now) : timeLeft(timer)) };
+  return {
+    timer,
+    running,
+    clock: formatClock(running && now ? timeLeft(timer, now) : timeLeft(timer)),
+  };
 }
 
 const startOrPause = (running: boolean) => {
@@ -78,22 +113,43 @@ const startOrPause = (running: boolean) => {
   start();
 };
 
-const CARD_GONE = { opacity: 0, y: 10, scale: 0.98, transition: { duration: 0.15 } };
+const CARD_GONE = {
+  opacity: 0,
+  y: 10,
+  scale: 0.98,
+  transition: { duration: 0.15 },
+};
 
 /**
  * A card. `layout` lets the others glide into place when one opens or
  * closes; min-h-0 lets it shrink and scroll inside when space runs short.
  * `hidden` closes it without unmounting, for a card playing music.
  */
-const Card = ({ className, hidden, children }: { className?: string; hidden?: boolean; children: ReactNode }) => (
+const Card = ({
+  className,
+  hidden,
+  children,
+}: {
+  className?: string;
+  hidden?: boolean;
+  children: ReactNode;
+}) => (
   <motion.div
     layout="position"
     initial={{ opacity: 0, y: 10, scale: 0.98 }}
-    animate={hidden ? { ...CARD_GONE, transitionEnd: { display: "none" } } : { opacity: 1, y: 0, scale: 1, display: "flex" }}
+    animate={
+      hidden
+        ? { ...CARD_GONE, transitionEnd: { display: "none" } }
+        : { opacity: 1, y: 0, scale: 1, display: "flex" }
+    }
     exit={CARD_GONE}
     transition={{ type: "spring", stiffness: 420, damping: 34 }}
     aria-hidden={hidden || undefined}
-    className={cn("pointer-events-auto flex min-h-0 flex-col", hidden && "pointer-events-none", className)}
+    className={cn(
+      "pointer-events-auto flex min-h-0 flex-col",
+      hidden && "pointer-events-none",
+      className,
+    )}
   >
     {children}
   </motion.div>
@@ -102,7 +158,13 @@ const Card = ({ className, hidden, children }: { className?: string; hidden?: bo
 // Inside a card the panel shrinks to fit and scrolls.
 const CARD_PANEL = "min-h-0 w-full overflow-y-auto";
 
-const TasksChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
+const TasksChip = ({
+  open,
+  onClick,
+}: {
+  open: boolean;
+  onClick: () => void;
+}) => {
   const todos = useTodos();
   const hydrated = useHydrated();
   const left = todos.filter((t) => !t.done).length;
@@ -127,7 +189,9 @@ const TasksChip = ({ open, onClick }: { open: boolean; onClick: () => void }) =>
         </span>
       </span>
       <span className="text-muted-foreground w-full truncate text-[0.8rem]">
-        {!hydrated ? " " : next ? (
+        {!hydrated ? (
+          " "
+        ) : next ? (
           <>
             next: <span className="normal-case">{next.text}</span>
           </>
@@ -143,7 +207,13 @@ const TimerChip = ({ open, onOpen }: { open: boolean; onOpen: () => void }) => {
   const { timer, running, clock } = useClock();
 
   return (
-    <div className={cn(chipGlass, "flex h-13 items-center gap-1 rounded-[1.1rem] p-1.5", open && "border-glow/55")}>
+    <div
+      className={cn(
+        chipGlass,
+        "flex h-13 items-center gap-1 rounded-[1.1rem] p-1.5",
+        open && "border-glow/55",
+      )}
+    >
       <button
         type="button"
         aria-expanded={open}
@@ -162,7 +232,11 @@ const TimerChip = ({ open, onOpen }: { open: boolean; onOpen: () => void }) => {
         onClick={() => startOrPause(running)}
         className="bg-glow text-primary-foreground focus-visible:ring-ring grid size-10 cursor-pointer place-items-center rounded-xl transition hover:brightness-110 focus-visible:ring-2 focus-visible:outline-none"
       >
-        {running ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+        {running ? (
+          <Pause className="size-4" />
+        ) : (
+          <Play className="ml-0.5 size-4" />
+        )}
       </button>
     </div>
   );
@@ -191,7 +265,11 @@ const ChipPlay = ({
     className="focus-visible:ring-ring relative grid size-10 shrink-0 cursor-pointer place-items-center rounded-xl transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
     {...rest}
   >
-    {playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+    {playing ? (
+      <Pause className="size-4" />
+    ) : (
+      <Play className="ml-0.5 size-4" />
+    )}
     {children}
   </button>
 );
@@ -201,13 +279,25 @@ const ChipPlay = ({
  * without opening it. Once Spotify's player is loaded (the card has been
  * open, or it's playing with the card shut), Spotify gets a button too.
  */
-const SoundChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
+const SoundChip = ({
+  open,
+  onClick,
+}: {
+  open: boolean;
+  onClick: () => void;
+}) => {
   const prefs = usePrefs();
   const playing = useAmbiencePlaying();
   const spotifyReady = useSpotifyReady();
   const spotifyPlaying = useSpotifyPlaying();
   return (
-    <div className={cn(chipGlass, "flex h-13 items-center gap-0.5 rounded-[1.1rem] p-1.5", open && "border-glow/55")}>
+    <div
+      className={cn(
+        chipGlass,
+        "flex h-13 items-center gap-0.5 rounded-[1.1rem] p-1.5",
+        open && "border-glow/55",
+      )}
+    >
       <button
         type="button"
         aria-expanded={open}
@@ -216,12 +306,23 @@ const SoundChip = ({ open, onClick }: { open: boolean; onClick: () => void }) =>
         className="focus-visible:ring-ring flex h-full cursor-pointer items-center gap-2.5 rounded-xl px-2.5 transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
       >
         <Equaliser on={playing} />
-        <span className="text-sm">{getAmbience(activeAmbience(prefs)).short}</span>
+        <span className="text-sm">
+          {getAmbience(activeAmbience(prefs)).short}
+        </span>
       </button>
       {/* Marked so the resume-on-first-click listener leaves it be. */}
-      <ChipPlay data-ambience-toggle playing={playing} label="ambience" onClick={() => toggleAmbience(playing)} />
+      <ChipPlay
+        data-ambience-toggle
+        playing={playing}
+        label="ambience"
+        onClick={() => toggleAmbience(playing)}
+      />
       {spotifyReady && (
-        <ChipPlay playing={spotifyPlaying} label="Spotify" onClick={toggleSpotify}>
+        <ChipPlay
+          playing={spotifyPlaying}
+          label="Spotify"
+          onClick={toggleSpotify}
+        >
           <Music2 className="text-glow absolute top-1 right-1 size-2.5" />
         </ChipPlay>
       )}
@@ -229,7 +330,13 @@ const SoundChip = ({ open, onClick }: { open: boolean; onClick: () => void }) =>
   );
 };
 
-const EyesChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => {
+const EyesChip = ({
+  open,
+  onClick,
+}: {
+  open: boolean;
+  onClick: () => void;
+}) => {
   const status = useEyeStatus();
   return (
     <button
@@ -237,10 +344,28 @@ const EyesChip = ({ open, onClick }: { open: boolean; onClick: () => void }) => 
       aria-expanded={open}
       aria-label={`${LABEL.eyes}, ${status === "off" ? "off" : status === "now" ? "break due" : `next in ${status}`}`}
       onClick={onClick}
-      className={cn(chipButton, "flex h-13 items-center gap-2 rounded-[1.1rem] px-4", open && "border-glow/55")}
+      className={cn(
+        chipButton,
+        "flex h-13 items-center gap-2 rounded-[1.1rem] px-4",
+        open && "border-glow/55",
+      )}
     >
-      <Eye className={cn("size-4", status === "now" ? "text-glow-2" : status === "off" && "text-muted-foreground")} />
-      <span className={cn("font-pixel text-sm", status === "off" && "text-muted-foreground")}>{status}</span>
+      <Eye
+        className={cn(
+          "size-4",
+          status === "now"
+            ? "text-glow-2"
+            : status === "off" && "text-muted-foreground",
+        )}
+      />
+      <span
+        className={cn(
+          "font-pixel text-sm",
+          status === "off" && "text-muted-foreground",
+        )}
+      >
+        {status}
+      </span>
     </button>
   );
 };
@@ -254,12 +379,19 @@ const TABS: { id: PanelId; icon: ComponentType<{ className?: string }> }[] = [
   { id: "arcade", icon: Gamepad2 },
 ];
 
-const TabBar = ({ active, onPick }: { active: PanelId | null; onPick: (id: PanelId) => void }) => {
+const TabBar = ({
+  active,
+  onPick,
+}: {
+  active: PanelId | null;
+  onPick: (id: PanelId) => void;
+}) => {
   const { clock } = useClock();
   const eyes = useEyeStatus();
   const open = useTodos().filter((t) => !t.done).length;
   const hydrated = useHydrated();
-  const caption = (id: PanelId) => (id === "timer" ? clock : id === "eyes" ? eyes : id);
+  const caption = (id: PanelId) =>
+    id === "timer" ? clock : id === "eyes" ? eyes : id;
 
   return (
     <nav
@@ -285,7 +417,9 @@ const TabBar = ({ active, onPick }: { active: PanelId | null; onPick: (id: Panel
           <span
             className={cn(
               "text-[0.62rem]",
-              id === "timer" || id === "eyes" ? "font-pixel" : "text-muted-foreground",
+              id === "timer" || id === "eyes"
+                ? "font-pixel"
+                : "text-muted-foreground",
             )}
           >
             {caption(id)}
@@ -313,8 +447,11 @@ const PANELS: Record<PanelId, typeof Tasks> = {
 const Room = () => {
   const wide = useWide();
   const { openPanels, pet } = usePrefs();
-  const garden = useGarden();
-  const showPet = pet && isUnlocked(getPet(pet).unlock, garden) ? pet : null;
+  // Only whether the pet is unlocked: the room holds every card, so it
+  // mustn't re-render each time the garden ticks.
+  const showPet = useGardenValue((s) =>
+    pet && isUnlocked(getPet(pet).unlock, s) ? pet : null,
+  );
   const [sheet, setSheet] = useState<PanelId | null>(null);
 
   const isOpen = (id: PanelId) => wide && openPanels.includes(id);
@@ -322,7 +459,8 @@ const Room = () => {
     if (wide) return togglePanel(id);
     setSheet((s) => (s === id ? null : id));
   };
-  const chipOpen = (id: PanelId) => (wide ? openPanels.includes(id) : sheet === id);
+  const chipOpen = (id: PanelId) =>
+    wide ? openPanels.includes(id) : sheet === id;
 
   const rightColumn = isOpen("garden") || isOpen("timer") || isOpen("eyes");
   const SheetPanel = sheet ? PANELS[sheet] : null;
@@ -347,7 +485,8 @@ const Room = () => {
       }}
       onClick={(e) => {
         // Phones close their sheet from its own scrim.
-        if (wide && pressedScene.current && e.target === e.currentTarget) closePanels();
+        if (wide && pressedScene.current && e.target === e.currentTarget)
+          closePanels();
       }}
     >
       <TimerEngine />
@@ -358,8 +497,14 @@ const Room = () => {
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 md:top-7 md:right-8 md:gap-2.5">
         <HudChip open={chipOpen("garden")} onClick={() => toggle("garden")} />
         <SceneSwitcher />
-        <SiteSwitcher to="cs" className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center" />
-        <SiteSwitcher to="law" className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center" />
+        <SiteSwitcher
+          to="cs"
+          className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center"
+        />
+        <SiteSwitcher
+          to="law"
+          className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center"
+        />
       </div>
 
       <AnimatePresence>
@@ -368,7 +513,12 @@ const Room = () => {
             key="tasks"
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98, transition: { duration: 0.15 } }}
+            exit={{
+              opacity: 0,
+              y: 10,
+              scale: 0.98,
+              transition: { duration: 0.15 },
+            }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
             className="absolute bottom-[7.25rem] left-10 z-10 flex max-h-[calc(100dvh-17rem)] w-[22rem] flex-col"
           >
@@ -397,7 +547,10 @@ const Room = () => {
                   // Takes only the room the cards below leave, up to its own
                   // height, so they never scroll while it can still give
                   // way. Its shop list scrolls well at any height.
-                  <Card key="garden" className="max-h-fit min-h-48 flex-1 basis-0">
+                  <Card
+                    key="garden"
+                    className="max-h-fit min-h-48 flex-1 basis-0"
+                  >
                     <Garden className={CARD_PANEL} />
                   </Card>
                 )}
@@ -419,13 +572,20 @@ const Room = () => {
             </motion.div>
           )}
           {wide && (isOpen("sound") || keepSound) && (
-            <Card key="sound" hidden={!isOpen("sound")} className="max-h-full w-[22rem] min-w-[19rem] shrink">
+            <Card
+              key="sound"
+              hidden={!isOpen("sound")}
+              className="max-h-full w-[22rem] min-w-[19rem] shrink"
+            >
               <Sound className={CARD_PANEL} />
             </Card>
           )}
           {isOpen("arcade") && (
             // Shrinks before sound does: its cartridges reflow to fit.
-            <Card key="arcade" className="@container max-h-full w-[34rem] min-w-[16rem] shrink-[3]">
+            <Card
+              key="arcade"
+              className="@container max-h-full w-[34rem] min-w-[16rem] shrink-[3]"
+            >
               <Arcade className={CARD_PANEL} />
             </Card>
           )}
@@ -441,7 +601,11 @@ const Room = () => {
           aria-label={LABEL.arcade}
           aria-expanded={chipOpen("arcade")}
           onClick={() => toggle("arcade")}
-          className={cn(chipButton, "grid size-13 place-items-center rounded-[1.1rem]", chipOpen("arcade") && "border-glow/55")}
+          className={cn(
+            chipButton,
+            "grid size-13 place-items-center rounded-[1.1rem]",
+            chipOpen("arcade") && "border-glow/55",
+          )}
         >
           <Gamepad2 className="size-5" />
         </button>
@@ -472,7 +636,12 @@ const Room = () => {
             animate={
               sheet
                 ? { opacity: 1, y: 0, display: "block" }
-                : { opacity: 0, y: 40, transition: { duration: 0.15 }, transitionEnd: { display: "none" } }
+                : {
+                    opacity: 0,
+                    y: 40,
+                    transition: { duration: 0.15 },
+                    transitionEnd: { display: "none" },
+                  }
             }
             exit={{ opacity: 0, y: 40, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
@@ -486,7 +655,10 @@ const Room = () => {
               onClick={() => setSheet(null)}
               className="mb-1 block h-6 w-full cursor-pointer"
             >
-              <span aria-hidden="true" className="mx-auto block h-1 w-10 rounded-full bg-white/25" />
+              <span
+                aria-hidden="true"
+                className="mx-auto block h-1 w-10 rounded-full bg-white/25"
+              />
             </button>
             {SheetPanel && sheet !== "sound" && <SheetPanel chrome="bare" />}
             {/* Its own slot, so switching tabs doesn't remount it and stop the music. */}

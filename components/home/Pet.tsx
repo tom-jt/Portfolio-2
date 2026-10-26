@@ -27,9 +27,10 @@ const between = (a: number, b: number) => a + (b - a) * Math.random();
 
 /**
  * The pet, walking along the top of the chips its parent lays out. It idles,
- * then wanders to somewhere else along them; clicking it makes it happy; and
- * it sleeps once the page has been hidden, unfocused or closed for five
- * minutes, waking a minute after the visitor is back.
+ * then wanders to somewhere else along them; clicking it makes it happy. It
+ * sleeps when the page loads, and once the page has been hidden, unfocused
+ * or closed for five minutes, waking a minute after the visitor is here, or
+ * at once when tapped.
  *
  * Animated by stepping the sprite sheet behind a fixed frame, and moved with
  * a transform, both written straight to the element twelve times a second,
@@ -48,7 +49,8 @@ const Pet = ({ id }: { id: PetId }) => {
     if (!el || !track) return;
     const def = getPet(id);
 
-    let anim: PetAnim = "idle";
+    // Every visit starts with it asleep: it wakes a minute in, or when tapped.
+    let anim: PetAnim = "sleep";
     let facing: Facing = Math.random() < 0.5 ? "left" : "right";
     let frame = 0;
     /** Idling rests on its first frame until then, between loops. */
@@ -61,8 +63,8 @@ const Pet = ({ id }: { id: PetId }) => {
 
     // Sleep: away since when (null while here), and when to wake once back.
     let awaySince: number | null = document.hidden || !document.hasFocus() ? Date.now() : null;
-    let asleep = false;
-    let wakeAt: number | null = null;
+    let asleep = true;
+    let wakeAt: number | null = Date.now() + PET_WAKE_AFTER_MS;
 
     const goAway = () => (awaySince ??= Date.now());
     const comeBack = () => {

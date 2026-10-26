@@ -17,6 +17,7 @@ import {
   hasMeteors,
   hasMonsoon,
   hasRainbow,
+  hasSwipe,
   hasThunderclap,
   hasTorrent,
   ladybugMayAppear,
@@ -32,8 +33,9 @@ import {
  * The garden's window: raindrops run down it, and clicking (or tapping, or
  * pressing Space) catches them for drops. Golden ones are worth far more.
  * Drops left to land still pay a little, which rich soil raises. Now and
- * then a diamond drop falls, worth five golden ones and followed by a golden
- * shower; and a ladybug may crawl along the soil, bringing luck if caught.
+ * then a diamond drop falls, worth fifteen golden ones and followed by a
+ * golden shower; and a ladybug may crawl along the soil, bringing luck if
+ * caught. With Sweeping hands, dragging across the window catches as it goes.
  *
  * Later skills add the weather: rainbow drops, thunderclaps that catch the
  * whole window, meteor showers crossing it, and golden hour.
@@ -53,6 +55,16 @@ interface Drop {
   kind: DropKind;
   age: number;
   life: number;
+}
+
+type Point = { x: number; y: number };
+
+/** How far a point is from the line segment a–b. */
+function nearSegment(x: number, y: number, a: Point, b: Point) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const t = dx || dy ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy))) : 0;
+  return Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy));
 }
 
 /** Which palette a spark or floater is drawn in. */
@@ -301,7 +313,29 @@ const CatchGame = ({ label }: { label: string }) => {
         }
       });
       if (best >= 0) take(best);
+      // Sweeping hands: keep the press, and catch along the drag.
+      if (hasSwipe(gardenStore.get())) {
+        sweep = { x: px, y: py };
+        canvas.setPointerCapture(e.pointerId);
+      }
     };
+
+    /** Where a sweep last was, while one is under way. */
+    let sweep: { x: number; y: number } | null = null;
+
+    /** Catches every drop the drag passed over since the last move. */
+    const onMove = (e: PointerEvent) => {
+      if (!sweep) return;
+      const rect = canvas.getBoundingClientRect();
+      const to = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      for (let i = drops.length - 1; i >= 0; i--) {
+        if (i >= drops.length) continue;
+        const d = drops[i];
+        if (nearSegment(d.x, d.y - d.r * 0.4, sweep, to) < d.r * 2.2 + 8) take(i);
+      }
+      sweep = to;
+    };
+    const endSweep = () => (sweep = null);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== " " && e.key !== "Enter") return;
@@ -316,6 +350,9 @@ const CatchGame = ({ label }: { label: string }) => {
     };
 
     canvas.addEventListener("pointerdown", onPointer);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", endSweep);
+    canvas.addEventListener("pointercancel", endSweep);
     canvas.addEventListener("keydown", onKey);
 
     const draw = (t: number) => {
@@ -510,6 +547,10 @@ const CatchGame = ({ label }: { label: string }) => {
       }
 
       const s = gardenStore.get();
+      // A finger dragging on the window sweeps rather than scrolls, once
+      // sweeping is learnt; until then it scrolls the page as usual.
+      const touch = hasSwipe(s) ? "none" : "";
+      if (canvas.style.touchAction !== touch) canvas.style.touchAction = touch;
       spawnClock += dt * 1000;
       const interval = spawnInterval(s);
       if (spawnClock >= interval) {
@@ -569,9 +610,9 @@ const CatchGame = ({ label }: { label: string }) => {
           continue;
         }
         if (d.y + d.r >= h) {
-          // Landed, every drop is a plain one: the soil soaks up a plain
-          // drop's share, and only a catch pays a golden or diamond's worth.
-          burst(d.x, h - 1, "rain", 5, 70);
+          // It splashes in its own colour, but the soil only soaks up a
+          // plain drop's share: a golden or diamond's worth needs a catch.
+          burst(d.x, h - 1, toneOf(d.kind), 5, 70);
           drops.splice(i, 1);
           soak(d.x, h - 8);
         } else if (d.age > d.life) {
@@ -600,6 +641,9 @@ const CatchGame = ({ label }: { label: string }) => {
       resize.disconnect();
       seen.disconnect();
       canvas.removeEventListener("pointerdown", onPointer);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", endSweep);
+      canvas.removeEventListener("pointercancel", endSweep);
       canvas.removeEventListener("keydown", onKey);
     };
   }, [reduced]);

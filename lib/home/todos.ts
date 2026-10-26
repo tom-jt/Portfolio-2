@@ -16,6 +16,9 @@ export interface Todo {
   /** Place in the list. Kept on the task rather than implied by the array so
    *  two devices' lists can be merged. */
   order: number;
+  /** Marked important: highlighted, and kept above the other open tasks.
+   *  Missing on tasks saved, or synced, before it existed. */
+  important?: boolean;
 }
 
 /** Ids of deleted tasks and when they went, so a synced copy that still has
@@ -93,6 +96,14 @@ export function toggleTodo(id: string) {
   if (payOut) rewardTask();
 }
 
+/** Marks a task important or not. A change like any other, so it syncs, and
+ *  the newer of two devices' choices wins. */
+export function toggleImportant(id: string) {
+  todoStore.set((list) =>
+    list.map((t) => (t.id === id ? { ...t, important: !t.important, updatedAt: Date.now() } : t)),
+  );
+}
+
 export function editTodo(id: string, text: string) {
   const clean = text.trim().slice(0, TODO_MAX_LENGTH);
   if (!clean) return removeTodo(id);
@@ -133,7 +144,7 @@ export function reorderOpen(ids: string[]) {
 
 /** Moves an open task one place up or down, for keyboard reordering. */
 export function moveTodo(id: string, by: -1 | 1) {
-  const open = todoStore.get().filter((t) => !t.done);
+  const open = sortTodos(todoStore.get()).filter((t) => !t.done);
   const from = open.findIndex((t) => t.id === id);
   const to = from + by;
   if (from < 0 || to < 0 || to >= open.length) return;
@@ -142,9 +153,13 @@ export function moveTodo(id: string, by: -1 | 1) {
   reorderOpen(ids);
 }
 
-/** Open tasks in their set order, then finished ones, newest first. */
+/** Open tasks in their set order, the important ones first, then finished
+ *  ones, newest first. */
 export function sortTodos(list: Todo[]) {
-  const open = list.filter((t) => !t.done);
+  const open = [
+    ...list.filter((t) => !t.done && t.important),
+    ...list.filter((t) => !t.done && !t.important),
+  ];
   const done = list
     .filter((t) => t.done)
     .sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));

@@ -50,6 +50,7 @@ const NavBar = ({
               <SealMark size={30} />
             </NavbarLogo>
             <div className="text-nav-fg flex items-center gap-4">
+              <SiteSwitcher to="home" />
               <SiteSwitcher to="cs" />
               <AnimatedThemeToggler className="cursor-pointer" />
               <MobileNavToggle
@@ -79,7 +80,6 @@ const NavBar = ({
             ))}
             <div className="border-border text-nav-fg mt-2 flex w-full flex-col gap-4 border-t px-4 pt-4">
               <SiteSwitcher to="cs" withLabel className="text-sm" />
-              <SiteSwitcher to="home" withLabel className="text-sm" />
             </div>
           </MobileNavMenu>
         </MobileNav>

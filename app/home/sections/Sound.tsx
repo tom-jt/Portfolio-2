@@ -25,13 +25,33 @@ import {
   Wind,
   type LucideIcon,
 } from "lucide-react";
-import { Eyebrow, Panel, PrimaryButton, textButton, type PanelChrome } from "@/components/home/ui";
+import {
+  Eyebrow,
+  Panel,
+  PrimaryButton,
+  textButton,
+  type PanelChrome,
+} from "@/components/home/ui";
 import { DEFAULT_SPOTIFY_URL } from "@/data/home/config";
-import { playAmbience, primeAudio, useAmbienceStatus } from "@/lib/home/ambience";
+import {
+  playAmbience,
+  primeAudio,
+  useAmbienceStatus,
+} from "@/lib/home/ambience";
 import { describeUnlock, isUnlocked } from "@/lib/home/cosmetics";
-import { useGarden } from "@/lib/home/garden";
-import { activeAmbience, prefsStore, setPrefs, usePrefs } from "@/lib/home/prefs";
-import { AMBIENCES, getAmbience, getScene, type AmbienceKind } from "@/lib/home/scenes";
+import { useGardenValue } from "@/lib/home/garden";
+import {
+  activeAmbience,
+  prefsStore,
+  setPrefs,
+  usePrefs,
+} from "@/lib/home/prefs";
+import {
+  AMBIENCES,
+  getAmbience,
+  getScene,
+  type AmbienceKind,
+} from "@/lib/home/scenes";
 import {
   loadSpotifyApi,
   setSpotifyController,
@@ -51,7 +71,8 @@ export function toggleAmbience(playing: boolean) {
   if (playing) return setPrefs({ ambienceOn: false });
   primeAudio();
   const prefs = prefsStore.get();
-  if (prefs.ambienceOn) playAmbience(activeAmbience(prefs), prefs.ambienceVolume);
+  if (prefs.ambienceOn)
+    playAmbience(activeAmbience(prefs), prefs.ambienceVolume);
   else setPrefs({ ambienceOn: true });
 }
 
@@ -61,8 +82,17 @@ export const Equaliser = ({ on }: { on: boolean }) => (
     {[0, 0.25, 0.5].map((delay) => (
       <span
         key={delay}
-        className={cn("bg-glow-2 w-0.75 origin-bottom rounded-full", on ? "h-full" : "h-1")}
-        style={on ? { animation: `home-eq 0.9s ease-in-out ${delay}s infinite alternate` } : undefined}
+        className={cn(
+          "bg-glow-2 w-0.75 origin-bottom rounded-full",
+          on ? "h-full" : "h-1",
+        )}
+        style={
+          on
+            ? {
+                animation: `home-eq 0.9s ease-in-out ${delay}s infinite alternate`,
+              }
+            : undefined
+        }
       />
     ))}
   </span>
@@ -107,12 +137,18 @@ const SpotifyPlayer = ({ link, embed }: { link: string; embed: string }) => {
     loadSpotifyApi().then(
       (api) => {
         if (cancelled) return;
-        api.createController(target, { uri, width: "100%", height: 152 }, (c) => {
-          if (cancelled) return c.destroy?.();
-          controller = c;
-          setSpotifyController(c);
-          c.addListener("playback_update", (e) => setSpotifyPlaying(!e.data.isPaused));
-        });
+        api.createController(
+          target,
+          { uri, width: "100%", height: 152 },
+          (c) => {
+            if (cancelled) return c.destroy?.();
+            controller = c;
+            setSpotifyController(c);
+            c.addListener("playback_update", (e) =>
+              setSpotifyPlaying(!e.data.isPaused),
+            );
+          },
+        );
       },
       () => !cancelled && setFallback(true),
     );
@@ -137,12 +173,27 @@ const SpotifyPlayer = ({ link, embed }: { link: string; embed: string }) => {
       />
     );
   }
-  return <div ref={host} className="h-[152px] overflow-hidden rounded-xl [&_iframe]:block [&_iframe]:border-0" />;
+  return (
+    <div
+      ref={host}
+      className="h-[152px] overflow-hidden rounded-xl [&_iframe]:block [&_iframe]:border-0"
+    />
+  );
 };
 
-const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
+const Sound = ({
+  className,
+  chrome,
+}: {
+  className?: string;
+  chrome?: PanelChrome;
+}) => {
   const prefs = usePrefs();
-  const garden = useGarden();
+  const lockedIds = useGardenValue((s) =>
+    AMBIENCES.filter((a) => !isUnlocked(a.unlock, s))
+      .map((a) => a.id)
+      .join(" "),
+  ).split(" ");
   const scene = getScene(prefs.scene);
   const kind = activeAmbience(prefs);
   const ambience = getAmbience(kind);
@@ -178,7 +229,13 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
   };
 
   return (
-    <Panel id="sound" title="sound" icon={Headphones} className={className} chrome={chrome}>
+    <Panel
+      id="sound"
+      title="sound"
+      icon={Headphones}
+      className={className}
+      chrome={chrome}
+    >
       <div className="border-glass-edge flex items-center gap-3 rounded-2xl border bg-white/3 p-3">
         <button
           type="button"
@@ -188,7 +245,11 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           onClick={() => toggleAmbience(playing)}
           className="bg-glow-2/15 text-glow-2 hover:bg-glow-2/25 focus-visible:ring-glow-2 grid size-11 shrink-0 cursor-pointer place-items-center rounded-full transition focus-visible:ring-2 focus-visible:outline-none"
         >
-          {playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+          {playing ? (
+            <Pause className="size-4" />
+          ) : (
+            <Play className="ml-0.5 size-4" />
+          )}
         </button>
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-sm font-medium">
@@ -196,21 +257,34 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
             <Equaliser on={status === "playing"} />
           </p>
           {note && (
-            <p className={cn("truncate text-xs", status === "error" ? "text-destructive" : "text-muted-foreground")}>
+            <p
+              className={cn(
+                "truncate text-xs",
+                status === "error"
+                  ? "text-destructive"
+                  : "text-muted-foreground",
+              )}
+            >
               {note}
             </p>
           )}
         </div>
         <label className="text-muted-foreground flex items-center gap-2">
           <span className="sr-only">Ambience volume</span>
-          {prefs.ambienceVolume < 0.5 ? <Volume1 className="size-4" /> : <Volume2 className="size-4" />}
+          {prefs.ambienceVolume < 0.5 ? (
+            <Volume1 className="size-4" />
+          ) : (
+            <Volume2 className="size-4" />
+          )}
           <input
             type="range"
             min={0}
             max={1}
             step={0.01}
             value={prefs.ambienceVolume}
-            onChange={(e) => setPrefs({ ambienceVolume: Number(e.target.value) })}
+            onChange={(e) =>
+              setPrefs({ ambienceVolume: Number(e.target.value) })
+            }
             className="accent-glow-2 w-20 cursor-pointer"
           />
         </label>
@@ -228,12 +302,19 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
           </button>
         )}
       </div>
-      <div role="group" aria-label="ambient sound" className="mt-2 grid grid-cols-4 gap-1.5">
+      <div
+        role="group"
+        aria-label="ambient sound"
+        className="mt-2 grid grid-cols-4 gap-1.5"
+      >
         {AMBIENCES.map((a) => {
-          const locked = !isUnlocked(a.unlock, garden);
+          const locked = lockedIds.includes(a.id);
           const Icon = locked ? Lock : ICONS[a.id];
           const selected = a.id === kind;
-          const title = locked && a.unlock ? `${a.label}: ${describeUnlock(a.unlock)}` : a.label;
+          const title =
+            locked && a.unlock
+              ? `${a.label}: ${describeUnlock(a.unlock)}`
+              : a.label;
           return (
             <button
               key={a.id}
@@ -299,7 +380,12 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
               Save
             </PrimaryButton>
           </div>
-          <p className={cn("mt-1.5 text-xs", error ? "text-destructive" : "text-muted-foreground")}>
+          <p
+            className={cn(
+              "mt-1.5 text-xs",
+              error ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
             {error
               ? "That doesn't look like a Spotify link."
               : "any playlist, album, or track"}
@@ -324,7 +410,11 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
 
       <div className="mt-3">
         {prefs.spotifyLoaded && embed ? (
-          <SpotifyPlayer key={embed} link={prefs.spotifyUrl ?? DEFAULT_SPOTIFY_URL} embed={embed} />
+          <SpotifyPlayer
+            key={embed}
+            link={prefs.spotifyUrl ?? DEFAULT_SPOTIFY_URL}
+            embed={embed}
+          />
         ) : (
           // Spotify's embed pulls in a lot of script and sets cookies, so it
           // waits until it's asked for. After that it loads automatically.
@@ -334,7 +424,9 @@ const Sound = ({ className, chrome }: { className?: string; chrome?: PanelChrome
             </span>
             <div className="min-w-0">
               <p className="font-display text-xl">spotify</p>
-              <p className="text-muted-foreground mt-1 text-xs">previews unless you&rsquo;re signed in</p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                previews unless you&rsquo;re signed in
+              </p>
               <button
                 type="button"
                 onClick={() => setPrefs({ spotifyLoaded: true })}

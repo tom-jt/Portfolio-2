@@ -6,7 +6,10 @@
  * Each branch opens on a five-rank skill; two skills hang off it, one more
  * off the first of those, and a capstone needs both sides. Early ranks are
  * cheap so the first season's seeds buy something that shows straight away;
- * capstones are a few seasons out.
+ * capstones are a few seasons out. The skills that stack run to many ranks,
+ * the first few cheap and each after dearer than the last, so every harvest
+ * buys something that shows, and filling the tree takes fifteen seasons or
+ * so.
  *
  * Further down the three become two: the rainy side, opened by the rain and
  * roots capstones, and the sunny side, opened by the hearth and roots ones.
@@ -28,7 +31,7 @@ export type SkillId =
   | "downpour"
   | "lucky"
   | "puddles"
-  | "monsoon"
+  | "swipe"
   | "habits"
   | "nightowl"
   | "bookworm"
@@ -38,7 +41,7 @@ export type SkillId =
   | "stormfront"
   | "wetseason"
   | "deeppuddles"
-  | "rainbow"
+  | "monsoon"
   | "thunderclap"
   | "meteors"
   | "cloudburst"
@@ -50,7 +53,7 @@ export type SkillId =
   | "goldenhour"
   | "warmsoil"
   | "secondbloom"
-  | "sunlitseeds"
+  | "rainbow"
   | "solstice";
 
 export type BranchId = "roots" | "rain" | "hearth" | "rainy" | "sunny";
@@ -77,7 +80,14 @@ export const BRANCHES: { id: BranchId; name: string; side?: boolean }[] = [
   { id: "sunny", name: "the sunny side", side: true },
 ];
 
-const RAMP = [1, 2, 3, 4, 5];
+/** Costs for `ranks` ranks: `first`, then each `growth` times the last. */
+const ramp = (first: number, growth: number, ranks: number) =>
+  Array.from({ length: ranks }, (_, i) =>
+    Math.max(1, Math.round(first * growth ** i)),
+  );
+
+/** The three opening skills: fifteen ranks, the first ones a seed or two. */
+const OPENER = ramp(1, 1.35, 15);
 
 export const SKILLS: SkillDef[] = [
   // Roots: the idle garden.
@@ -85,7 +95,7 @@ export const SKILLS: SkillDef[] = [
     id: "roots",
     branch: "roots",
     name: "Deep roots",
-    costs: RAMP,
+    costs: OPENER,
     needs: {},
     effect: (r) => `+${10 * r}% plant output`,
     at: [0.5, 0],
@@ -94,7 +104,7 @@ export const SKILLS: SkillDef[] = [
     id: "headstart",
     branch: "roots",
     name: "Seed tray",
-    costs: [3],
+    costs: [2],
     needs: { roots: 1 },
     effect: () => "each season starts with 10 moss and 5 ferns",
     at: [0, 1],
@@ -103,7 +113,7 @@ export const SKILLS: SkillDef[] = [
     id: "perennials",
     branch: "roots",
     name: "Perennials",
-    costs: [5],
+    costs: [4],
     needs: { roots: 3 },
     effect: () => "keep a tenth of every plant when a season ends",
     at: [1, 1],
@@ -112,7 +122,7 @@ export const SKILLS: SkillDef[] = [
     id: "compost",
     branch: "roots",
     name: "Compost",
-    costs: [4, 4, 4],
+    costs: ramp(3, 1.5, 5),
     needs: { headstart: 1 },
     effect: (r) => `plants cost ${4 * r}% less`,
     at: [0, 2],
@@ -121,7 +131,7 @@ export const SKILLS: SkillDef[] = [
     id: "oldgrowth",
     branch: "roots",
     name: "Old growth",
-    costs: [15],
+    costs: [12],
     needs: { compost: 1, perennials: 1 },
     effect: () => "every 10 copies of a plant adds ×3, not ×2",
     at: [0.5, 3],
@@ -132,7 +142,7 @@ export const SKILLS: SkillDef[] = [
     id: "hands",
     branch: "rain",
     name: "Cupped hands",
-    costs: RAMP,
+    costs: OPENER,
     needs: {},
     effect: (r) => `catches worth ${15 * r}% more`,
     at: [0.5, 0],
@@ -141,7 +151,7 @@ export const SKILLS: SkillDef[] = [
     id: "downpour",
     branch: "rain",
     name: "Downpour",
-    costs: [3, 3, 3],
+    costs: ramp(2, 1.5, 6),
     needs: { hands: 1 },
     effect: (r) => `${Math.round((1 / 0.93 ** r - 1) * 100)}% more rain`,
     at: [0, 1],
@@ -150,7 +160,7 @@ export const SKILLS: SkillDef[] = [
     id: "lucky",
     branch: "rain",
     name: "Magpie",
-    costs: [4, 4, 4],
+    costs: ramp(3, 1.45, 8),
     needs: { hands: 3 },
     effect: (r) => `+${r}% golden chance, golden drops worth ${25 * r}% more`,
     at: [1, 1],
@@ -159,18 +169,18 @@ export const SKILLS: SkillDef[] = [
     id: "puddles",
     branch: "rain",
     name: "Puddles",
-    costs: [6],
+    costs: [5],
     needs: { downpour: 1 },
     effect: () => "missed drops give 10% more of a catch",
     at: [0, 2],
   },
   {
-    id: "monsoon",
+    id: "swipe",
     branch: "rain",
-    name: "Monsoon",
-    costs: [15],
+    name: "Sweeping hands",
+    costs: [12],
     needs: { puddles: 1, lucky: 1 },
-    effect: () => "a caught golden drop brings a fleeting drizzle",
+    effect: () => "drag across the window to catch every drop you pass through",
     at: [0.5, 3],
   },
 
@@ -179,7 +189,7 @@ export const SKILLS: SkillDef[] = [
     id: "habits",
     branch: "hearth",
     name: "Good habits",
-    costs: RAMP,
+    costs: OPENER,
     needs: {},
     effect: (r) => `+${20 * r}% drops from tasks, focus, breaks, and games`,
     at: [0.5, 0],
@@ -188,7 +198,7 @@ export const SKILLS: SkillDef[] = [
     id: "nightowl",
     branch: "hearth",
     name: "Night owl",
-    costs: [3, 3, 3],
+    costs: ramp(2, 1.5, 6),
     needs: { habits: 1 },
     effect: (r) => `+${5 * r}% speed and +${4 * r}h while away`,
     at: [0, 1],
@@ -197,7 +207,7 @@ export const SKILLS: SkillDef[] = [
     id: "bookworm",
     branch: "hearth",
     name: "Bookworm",
-    costs: [5, 5],
+    costs: ramp(3, 1.5, 6),
     needs: { habits: 3 },
     effect: (r) => `+${15 * r}% xp from tasks and focus`,
     at: [1, 1],
@@ -206,7 +216,7 @@ export const SKILLS: SkillDef[] = [
     id: "toolshed",
     branch: "hearth",
     name: "Tool shed",
-    costs: [6],
+    costs: [5],
     needs: { nightowl: 1 },
     effect: () => "keep a third of every upgrade when a season ends",
     at: [0, 2],
@@ -215,7 +225,7 @@ export const SKILLS: SkillDef[] = [
     id: "evergreen",
     branch: "hearth",
     name: "Evergreen",
-    costs: [15],
+    costs: [12],
     needs: { toolshed: 1, bookworm: 1 },
     effect: () => "+1% to all drops per garden level, up to +100%",
     at: [0.5, 3],
@@ -228,8 +238,8 @@ SKILLS.push(
     id: "stormfront",
     branch: "rainy",
     name: "Storm front",
-    costs: [10, 15, 20],
-    needs: { monsoon: 1, oldgrowth: 1 },
+    costs: ramp(8, 1.5, 6),
+    needs: { swipe: 1, oldgrowth: 1 },
     effect: (r) => `${Math.round((1 / 0.91 ** r - 1) * 100)}% more rain`,
     at: [0.5, 0],
   },
@@ -237,7 +247,7 @@ SKILLS.push(
     id: "wetseason",
     branch: "rainy",
     name: "Wet season",
-    costs: [15, 20, 30, 40],
+    costs: ramp(8, 1.35, 10),
     needs: { stormfront: 1 },
     effect: (r) => `catches worth ${10 * r}% more`,
     at: [0, 1],
@@ -246,26 +256,25 @@ SKILLS.push(
     id: "deeppuddles",
     branch: "rainy",
     name: "Deep puddles",
-    costs: [20, 30, 40],
+    costs: ramp(15, 1.5, 5),
     needs: { stormfront: 2 },
     effect: (r) => `missed drops give ${5 * r}% more of a catch`,
     at: [1, 1],
   },
   {
-    id: "rainbow",
+    id: "monsoon",
     branch: "rainy",
-    name: "Rainbow shower",
-    costs: [60],
+    name: "Monsoon",
+    costs: [50],
     needs: { wetseason: 2 },
-    effect: () =>
-      "now and then a rainbow drop falls: catch it and every catch is worth ×3 for 20s",
+    effect: () => "a caught golden drop brings a fleeting drizzle",
     at: [0, 2],
   },
   {
     id: "thunderclap",
     branch: "rainy",
     name: "Thunderclap",
-    costs: [70],
+    costs: [60],
     needs: { deeppuddles: 1 },
     effect: () =>
       "a quarter of golden catches strike lightning, catching every drop on the window",
@@ -275,8 +284,8 @@ SKILLS.push(
     id: "meteors",
     branch: "rainy",
     name: "Meteor night",
-    costs: [100],
-    needs: { rainbow: 1, thunderclap: 1 },
+    costs: [90],
+    needs: { monsoon: 1, thunderclap: 1 },
     effect: () =>
       "meteor showers cross the window, more often at night; each meteor is worth three golden drops",
     at: [0, 3],
@@ -285,7 +294,7 @@ SKILLS.push(
     id: "cloudburst",
     branch: "rainy",
     name: "Cloudburst",
-    costs: [30, 45, 60],
+    costs: ramp(20, 1.5, 6),
     needs: { thunderclap: 1 },
     effect: (r) => `room for ${2 * r} more drops on the window at once`,
     at: [1, 3],
@@ -294,7 +303,7 @@ SKILLS.push(
     id: "torrent",
     branch: "rainy",
     name: "Torrent",
-    costs: [200],
+    costs: [180],
     needs: { meteors: 1, cloudburst: 3 },
     effect: () => "every catch also catches the drop nearest to it",
     at: [0.5, 4],
@@ -307,7 +316,7 @@ SKILLS.push(
     id: "morningsun",
     branch: "sunny",
     name: "Morning sun",
-    costs: [10, 15, 20],
+    costs: ramp(8, 1.35, 10),
     needs: { evergreen: 1, oldgrowth: 1 },
     effect: (r) => `+${15 * r}% plant output`,
     at: [0.5, 0],
@@ -316,7 +325,7 @@ SKILLS.push(
     id: "longdays",
     branch: "sunny",
     name: "Long days",
-    costs: [15, 20, 30],
+    costs: ramp(10, 1.5, 6),
     needs: { morningsun: 1 },
     effect: (r) => `ladybug luck lasts ${5 + 2.5 * r} minutes`,
     at: [0, 1],
@@ -325,7 +334,7 @@ SKILLS.push(
     id: "haymaking",
     branch: "sunny",
     name: "Make hay",
-    costs: [15, 20, 30, 40],
+    costs: ramp(8, 1.35, 10),
     needs: { morningsun: 2 },
     effect: (r) => `+${25 * r}% drops from tasks and focus`,
     at: [1, 1],
@@ -334,7 +343,7 @@ SKILLS.push(
     id: "goldenhour",
     branch: "sunny",
     name: "Golden hour",
-    costs: [60],
+    costs: [50],
     needs: { longdays: 2 },
     effect: () =>
       "now and then the light turns gold, and for 45s every drop that falls is golden",
@@ -344,7 +353,7 @@ SKILLS.push(
     id: "warmsoil",
     branch: "sunny",
     name: "Sun-warmed soil",
-    costs: [20, 30, 40],
+    costs: ramp(15, 1.5, 6),
     needs: { haymaking: 1 },
     effect: (r) => `+${10 * r}% speed and +${6 * r}h while away`,
     at: [1, 2],
@@ -353,32 +362,40 @@ SKILLS.push(
     id: "secondbloom",
     branch: "sunny",
     name: "Second bloom",
-    costs: [70],
+    costs: [60],
     needs: { goldenhour: 1, warmsoil: 1 },
     effect: () => "every plant milestone reached adds +1% to all plant output",
     at: [0, 3],
   },
+  // Sun and rain together make the rainbow.
   {
-    id: "sunlitseeds",
+    id: "rainbow",
     branch: "sunny",
-    name: "Sunlit seeds",
-    costs: [30, 45, 60],
+    name: "Rainbow shower",
+    costs: [80],
     needs: { warmsoil: 2 },
-    effect: (r) => `harvests give ${15 * r}% more seeds`,
+    effect: () =>
+      "now and then a rainbow drop falls: catch it and every catch is worth ×3 for 20s",
     at: [1, 3],
   },
   {
     id: "solstice",
     branch: "sunny",
     name: "Solstice",
-    costs: [200],
-    needs: { secondbloom: 1, sunlitseeds: 3 },
+    costs: [180],
+    needs: { secondbloom: 1, rainbow: 1 },
     effect: () => "plant output ×1.5, and golden hour comes twice as often",
     at: [0.5, 4],
   },
 );
 
 export const getSkill = (id: SkillId) => SKILLS.find((s) => s.id === id)!;
+
+/** Skills that have left the tree, and what their ranks cost, so old saves
+ *  get their seeds back. */
+export const RETIRED_SKILLS: Record<string, number[]> = {
+  sunlitseeds: [30, 45, 60],
+};
 
 /** Seeds to learn every skill, for the tab's progress line. */
 export const TREE_COST = SKILLS.reduce(
