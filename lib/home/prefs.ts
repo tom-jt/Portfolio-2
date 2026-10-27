@@ -23,7 +23,7 @@ import { isThemeId, sceneTheme, type ThemeId } from "./themes";
 
 /** Every card on /home, each opened from its own chip. */
 export type PanelId =
-  "timer" | "tasks" | "garden" | "eyes" | "sound" | "arcade";
+  "timer" | "tasks" | "garden" | "eyes" | "sound" | "arcade" | "links";
 export const PANEL_IDS: PanelId[] = [
   "timer",
   "tasks",
@@ -31,6 +31,7 @@ export const PANEL_IDS: PanelId[] = [
   "eyes",
   "sound",
   "arcade",
+  "links",
 ];
 
 /** The garden card's tabs. */
@@ -73,6 +74,8 @@ export interface HomePrefs {
   goldLeaf: boolean;
   /** The pet on the chips, or none. */
   pet: PetId | null;
+  /** The quick links row, kept open beside the tasks chip. */
+  linksPinned: boolean;
 }
 
 const initial: HomePrefs = {
@@ -91,6 +94,7 @@ const initial: HomePrefs = {
   frame: "plain",
   goldLeaf: false,
   pet: null,
+  linksPinned: false,
 };
 
 export const prefsStore = createPersistentStore<HomePrefs>(
@@ -106,6 +110,7 @@ export const prefsStore = createPersistentStore<HomePrefs>(
     if (!isDecorPick(merged.decor)) merged.decor = init.decor;
     if (!isFramePick(merged.frame)) merged.frame = init.frame;
     merged.goldLeaf = merged.goldLeaf === true;
+    merged.linksPinned = merged.linksPinned === true;
     if (!isPetId(merged.pet)) merged.pet = null;
     merged.ambienceVolume = Math.min(
       1,

@@ -22,6 +22,7 @@ import {
 import EyeBreak from "@/components/home/EyeBreak";
 import HudChip from "@/components/home/HudChip";
 import Pet from "@/components/home/Pet";
+import { LinkKeys, QuickLinksBar, QuickLinksMenu, QuickLinksPanel } from "@/components/home/QuickLinks";
 import SceneSwitcher from "@/components/home/SceneSwitcher";
 import TimerEngine from "@/components/home/TimerEngine";
 import { chipButton, chipGlass } from "@/components/home/ui";
@@ -76,6 +77,7 @@ const LABEL: Record<PanelId, string> = {
   eyes: "eye breaks",
   sound: "sound",
   arcade: "arcade",
+  links: "quick links",
 };
 
 const WIDE = "(min-width: 768px)";
@@ -355,7 +357,9 @@ const EyesChip = ({
           "size-4",
           status === "now"
             ? "text-glow-2"
-            : status === "off" && "text-muted-foreground",
+            : status === "off"
+              ? "text-muted-foreground"
+              : "text-glow",
         )}
       />
       <span
@@ -413,7 +417,7 @@ const TabBar = ({
             active === id ? "bg-white/14" : "hover:bg-white/6",
           )}
         >
-          <Icon className="size-5" />
+          <Icon className="text-glow size-5" />
           <span
             className={cn(
               "text-[0.62rem]",
@@ -442,6 +446,7 @@ const PANELS: Record<PanelId, typeof Tasks> = {
   eyes: Eyes,
   sound: Sound,
   arcade: Arcade,
+  links: QuickLinksPanel,
 };
 
 const Room = () => {
@@ -496,6 +501,7 @@ const Room = () => {
 
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 md:top-7 md:right-8 md:gap-2.5">
         <HudChip open={chipOpen("garden")} onClick={() => toggle("garden")} />
+        <QuickLinksMenu className="md:hidden" />
         <SceneSwitcher />
         <SiteSwitcher
           to="cs"
@@ -507,31 +513,30 @@ const Room = () => {
         />
       </div>
 
-      <AnimatePresence>
-        {isOpen("tasks") && (
-          <motion.div
-            key="tasks"
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{
-              opacity: 0,
-              y: 10,
-              scale: 0.98,
-              transition: { duration: 0.15 },
-            }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="absolute bottom-[7.25rem] left-10 z-10 flex max-h-[calc(100dvh-17rem)] w-[22rem] flex-col"
-          >
-            <Tasks className={CARD_PANEL} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* The tasks card, and the links card beside it, at the bottom left. */}
+      <div className="pointer-events-none absolute bottom-[7.25rem] left-10 z-10 hidden max-h-[calc(100dvh-17rem)] items-end gap-4 md:flex">
+        <AnimatePresence>
+          {isOpen("tasks") && (
+            <Card key="tasks" className="max-h-[calc(100dvh-17rem)] w-[22rem]">
+              <Tasks className={CARD_PANEL} />
+            </Card>
+          )}
+          {isOpen("links") && (
+            <Card key="links" className="max-h-[calc(100dvh-17rem)] w-[22rem]">
+              <QuickLinksPanel className={CARD_PANEL} />
+            </Card>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* The reverse L. Its left edge stays clear of the tasks card. */}
+      {/* The reverse L. Its left edge stays clear of the cards at the left. */}
       <div
         className={cn(
           "pointer-events-none absolute top-20 right-8 bottom-[6.5rem] z-10 hidden flex-row-reverse items-end gap-4 md:flex",
-          isOpen("tasks") ? "left-[27rem]" : "left-10",
+          // Clear of the cards at the bottom left, however many are open.
+          ["left-10", "left-[27rem]", "left-[50.5rem]"][
+            Number(isOpen("tasks")) + Number(isOpen("links"))
+          ],
         )}
       >
         <AnimatePresence>
@@ -593,6 +598,9 @@ const Room = () => {
       </div>
 
       <TasksChip open={chipOpen("tasks")} onClick={() => toggle("tasks")} />
+      {/* Beside the tasks, stopping short of the chips on the right. */}
+      <QuickLinksBar className="absolute bottom-8 left-[22.25rem] z-20 hidden max-w-[max(5rem,calc(100vw-51rem))] md:flex" />
+      <LinkKeys />
       <div className="absolute right-8 bottom-8 hidden items-center gap-2.5 md:flex">
         {/* The pet lives on top of these chips. */}
         {wide && showPet && <Pet id={showPet} />}
@@ -607,7 +615,7 @@ const Room = () => {
             chipOpen("arcade") && "border-glow/55",
           )}
         >
-          <Gamepad2 className="size-5" />
+          <Gamepad2 className="text-glow size-5" />
         </button>
         <SoundChip open={chipOpen("sound")} onClick={() => toggle("sound")} />
         <EyesChip open={chipOpen("eyes")} onClick={() => toggle("eyes")} />

@@ -244,7 +244,10 @@ const Greenhouse = ({ id }: { id: string }) => (
       <path d="M15 23v-6.5l5-3 5 3V23" />
       <path d="M-2 8 15 16.5M42 8 25 16.5M20-6v19M-2 17h17M42 17H25" opacity="0.6" />
     </g>
-    <rect x="18.6" y="18" width="2.8" height="5" fill="#4d6458" stroke="#d6e0da" strokeWidth="0.4" />
+    <rect x="18.4" y="17.8" width="3.2" height="5.4" fill="#cfd9d2" />
+    <rect x="18.8" y="18.2" width="2.4" height="5" fill="#2f5242" />
+    <rect x="19.1" y="18.5" width="1.8" height="1.6" fill="#a9c4d4" />
+    <circle cx="20.8" cy="21" r="0.2" fill="#d9b25a" />
     {/* Bulbs slung across. */}
     <path d="M3 12q17 6 34 0" stroke="#1e221e" strokeWidth="0.4" fill="none" />
     {[7, 13.5, 20, 26.5, 33].map((x) => (

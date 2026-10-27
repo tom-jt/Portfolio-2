@@ -90,7 +90,7 @@ export const Equaliser = ({ on }: { on: boolean }) => (
       <span
         key={delay}
         className={cn(
-          "bg-glow-2 w-0.75 origin-bottom rounded-full",
+          "bg-glow w-0.75 origin-bottom rounded-full",
           on ? "h-full" : "h-1",
         )}
         style={

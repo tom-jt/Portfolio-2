@@ -94,8 +94,8 @@ const TaskSync = ({ onBack }: { onBack: () => void }) => {
             <span aria-live="polite">{STATUS[state]}</span>
           </p>
           <p className="text-muted-foreground text-xs">
-            note: your tasks and garden level sync encrypted using the above
-            code. anyone with this code can see your tasks.
+            note: your tasks, quick links, and garden level sync encrypted
+            using the above code. anyone with this code can see them.
           </p>
           <div className="mt-auto flex items-center justify-between gap-3">
             <button type="button" onClick={stopSync} className={LINK}>
@@ -109,8 +109,8 @@ const TaskSync = ({ onBack }: { onBack: () => void }) => {
       ) : (
         <>
           <p className="text-muted-foreground">
-            sync this list and your garden level with any device. one-time set
-            up per device. no accounts needed.
+            sync this list, your quick links, and your garden level with any
+            device. one-time set up per device. no accounts needed.
           </p>
           <PrimaryButton onClick={startSync} className="self-start">
             link a device

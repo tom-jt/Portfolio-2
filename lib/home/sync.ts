@@ -4,6 +4,16 @@ import { useEffect, useSyncExternalStore } from "react";
 import type { SimplePool } from "nostr-tools/pool";
 import type { Event } from "nostr-tools/pure";
 import { gardenStore, mergeXpElsewhere, totalXp } from "./garden";
+import {
+  applyLinkSnapshot,
+  deletedLinkStore,
+  linkSnapshot,
+  linkStore,
+  mergeLinks,
+  parseLinks,
+  syncedLinks,
+  type LinkSnapshot,
+} from "./links";
 import { createPersistentStore, useStore } from "./store";
 import {
   applyTodoSnapshot,
@@ -16,8 +26,9 @@ import {
 } from "./todos";
 
 /**
- * Keeps the task list, and the garden's level, the same on every device that
- * shares a sync code, with no account and no server of our own.
+ * Keeps the task list, the quick links, and the garden's level, the same on
+ * every device that shares a sync code, with no account and no server of our
+ * own.
  *
  * The code is the only secret. A Nostr key is derived from it, and the list
  * is kept on a few public Nostr relays as that key's one replaceable "app
@@ -121,26 +132,40 @@ function deviceId() {
   }
 }
 
-/** What the synced note holds: the list, and each device's XP. */
+/** What the synced note holds: the list, the links, and each device's XP. */
 interface Shared extends TodoSnapshot {
   xp: Record<string, number>;
+  links: LinkSnapshot;
 }
 
 const NO_TODOS: TodoSnapshot = { todos: [], deleted: {} };
+const NO_LINKS: LinkSnapshot = { links: [], deleted: {} };
 
 /** Each device's XP, keys in order, so equal tables serialise equally. */
 const sortedXp = (xp: Record<string, number>) =>
   Object.fromEntries(Object.entries(xp).sort(([a], [b]) => (a < b ? -1 : 1)));
 
-/** This device's copy: its list, and every device's XP as far as it knows. */
+/** This device's copy: its list, its links short enough to sync, and every
+ *  device's XP as far as it knows. */
 function localShared(me: string): Shared {
   const g = gardenStore.get();
-  return { ...mergeTodos(todoSnapshot(), NO_TODOS), xp: sortedXp({ ...g.xpElsewhere, [me]: g.xp }) };
+  return {
+    ...mergeTodos(todoSnapshot(), NO_TODOS),
+    xp: sortedXp({ ...g.xpElsewhere, [me]: g.xp }),
+    links: mergeLinks(syncedLinks(linkSnapshot()), NO_LINKS),
+  };
 }
 
 /** The same copy always serialises the same way, so copies compare as text. */
 const serialise = (s: Shared) =>
-  JSON.stringify({ v: 1, todos: s.todos, deleted: s.deleted, xp: s.xp });
+  JSON.stringify({
+    v: 1,
+    todos: s.todos,
+    deleted: s.deleted,
+    xp: s.xp,
+    links: s.links.links,
+    linksDeleted: s.links.deleted,
+  });
 
 function parse(text: string): Shared | null {
   try {
@@ -152,7 +177,9 @@ function parse(text: string): Shared | null {
       if (typeof value === "number" && Number.isFinite(value) && value > 0) xp[device] = value;
     }
     const todos = (raw.todos as Todo[]).filter((t) => typeof t?.id === "string" && typeof t.text === "string");
-    return { todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp) };
+    // Nor do notes from before the links were.
+    const links = mergeLinks(parseLinks(raw.links, raw.linksDeleted), NO_LINKS);
+    return { todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp), links };
   } catch {
     return null;
   }
@@ -217,6 +244,7 @@ async function fit(s: Shared) {
         todos: s.todos.filter((t) => !gone.has(t.id)),
         deleted: Object.fromEntries(Object.entries(s.deleted).filter(([id]) => !gone.has(`deleted:${id}`))),
         xp: s.xp,
+        links: s.links,
       }),
     );
   };
@@ -363,11 +391,12 @@ async function connect(code: string) {
     try {
       const snapshot = parse(await unpack(nip44.decrypt(event.content, key)));
       if (!snapshot || closed) return;
-      remote = serialise({ ...mergeTodos(snapshot, NO_TODOS), xp: snapshot.xp });
+      remote = serialise({ ...mergeTodos(snapshot, NO_TODOS), xp: snapshot.xp, links: snapshot.links });
       // Applying the merges fires the store listeners, which write it back if
       // this copy added anything: a task, or XP the note didn't have.
       mergeXpElsewhere(snapshot.xp, me);
       applyTodoSnapshot(mergeTodos(todoSnapshot(), snapshot));
+      applyLinkSnapshot(mergeLinks(linkSnapshot(), snapshot.links));
       if (caughtUp) setStatus("synced");
     } catch {
       // Not ours, or not readable: skip it.
@@ -424,6 +453,8 @@ async function connect(code: string) {
   restart();
   const offTodos = todoStore.subscribe(schedule);
   const offDeleted = deletedStore.subscribe(schedule);
+  const offLinks = linkStore.subscribe(schedule);
+  const offDeletedLinks = deletedLinkStore.subscribe(schedule);
   // The garden changes every second as plants pay out; only XP is synced.
   let xpSeen = "";
   const offGarden = gardenStore.subscribe(() => {
@@ -457,6 +488,8 @@ async function connect(code: string) {
     quietly(() => pool?.destroy());
     offTodos();
     offDeleted();
+    offLinks();
+    offDeletedLinks();
     offGarden();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("online", restart);

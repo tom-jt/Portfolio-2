@@ -1697,6 +1697,17 @@ html:has([data-site="home"]) {
   }
 }
 
+/* /home: the quick-link hint's line, running down to when the typed
+   letters are forgotten. */
+@keyframes home-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 /* An old neon tube: steady, then a stutter. */
 @keyframes home-neon {
   0%,

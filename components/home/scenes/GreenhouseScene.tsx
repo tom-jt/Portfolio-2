@@ -224,19 +224,14 @@ function potted(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, 
   const pw = 0.1 * s;
   const ph = 0.09 * s;
   const top = y - ph;
-  ctx.fillStyle = "#8a5236";
-  ctx.beginPath();
-  ctx.moveTo(x - pw / 2, top);
-  ctx.lineTo(x + pw / 2, top);
-  ctx.lineTo(x + pw * 0.38, y);
-  ctx.lineTo(x - pw * 0.38, y);
-  ctx.fill();
+  // The soil, its far half showing above the rim.
   ctx.fillStyle = "#2e2118";
   ctx.beginPath();
-  ctx.ellipse(x, top + ph * 0.04, pw * 0.48, ph * 0.12, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, top, pw * 0.48, ph * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const soil = top + ph * 0.1;
+  // Stems start down in the pot, so the pot drawn over them hides their feet.
+  const soil = top + ph * 0.12;
   const base = () => x + (rand() - 0.5) * pw * 0.7;
   const green = () => GREENS[1 + Math.floor(rand() * 4)];
   if (kind === 0) {
@@ -280,7 +275,21 @@ function potted(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, 
       }
     }
   }
-  // The rim, over the stems where they leave the soil.
+  // The pot over the plant's foot, and its rim over the stems.
+  ctx.fillStyle = "#8a5236";
+  ctx.beginPath();
+  ctx.moveTo(x - pw / 2, top);
+  ctx.lineTo(x + pw / 2, top);
+  ctx.lineTo(x + pw * 0.38, y);
+  ctx.lineTo(x - pw * 0.38, y);
+  ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.beginPath();
+  ctx.moveTo(x + pw * 0.15, top);
+  ctx.lineTo(x + pw / 2, top);
+  ctx.lineTo(x + pw * 0.38, y);
+  ctx.lineTo(x + pw * 0.1, y);
+  ctx.fill();
   ctx.fillStyle = "#a3633f";
   ctx.fillRect(x - pw * 0.55, top, pw * 1.1, ph * 0.24);
   ctx.fillStyle = "rgba(255,220,180,0.18)";
@@ -322,6 +331,34 @@ function moss(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, ra
       Math.PI * 2,
     );
     ctx.fill();
+  }
+}
+
+/**
+ * A strip of the staging's top at depth z: tufts of grass and low leafy
+ * groundcover, most of them along the front edge.
+ */
+function groundcover(ctx: CanvasRenderingContext2D, v: View, side: number, z: number, rand: () => number) {
+  const s = v.f / z;
+  ctx.lineCap = "round";
+  ctx.lineWidth = Math.max(0.5, s * 0.004);
+  // As many as the strip is big on screen.
+  const count = Math.min(26, Math.max(5, Math.round(s / 32)));
+  for (let i = 0; i < count; i++) {
+    const [x, y] = at(v, side * lerp(AISLE, 1, rand() ** 2.2), BENCH, z + (rand() - 0.5) * 0.06);
+    if (rand() < 0.35) {
+      moss(ctx, x, y, s * 0.02, rand);
+      continue;
+    }
+    ctx.strokeStyle = GREENS[2 + Math.floor(rand() * 3)];
+    const len = s * lerp(0.02, 0.045, rand());
+    ctx.beginPath();
+    for (let k = -2; k <= 2; k++) {
+      const lean = k * 0.25 + (rand() - 0.5) * 0.3;
+      ctx.moveTo(x + k * s * 0.003, y);
+      ctx.lineTo(x + k * s * 0.003 + Math.sin(lean) * len, y - Math.cos(lean) * len);
+    }
+    ctx.stroke();
   }
 }
 
@@ -417,6 +454,60 @@ interface Bulb {
   r: number;
 }
 
+/**
+ * The door at the far end, shut: a frame painted like the rest of the house,
+ * and a green panelled door in it, glazed above with the misty garden
+ * showing through, two sunk panels below, and a brass knob.
+ */
+function door(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
+  const [l, t] = at(v, -0.25, 0.36, Z_FAR);
+  const [r, b] = at(v, 0.25, FLOOR, Z_FAR);
+  const dw = r - l;
+  const dh = b - t;
+  const u = dw / 20;
+  ctx.fillStyle = mask ? "#000" : "#cfd9d2";
+  ctx.fillRect(l - u, t - u, dw + u * 2, dh + u);
+  if (mask) return;
+  ctx.fillStyle = "#2f5242";
+  ctx.fillRect(l + u, t + u, dw - u * 2, dh - u);
+  // The glazed top: four panes in glazing bars.
+  const gx = l + u * 3;
+  const gy = t + u * 3;
+  const gw = dw - u * 6;
+  const gh = dh * 0.38;
+  const pane = ctx.createLinearGradient(0, gy, 0, gy + gh);
+  pane.addColorStop(0, "#a9c4d4");
+  pane.addColorStop(0.6, "#8fae9c");
+  pane.addColorStop(1, "#6f9c62");
+  ctx.fillStyle = pane;
+  ctx.fillRect(gx, gy, gw, gh);
+  ctx.fillStyle = "rgba(230,240,245,0.25)";
+  ctx.fillRect(gx, gy, gw, gh);
+  ctx.fillStyle = "#2f5242";
+  ctx.fillRect(gx + gw / 2 - u * 0.6, gy, u * 1.2, gh);
+  ctx.fillRect(gx, gy + gh / 2 - u * 0.6, gw, u * 1.2);
+  // Two sunk panels below, shaded along their top and left edges.
+  const py = gy + gh + u * 3;
+  const ph = b - py - u * 3;
+  for (const px of [gx, gx + gw / 2 + u]) {
+    const pw = gw / 2 - u;
+    ctx.fillStyle = "#264536";
+    ctx.fillRect(px, py, pw, ph);
+    ctx.fillStyle = "rgba(10,25,18,0.45)";
+    ctx.fillRect(px, py, pw, u * 0.7);
+    ctx.fillRect(px, py, u * 0.7, ph);
+    ctx.fillStyle = "rgba(200,230,210,0.12)";
+    ctx.fillRect(px, py + ph - u * 0.6, pw, u * 0.6);
+  }
+  // The knob, and a step worn pale in front.
+  ctx.fillStyle = "#d9b25a";
+  ctx.beginPath();
+  ctx.arc(r - u * 3, t + dh * 0.55, Math.max(1, u * 0.9), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#6d6a5e";
+  ctx.fillRect(l - u * 1.5, b - u * 0.5, dw + u * 3, u * 1.2);
+}
+
 /** A string of bulbs slung across the house at depth z, sagging in the middle. */
 function bulbString(v: View, z: number, count: number): { wire: [number, number][]; bulbs: Bulb[] } {
   const wire: [number, number][] = [];
@@ -477,11 +568,7 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
   ctx.moveTo(...at(v, -1, 0.4, Z_FAR));
   ctx.lineTo(...at(v, 1, 0.4, Z_FAR));
   ctx.stroke();
-  ctx.fillStyle = mask ? "#000" : "rgba(60,80,68,0.55)";
-  const [dl, dt] = at(v, -0.24, 0.35, Z_FAR);
-  const [dr, db] = at(v, 0.24, FLOOR, Z_FAR);
-  ctx.fillRect(dl, dt, dr - dl, db - dt);
-  ctx.strokeRect(dl, dt, dr - dl, db - dt);
+  door(ctx, v, mask);
 
   // The main frames, each with curved iron brackets at the eaves.
   for (const z of [...RAFTERS].reverse()) {
@@ -569,7 +656,9 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
       ctx.fill();
     };
     quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, FLOOR, Z_FAR), at(v, side * AISLE, FLOOR, Z_NEAR)], "#16261b");
-    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side, BENCH, Z_FAR), at(v, side, BENCH, Z_NEAR)], "#3d4a33");
+    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side, BENCH, Z_FAR), at(v, side, BENCH, Z_NEAR)], "#3a3326");
+    // Green creeping in over the soil from the front edge.
+    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_NEAR)], "rgba(72,112,58,0.55)");
     quad(
       [at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_NEAR)],
       "#5e5640",
@@ -607,19 +696,29 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
     }
   }
 
-  // Pots along the staging, far to near, so the near ones stand in front.
-  const pots: { x: number; z: number; kind: number }[] = [];
+  // On the staging, far to near so nearer things stand in front: grass and
+  // low groundcover all over its soil, thickest along the front edge, and
+  // the pots standing in it.
+  const staged: { z: number; draw: () => void }[] = [];
   for (const side of [-1, 1]) {
     for (let z = Z_FAR - 0.25; z > 0.9; z -= lerp(0.18, 0.32, rand())) {
-      pots.push({ x: side * lerp(0.5, 0.93, rand()), z, kind: Math.floor(rand() * 4) });
+      const x = side * lerp(0.5, 0.93, rand());
+      const kind = Math.floor(rand() * 4);
+      staged.push({
+        z,
+        draw: () => {
+          const [px, py] = at(v, x, BENCH, z);
+          if (py > h + 40 || px < -200 || px > w + 200) return;
+          potted(ctx, px, py, v.f / z, kind, rand);
+        },
+      });
+    }
+    for (let z = Z_FAR - 0.05; z > Z_NEAR + 0.1; z -= 0.06) {
+      staged.push({ z, draw: () => groundcover(ctx, v, side, z, rand) });
     }
   }
-  pots.sort((a, b) => b.z - a.z);
-  for (const p of pots) {
-    const [x, y] = at(v, p.x, BENCH, p.z);
-    if (y > h + 40 || x < -200 || x > w + 200) continue;
-    potted(ctx, x, y, v.f / p.z, p.kind, rand);
-  }
+  staged.sort((a, b) => b.z - a.z);
+  for (const item of staged) item.draw();
 
   // Trailing plants spilling over the staging's edge.
   for (const side of [-1, 1]) {
