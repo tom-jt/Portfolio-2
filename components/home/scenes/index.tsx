@@ -30,6 +30,9 @@ const BACKGROUNDS: Record<SceneId, ComponentType> = {
   "p-autumn": photo("autumn"),
   "p-majula": photo("majula"),
   "p-moonlight": photo("moonlight"),
+  "p-tram": photo("tram"),
+  "p-ruins": photo("ruins"),
+  "p-overpass": photo("overpass"),
 };
 
 /**

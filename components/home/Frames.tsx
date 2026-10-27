@@ -59,6 +59,16 @@ const BlueLine = () => (
   <span aria-hidden="true" className="pointer-events-none absolute inset-[3.5px] z-10 rounded-[inherit] shadow-[0_0_0_1px_#4a6fb5]" />
 );
 
+/** Reclaimed concrete's neon tube, round the inside of the band, stuttering
+ *  as the overgrown city's signs do. */
+const NeonTube = () => (
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-1 z-10 rounded-[inherit] shadow-[0_0_0_1.5px_#ff8ad8,0_0_6px_1px_rgb(255_80_200/0.7)]"
+    style={{ animation: "home-neon 9s linear -3s infinite" }}
+  />
+);
+
 const DARK = "rgb(0 0 0 / 0.35)";
 const PALE = "#f7f4ee";
 
@@ -101,6 +111,19 @@ const STYLES: Record<Exclude<FrameId, "plain">, FrameStyle> = {
   nebula: {
     surface: `${scatter(23, ["#ffffff", "#f0d8ff", "#cfe4ff"], 16, [0.4, 1.2], [110, 90])}, linear-gradient(135deg, #4a2f8a, #121a44)`,
     edge: "#7a5ad0",
+  },
+  // The tram's livery: mint over pink, a white stripe between.
+  tram: { surface: "linear-gradient(#bfe8cf 0 47%, #ffffff 47% 53%, #f6c1cf 53%)", edge: "#7fae95" },
+  // Concrete gone green with moss, a neon tube still lit inside it.
+  reclaimed: {
+    surface: `${scatter(31, ["#5f8f45", "#6fa04f", "#4f7a3a"], 12, [1.5, 3.8], [110, 76])}, linear-gradient(135deg, #9a9c97, #767873)`,
+    edge: DARK,
+    extra: <NeonTube />,
+  },
+  // The footbridge's railings: green-painted bars, rusting.
+  steel: {
+    surface: `${scatter(37, ["#a0582c", "#b8693a", "#8a4a26"], 9, [1, 2.8], [120, 80])}, repeating-linear-gradient(90deg, #5d9157 0 3px, #3f6a3b 3px 9px)`,
+    edge: "#2f4f2c",
   },
   wood: { surface: "repeating-linear-gradient(90deg, #7a4e2a 0 9px, #6b4423 9px 11px, #83582f 11px 14px)", edge: "#3a2414" },
   // Pastel panes cut into diamonds by pale leading.

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Bird,
+  Building2,
   CloudDrizzle,
   CloudLightning,
   CloudRain,
@@ -113,6 +114,7 @@ const ICONS: Record<AmbienceKind, LucideIcon> = {
   shore: Sunset,
   majula: Flame,
   snow: Snowflake,
+  city: Building2,
 };
 
 /**

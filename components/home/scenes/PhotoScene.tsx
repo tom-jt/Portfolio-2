@@ -10,20 +10,35 @@ import { lerp, seeded } from "./canvas";
  * given in the photo's own percentages and stays put at any window shape.
  *
  * The motion is all CSS transform and opacity, so the photograph itself is
- * never repainted.
+ * never repainted. (The tram's is the exception: pixel art animated in its
+ * own right, an animated WebP made from the artist's GIF.)
  */
 
-export type PhotoId = "aurora" | "forest" | "space" | "sunset" | "alps" | "autumn" | "majula" | "moonlight";
+export type PhotoId =
+  | "aurora"
+  | "forest"
+  | "space"
+  | "sunset"
+  | "alps"
+  | "autumn"
+  | "majula"
+  | "moonlight"
+  | "tram"
+  | "ruins"
+  | "overpass";
 
 const ASPECT: Record<PhotoId, number> = {
   aurora: 16 / 9,
   forest: 2560 / 1667,
   space: 16 / 9,
-  sunset: 16 / 9,
+  sunset: 2500 / 1406,
   alps: 16 / 9,
   autumn: 2560 / 1582,
   majula: 16 / 9,
   moonlight: 16 / 9,
+  tram: 16 / 9,
+  ruins: 16 / 9,
+  overpass: 2560 / 1192,
 };
 
 export const photoSrc = (id: PhotoId) => `/home/scenes/${id}.webp`;
@@ -188,6 +203,74 @@ const Glow = ({ x, y, size, color, period, delay = 0 }: { x: number; y: number; 
       } as CSSProperties
     }
   />
+);
+
+/**
+ * The bloom round a neon sign: steady, but for a stutter now and then, as an
+ * old tube's is. Over the sign in the photo, so when it stutters the sign
+ * itself seems to.
+ */
+const Neon = ({ x, y, size, color, period, delay = 0 }: { x: number; y: number; size: number; color: string; period: number; delay?: number }) => (
+  <span
+    className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full mix-blend-screen"
+    style={{
+      left: `${x}%`,
+      top: `${y}%`,
+      width: `${size}%`,
+      aspectRatio: "1",
+      background: `radial-gradient(circle, ${color}, transparent 65%)`,
+      animation: `home-neon ${period}s linear ${delay}s infinite`,
+    }}
+  />
+);
+
+/** A few birds far off, crossing a stretch of sky in a loose flock. */
+const Flock = ({ x, y, across, period, delay = 0, color }: {
+  x: number;
+  y: number;
+  /** How far they fly, in vw. */
+  across: number;
+  period: number;
+  delay?: number;
+  color: string;
+}) => (
+  <span
+    className="absolute"
+    style={
+      {
+        left: `${x}%`,
+        top: `${y}%`,
+        opacity: 0,
+        "--across": `${across}vw`,
+        "--bob": "-2vh",
+        animation: `home-flock ${period}s linear ${delay}s infinite`,
+      } as CSSProperties
+    }
+  >
+    {[
+      [0, 0, 1],
+      [14, -6, 0.8],
+      [26, 4, 0.9],
+      [9, 11, 0.7],
+    ].map(([dx, dy, scale], i) => (
+      <svg
+        key={i}
+        viewBox="0 0 16 6"
+        className="absolute block w-3 overflow-visible"
+        style={{ left: dx, top: dy, transform: `scale(${scale})` }}
+        aria-hidden="true"
+      >
+        <path
+          d="M0 4 Q4 0 8 4 Q12 0 16 4"
+          stroke={color}
+          strokeWidth="1.6"
+          fill="none"
+          strokeLinecap="round"
+          style={{ transformOrigin: "8px 4px", animation: `home-gull 1.2s ease-in-out ${-i * 0.3}s infinite` }}
+        />
+      </svg>
+    ))}
+  </span>
 );
 
 /**
@@ -440,17 +523,15 @@ const Fire = ({ x, y, size }: { x: number; y: number; size: number }) => (
   </span>
 );
 
-// The sea in the sunset, traced inside the shoreline and the rocks.
-const SUNSET_WATER: Pt[] = [
-  [20, 45],
-  [100, 45],
-  [100, 96],
-  [70, 98],
-  [56, 91],
-  [46, 84],
-  [34, 76],
-  [30, 66],
-  [26, 54],
+// The strip of sea in the sunset under the horizon, cut where the palm trunks
+// and the hammock stand in front of it: the sun's path, and either side.
+const SUNSET_WATER: [number, number, number, number][] = [
+  [34, 85.5, 48.5, 97],
+  [56, 85.5, 76, 88.5],
+  [83, 85.5, 100, 97],
+  [22.5, 85.5, 30.5, 97],
+  [13, 85.5, 19, 97],
+  [0, 85.5, 10, 97],
 ];
 
 // The aurora's curtains fade in and out along their whole length.
@@ -560,10 +641,76 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
   sunset: () => (
     <>
-      <Glow x={47.5} y={41} size={30} color="rgb(255 170 120 / 0.45)" period={7} />
-      {/* Glitter only on the water: thickest in the sun's path. */}
-      <Twinkles seed={53} count={44} box={[41, 45, 56, 72]} within={SUNSET_WATER} color="#fff0d8" size={[1.2, 2.8]} speed={[0.8, 2]} />
-      <Twinkles seed={59} count={34} box={[26, 46, 100, 96]} within={SUNSET_WATER} color="#ffd6ef" size={[1, 2]} speed={[1, 2.6]} />
+      {/* The sun just gone under the horizon, and the pink it leaves. */}
+      <Glow x={55} y={80} size={42} color="rgb(255 200 110 / 0.42)" period={7} />
+      <Glow x={26} y={75} size={30} color="rgb(255 120 150 / 0.24)" period={10} delay={-4} />
+      {/* The low clouds drifting along the horizon. */}
+      <CloudStreak x={68} y={70} width={50} height={6} color="rgb(255 170 190 / 0.24)" period={80} />
+      <CloudStreak x={24} y={73} width={40} height={5} color="rgb(255 190 150 / 0.2)" period={95} delay={-30} />
+      {/* Glitter only on the water, never on the trunks: thickest in the
+          sun's path. */}
+      {SUNSET_WATER.map((box, i) => (
+        <Twinkles
+          key={i}
+          seed={53 + i * 6}
+          count={i === 0 ? 30 : 10}
+          box={box}
+          color={i < 2 ? "#fff0d8" : "#ffd6ef"}
+          size={[1, 2.4]}
+          speed={[0.8, 2.4]}
+        />
+      ))}
+    </>
+  ),
+  tram: () => (
+    <>
+      {/* The rain's in the picture; mist drifts behind the tram, and its
+          headlamps glow through the wet. */}
+      <CloudStreak x={45} y={40} width={40} height={10} color="rgb(235 245 245 / 0.22)" period={60} travel={10} />
+      <CloudStreak x={22} y={18} width={40} height={8} color="rgb(240 248 248 / 0.18)" period={75} delay={-25} />
+      <Glow x={15.6} y={58.7} size={4} color="rgb(255 250 220 / 0.6)" period={6} />
+      <Glow x={21.8} y={58.7} size={4} color="rgb(255 250 220 / 0.6)" period={6} delay={-0.4} />
+    </>
+  ),
+  ruins: () => (
+    <>
+      {/* Hazy light down between the towers. */}
+      <Beam x={36} y={-6} width={18} length={90} angle={8} color="rgb(255 245 220 / 0.16)" period={20} />
+      {/* The signs still lit, each stuttering in its own time. */}
+      <Neon x={50} y={54} size={9} color="rgb(255 80 200 / 0.55)" period={7} delay={-2} />
+      <Neon x={57} y={57} size={12} color="rgb(255 60 120 / 0.45)" period={11} delay={-6} />
+      <Neon x={69.3} y={35} size={7} color="rgb(60 120 255 / 0.55)" period={9} delay={-1} />
+      <Neon x={58.6} y={43.5} size={6} color="rgb(60 140 255 / 0.5)" period={13} delay={-8} />
+      <Neon x={52.5} y={47.5} size={5} color="rgb(80 150 255 / 0.5)" period={8} delay={-4} />
+      <Neon x={72.5} y={42} size={8} color="rgb(90 255 120 / 0.5)" period={10} delay={-3} />
+      <Neon x={19} y={55.5} size={5} color="rgb(200 80 255 / 0.55)" period={6} delay={-5} />
+      <Neon x={9.5} y={58} size={6} color="rgb(255 60 60 / 0.45)" period={12} delay={-7} />
+      <Neon x={27} y={67.5} size={5} color="rgb(180 255 80 / 0.5)" period={9} delay={-2} />
+      {/* The pink sign in the puddle. */}
+      <Glow x={57} y={87} size={10} color="rgb(255 80 160 / 0.3)" period={5} />
+      <Fall tile={RAIN_TILE} period={1.4} opacity={0.25} />
+      <Fall tile={RAIN_TILE} period={1} scale={1.6} opacity={0.18} />
+      <Fireflies seed={151} count={16} box={[4, 70, 96, 94]} />
+    </>
+  ),
+  overpass: () => (
+    <>
+      {/* Low sun through the haze, from the right. */}
+      <Glow x={88} y={25} size={40} color="rgb(255 220 160 / 0.3)" period={12} />
+      <Beam x={78} y={-10} width={14} length={140} angle={38} color="rgb(255 236 200 / 0.18)" period={24} />
+      <Beam x={92} y={-8} width={10} length={140} angle={40} color="rgb(255 230 190 / 0.15)" period={30} delay={-10} />
+      {/* What's left of the neon. */}
+      <Neon x={34.7} y={42} size={6} color="rgb(255 90 220 / 0.5)" period={8} />
+      <Neon x={40.6} y={10} size={3} color="rgb(190 120 255 / 0.55)" period={6} delay={-2} />
+      <Neon x={31} y={20} size={5} color="rgb(120 255 160 / 0.45)" period={11} delay={-5} />
+      <Neon x={44.5} y={36} size={6} color="rgb(255 80 80 / 0.4)" period={9} delay={-3} />
+      <Neon x={54.5} y={39} size={7} color="rgb(255 90 80 / 0.35)" period={13} delay={-7} />
+      <Neon x={63} y={15} size={5} color="rgb(255 110 110 / 0.4)" period={10} delay={-1} />
+      <Neon x={38.3} y={40} size={4} color="rgb(110 150 255 / 0.4)" period={7} delay={-4} />
+      {/* Dust in the sunlight, and birds now and then over the rooftops. */}
+      <Motes seed={157} count={20} box={[50, 15, 98, 75]} color="rgb(255 235 200 / 0.75)" rise={-100} />
+      <Flock x={58} y={6} across={30} period={40} color="rgb(60 50 45 / 0.85)" />
+      <Flock x={8} y={14} across={25} period={55} delay={-25} color="rgb(60 50 45 / 0.75)" />
     </>
   ),
 };
@@ -646,6 +793,9 @@ const MOTION: Partial<Record<PhotoId, string>> = {
   space: "home-slow-zoom 90s ease-in-out infinite alternate",
   alps: "home-slow-zoom 150s ease-in-out infinite alternate",
   moonlight: "home-slow-zoom 130s ease-in-out infinite alternate",
+  ruins: "home-slow-zoom 140s ease-in-out infinite alternate",
+  overpass: "home-slow-zoom 150s ease-in-out infinite alternate",
+  // Not the tram: zoomed, pixel art shimmers.
 };
 
 /**

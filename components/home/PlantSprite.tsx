@@ -649,6 +649,81 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
           </g>
         ),
       };
+    case "tram":
+      // The rainy tram stop: the tram's livery, mint over pink, a white
+      // stripe between, and a row of its windows.
+      return {
+        fill: "#bfe8cf",
+        detail: (
+          <g>
+            <path d="M10.8 40.8 H29.2 L28 46 H12 Z" fill="#f6c1cf" />
+            <rect x="10.6" y="40.2" width="18.8" height="0.8" fill="#ffffff" />
+            {[12.8, 17.2, 21.6, 26].map((x) => (
+              <rect
+                key={x}
+                x={x}
+                y="36.6"
+                width="2.4"
+                height="2.2"
+                rx="0.3"
+                fill="#eef8f2"
+                stroke="#7fae95"
+                strokeWidth="0.35"
+              />
+            ))}
+          </g>
+        ),
+      };
+    case "reclaimed":
+      // The overgrown city: cracked concrete, moss on the rim, and a strip
+      // of pink neon still lit.
+      return {
+        fill: "#8d8f8a",
+        detail: (
+          <g>
+            <g fill="#5f8f45">
+              <circle cx="11" cy="31.8" r="1.5" />
+              <circle cx="13.8" cy="31.4" r="1" />
+              <circle cx="28.2" cy="32" r="1.3" />
+              <circle cx="25.8" cy="31.4" r="0.8" />
+            </g>
+            <path
+              d="M24 36 L22.6 39 L24 41.2"
+              stroke="#5c5e5a"
+              strokeWidth="0.5"
+              fill="none"
+            />
+            <path
+              d="M12.4 43 H23.5"
+              stroke="#ff6fcf"
+              strokeWidth="0.9"
+              strokeLinecap="round"
+              style={{ filter: "drop-shadow(0 0 1.5px #ff4fc0)" }}
+            />
+          </g>
+        ),
+      };
+    case "steel":
+      // The hazy overpass: steel painted green like its railings, the bars
+      // picked out, and rust coming through.
+      return {
+        fill: "#4f7f4a",
+        detail: (
+          <g>
+            <rect x="8" y="31" width="24" height="4.5" rx="1.2" fill="#3f6a3b" />
+            <path
+              d="M13 36 V45.5 M16.5 36 V45.5 M20 36 V45.5 M23.5 36 V45.5 M27 36 V45.5"
+              stroke="#6fa066"
+              strokeWidth="0.7"
+            />
+            <g fill="#a0582c" opacity="0.75">
+              <ellipse cx="14.5" cy="43" rx="1.6" ry="0.9" />
+              <ellipse cx="26" cy="38" rx="1.2" ry="0.8" />
+              <circle cx="21.5" cy="33.2" r="0.7" />
+            </g>
+          </g>
+        ),
+      };
     case "wood":
       // Oak: warm wood with the grain running down it.
       return {

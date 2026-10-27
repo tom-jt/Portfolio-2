@@ -30,7 +30,10 @@ export type ThemeId =
   | "canopy"
   | "tropic"
   | "alpine"
-  | "maple";
+  | "maple"
+  | "mint"
+  | "overgrowth"
+  | "haze";
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -91,6 +94,24 @@ export const THEMES: ThemeMeta[] = [
     name: "maple",
     hint: "rust, gold, and red leaves",
     pairsWith: "p-autumn",
+  },
+  {
+    id: "mint",
+    name: "mint",
+    hint: "tram mint and blossom pink",
+    pairsWith: "p-tram",
+  },
+  {
+    id: "overgrowth",
+    name: "overgrowth",
+    hint: "neon pink over moss",
+    pairsWith: "p-ruins",
+  },
+  {
+    id: "haze",
+    name: "haze",
+    hint: "sun-faded signs and green steel",
+    pairsWith: "p-overpass",
   },
   // Earned: a third row that fills in as the garden grows.
   {

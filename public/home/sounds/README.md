@@ -13,11 +13,11 @@ with no attribution required.
 | `heavy-rain.mp3`     | `rain/heavy-rain.mp3`          | storm              |
 | `thunder.mp3`        | `rain/thunder.mp3`             | storm              |
 | `cafe.mp3`           | `places/cafe.mp3`              | café               |
-| `wind.mp3`           | `nature/wind.mp3`              | hill, waves        |
+| `wind.mp3`           | `nature/wind.mp3`              | hill, waves, city  |
 | `waves.mp3`          | `nature/waves.mp3`             | waves              |
 | `seagulls.mp3`       | `animals/seagulls.mp3`         | shore              |
 | `campfire.mp3`       | `nature/campfire.mp3`          | majula             |
-| `howling-wind.mp3`   | `nature/howling-wind.mp3`      | snow               |
+| `howling-wind.mp3`   | `nature/howling-wind.mp3`      | snow, city         |
 | `wind-in-trees.mp3`  | `nature/wind-in-trees.mp3`     | woods              |
 
 Each was loudness-matched to −20 LUFS and re-encoded as VBR MP3, and the

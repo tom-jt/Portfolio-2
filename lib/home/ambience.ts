@@ -218,8 +218,10 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
   },
   shore: {
     layers: [
-      { file: "waves", gain: 0.85 },
-      { file: "seagulls", gain: 0.42, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
+      // Both kept down: louder, the gulls' cries came with a screech in
+      // Vivaldi, and the surf's turned down to keep them over it.
+      { file: "waves", gain: 0.68 },
+      { file: "seagulls", gain: 0.3, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
     ],
     // No crickets: their pure 4–5 kHz pulses read as a whine over surf.
   },
@@ -235,6 +237,15 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
       { file: "howling-wind", gain: 0.35, lowpass: 1100 },
       { file: "wind", gain: 0.3, lowpass: 1200, offset: 25 },
     ],
+  },
+  city: {
+    // Wind down empty streets, a gust now and then between the towers, and
+    // a few birds that have the place to themselves.
+    layers: [
+      { file: "wind", gain: 0.45, lowpass: 1600 },
+      { file: "howling-wind", gain: 0.14, lowpass: 900, offset: 18 },
+    ],
+    extra: (c, out) => birds(c, route(gain(c, 0.35), out)),
   },
   cafe: {
     layers: [

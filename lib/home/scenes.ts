@@ -27,7 +27,10 @@ export type SceneId =
   | "p-alps"
   | "p-autumn"
   | "p-majula"
-  | "p-moonlight";
+  | "p-moonlight"
+  | "p-tram"
+  | "p-ruins"
+  | "p-overpass";
 
 /** Ambient sounds. Each scene has a default, and the visitor can pick another.
  *  Their recipes are in lib/home/ambience.ts. */
@@ -45,7 +48,8 @@ export type AmbienceKind =
   | "cosmos"
   | "shore"
   | "majula"
-  | "snow";
+  | "snow"
+  | "city";
 
 export interface AmbienceMeta {
   id: AmbienceKind;
@@ -70,6 +74,7 @@ export const AMBIENCES: AmbienceMeta[] = [
   { id: "shore", label: "warm shore", short: "shore" },
   { id: "majula", label: "majula bonfire", short: "majula" },
   { id: "snow", label: "falling snow", short: "snow" },
+  { id: "city", label: "empty city", short: "city" },
   // Belonging to no scene: more ways to have it rain.
   { id: "storm", label: "thunderstorm", short: "storm" },
   { id: "wind", label: "wind and drizzle", short: "wind" },
@@ -80,7 +85,9 @@ export const AMBIENCES: AmbienceMeta[] = [
 const AMBIENCE_IDS = AMBIENCES.map((a) => a.id);
 
 export function isAmbienceKind(value: unknown): value is AmbienceKind {
-  return typeof value === "string" && AMBIENCE_IDS.includes(value as AmbienceKind);
+  return (
+    typeof value === "string" && AMBIENCE_IDS.includes(value as AmbienceKind)
+  );
 }
 
 export function getAmbience(id: AmbienceKind) {
@@ -101,18 +108,92 @@ export interface SceneMeta {
 export const SCENES: SceneMeta[] = [
   { id: "rain", name: "rainy window", unlockLevel: 1, ambience: "glass" },
   { id: "hill", name: "rain on the hill", unlockLevel: 2, ambience: "hill" },
-  { id: "sunset", name: "sunset over the sea", unlockLevel: 3, ambience: "waves" },
+  {
+    id: "sunset",
+    name: "sunset over the sea",
+    unlockLevel: 3,
+    ambience: "waves",
+  },
   { id: "cafe", name: "late-night café", unlockLevel: 4, ambience: "cafe" },
   // Picture scenes: photographs with motion layered on. The first opens at
   // level 5, then one every two levels.
-  { id: "p-aurora", name: "aurora lake", unlockLevel: 5, ambience: "lake", photo: "aurora" },
-  { id: "p-forest", name: "sunlit forest", unlockLevel: 7, ambience: "woods", photo: "forest" },
-  { id: "p-space", name: "nebula", unlockLevel: 9, ambience: "cosmos", photo: "space" },
-  { id: "p-sunset", name: "tropical sunset", unlockLevel: 11, ambience: "shore", photo: "sunset" },
-  { id: "p-alps", name: "alpine hill", unlockLevel: 13, ambience: "hill", photo: "alps" },
-  { id: "p-autumn", name: "autumn path", unlockLevel: 15, ambience: "woods", photo: "autumn" },
-  { id: "p-majula", name: "majula", unlockLevel: 17, ambience: "majula", photo: "majula" },
-  { id: "p-moonlight", name: "moonlight", unlockLevel: 19, ambience: "snow", photo: "moonlight" },
+  {
+    id: "p-aurora",
+    name: "aurora lake",
+    unlockLevel: 5,
+    ambience: "lake",
+    photo: "aurora",
+  },
+  {
+    id: "p-forest",
+    name: "sunlit forest",
+    unlockLevel: 7,
+    ambience: "woods",
+    photo: "forest",
+  },
+  {
+    id: "p-space",
+    name: "nebula",
+    unlockLevel: 9,
+    ambience: "cosmos",
+    photo: "space",
+  },
+  {
+    id: "p-sunset",
+    name: "tropical sunset",
+    unlockLevel: 11,
+    ambience: "shore",
+    photo: "sunset",
+  },
+  {
+    id: "p-alps",
+    name: "alpine hill",
+    unlockLevel: 13,
+    ambience: "hill",
+    photo: "alps",
+  },
+  {
+    id: "p-autumn",
+    name: "autumn path",
+    unlockLevel: 15,
+    ambience: "woods",
+    photo: "autumn",
+  },
+  {
+    id: "p-majula",
+    name: "majula",
+    unlockLevel: 17,
+    ambience: "majula",
+    photo: "majula",
+  },
+  {
+    id: "p-moonlight",
+    name: "moonlight",
+    unlockLevel: 19,
+    ambience: "snow",
+    photo: "moonlight",
+  },
+  {
+    id: "p-tram",
+    name: "rainy tram stop",
+    unlockLevel: 21,
+    ambience: "leaves",
+    photo: "tram",
+  },
+  {
+    id: "p-ruins",
+    name: "overgrown city",
+    unlockLevel: 23,
+    ambience: "wind",
+    photo: "ruins",
+  },
+  {
+    id: "p-overpass",
+    name: "hazy overpass",
+    unlockLevel: 25,
+    ambience: "city",
+    photo: "overpass",
+  },
 ];
 
 export const DEFAULT_SCENE: SceneId = "rain";

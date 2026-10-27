@@ -634,6 +634,57 @@ html[data-home-scene="p-moonlight"] [data-site="home"] {
   --nav-fg-hover: #9ed6ff;
 }
 
+html[data-home-scene="p-tram"] [data-site="home"] {
+  --background: #2f4a44;
+  --muted-foreground: #b5cbc4;
+  --primary: #9fe3c4;
+  --primary-foreground: #0d2a22;
+  --ring: #9fe3c4;
+  --accent-text: #9fe3c4;
+  --glass: rgb(20 40 36 / 80%);
+  --glass-strong: rgb(18 36 32 / 93%);
+  --glass-edge: rgb(215 255 240 / 15%);
+  --glass-highlight: rgb(235 255 248 / 9%);
+  --glow: #9fe3c4; /* the tram's mint */
+  --glow-2: #ffb6c8; /* and its pink */
+  --glow-3: #cfe8f0; /* the rain-white sky */
+  --nav-fg-hover: #9fe3c4;
+}
+
+html[data-home-scene="p-ruins"] [data-site="home"] {
+  --background: #121a14;
+  --muted-foreground: #b3c2b6;
+  --primary: #ff6fcf;
+  --primary-foreground: #2a0820;
+  --ring: #ff6fcf;
+  --accent-text: #ff6fcf;
+  --glass: rgb(14 24 20 / 82%);
+  --glass-strong: rgb(12 21 17 / 93%);
+  --glass-edge: rgb(220 255 225 / 13%);
+  --glass-highlight: rgb(240 255 242 / 8%);
+  --glow: #ff6fcf; /* the neon */
+  --glow-2: #8fe07a; /* the moss */
+  --glow-3: #5f9bff; /* the blue tubes */
+  --nav-fg-hover: #ff6fcf;
+}
+
+html[data-home-scene="p-overpass"] [data-site="home"] {
+  --background: #3a3128;
+  --muted-foreground: #d1c3b0;
+  --primary: #f2c98a;
+  --primary-foreground: #2a1c0a;
+  --ring: #f2c98a;
+  --accent-text: #f2c98a;
+  --glass: rgb(40 34 28 / 80%);
+  --glass-strong: rgb(35 30 24 / 93%);
+  --glass-edge: rgb(255 236 210 / 15%);
+  --glass-highlight: rgb(255 244 228 / 9%);
+  --glow: #f2c98a; /* the haze */
+  --glow-2: #7fbf7a; /* the railings */
+  --glow-3: #ff7a8a; /* the signs */
+  --nav-fg-hover: #f2c98a;
+}
+
 /* ---------------------------------------------------------------
    Home colour themes. They recolour the chrome (glass, text and glows) and
    leave the scene and its ground alone, so they sit at the same specificity
@@ -824,6 +875,54 @@ html[data-home-theme="maple"] [data-site="home"],
   --glow-2: #ffd27a;
   --glow-3: #e0503a;
   --nav-fg: #ecd2bf;
+}
+
+/* Made for the rainy tram stop: the tram's mint and pink in the rain. */
+html[data-home-theme="mint"] [data-site="home"],
+[data-home-swatch="mint"] {
+  --foreground: #f0fbf6;
+  --muted-foreground: #b5cbc4;
+  --primary-foreground: #0d2a22;
+  --glass: rgb(20 40 36 / 80%);
+  --glass-strong: rgb(18 36 32 / 93%);
+  --glass-edge: rgb(215 255 240 / 15%);
+  --glass-highlight: rgb(235 255 248 / 9%);
+  --glow: #9fe3c4;
+  --glow-2: #ffb6c8;
+  --glow-3: #cfe8f0;
+  --nav-fg: #cfe3dc;
+}
+
+/* Made for the overgrown city: neon still lit over the moss. */
+html[data-home-theme="overgrowth"] [data-site="home"],
+[data-home-swatch="overgrowth"] {
+  --foreground: #f1f7f0;
+  --muted-foreground: #b3c2b6;
+  --primary-foreground: #2a0820;
+  --glass: rgb(14 24 20 / 82%);
+  --glass-strong: rgb(12 21 17 / 93%);
+  --glass-edge: rgb(220 255 225 / 13%);
+  --glass-highlight: rgb(240 255 242 / 8%);
+  --glow: #ff6fcf;
+  --glow-2: #8fe07a;
+  --glow-3: #5f9bff;
+  --nav-fg: #cddbd0;
+}
+
+/* Made for the hazy overpass: sun-faded signs and green steel. */
+html[data-home-theme="haze"] [data-site="home"],
+[data-home-swatch="haze"] {
+  --foreground: #fbf4ea;
+  --muted-foreground: #d1c3b0;
+  --primary-foreground: #2a1c0a;
+  --glass: rgb(40 34 28 / 80%);
+  --glass-strong: rgb(35 30 24 / 93%);
+  --glass-edge: rgb(255 236 210 / 15%);
+  --glass-highlight: rgb(255 244 228 / 9%);
+  --glow: #f2c98a;
+  --glow-2: #7fbf7a;
+  --glow-3: #ff7a8a;
+  --nav-fg: #e6d8c4;
 }
 
 /* Earned themes. Sakura: blossom on a warm dusk. */
@@ -1396,6 +1495,45 @@ html:has([data-site="home"]) {
   100% {
     opacity: 0;
     transform: translate3d(-260px, 140px, 0) rotate(-28deg);
+  }
+}
+
+/* An old neon tube: steady, then a stutter. */
+@keyframes home-neon {
+  0%,
+  88%,
+  100% {
+    opacity: 1;
+  }
+  89% {
+    opacity: 0.2;
+  }
+  90.5% {
+    opacity: 0.9;
+  }
+  92% {
+    opacity: 0.3;
+  }
+  93.5% {
+    opacity: 1;
+  }
+}
+
+/* Birds crossing a picture's sky now and then, out of the haze and back
+   into it, then gone for a while. */
+@keyframes home-flock {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  8%,
+  52% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--across, 30vw), var(--bob, 0px), 0);
   }
 }
 

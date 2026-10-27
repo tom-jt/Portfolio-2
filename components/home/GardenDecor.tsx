@@ -388,6 +388,73 @@ const Candle = ({ left, height, delay }: { left: string; height: number; delay: 
   </span>
 );
 
+/** Tram livery: a little pixel tram, mint over pink, its pole up to the wire. */
+const PixelTram = () => (
+  <svg viewBox="0 0 34 16" className="block w-16" shapeRendering="crispEdges" aria-hidden="true">
+    <path d="M14 0 L18 3 M18 3 H20" stroke="#4a5a55" strokeWidth="1" />
+    <rect x="1" y="3" width="32" height="5" fill="#bfe8cf" />
+    <rect x="1" y="8" width="32" height="1" fill="#ffffff" />
+    <rect x="1" y="9" width="32" height="4" fill="#f6c1cf" />
+    {[3, 8, 13, 18, 23, 28].map((x) => (
+      <rect key={x} x={x} y="4" width="3" height="3" fill="#5f8f86" />
+    ))}
+    <rect x="1" y="10" width="1" height="1" fill="#ffffff" />
+    <rect x="32" y="10" width="1" height="1" fill="#e04a5a" />
+    <rect x="0" y="13" width="34" height="1" fill="#3a4a46" />
+    {[5, 10, 24, 29].map((x) => (
+      <rect key={x} x={x - 1} y="14" width="2" height="2" fill="#2a3532" />
+    ))}
+  </svg>
+);
+
+/** Neon and vines: a sign's tubes, bent into a shape and stuttering. */
+const NeonSign = ({ d, color, period, delay, className }: {
+  d: string;
+  color: string;
+  period: number;
+  delay: number;
+  className: string;
+}) => (
+  <svg
+    viewBox="0 0 30 20"
+    className={`absolute overflow-visible ${className}`}
+    style={{ filter: `drop-shadow(0 0 3px ${color})`, animation: `home-neon ${period}s linear ${delay}s infinite` }}
+    aria-hidden="true"
+  >
+    <path d={d} stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/** Wires and sparrows: a sparrow sat on the wire, shifting now and then. */
+const Sparrow = ({ flip, delay }: { flip?: boolean; delay: number }) => (
+  <span
+    className="block origin-bottom"
+    style={{ animation: `home-sway 2.6s ease-in-out ${delay}s infinite alternate` }}
+  >
+    <svg viewBox="0 0 12 10" className={`block w-3 ${flip ? "-scale-x-100" : ""}`} aria-hidden="true">
+      <path d="M1 5.5 L3.5 6 L3 8 Z" fill="#5a4636" />
+      <ellipse cx="6" cy="6.2" rx="3.6" ry="2.8" fill="#8a6a4c" />
+      <ellipse cx="6.4" cy="7.2" rx="2.4" ry="1.5" fill="#d9c4a6" />
+      <circle cx="9" cy="3.6" r="2" fill="#7a5c40" />
+      <circle cx="9.6" cy="3.3" r="0.4" fill="#1a1410" />
+      <path d="M10.8 3.8 L12 4.1 L10.8 4.5 Z" fill="#3a2c20" />
+      <path d="M5.5 9 V10 M7 9 V10" stroke="#3a2c20" strokeWidth="0.5" />
+    </svg>
+  </span>
+);
+
+/** The two wires sparrows sit on, sagging across a 100×30 box. */
+const WIRES: [number, number, number][] = [
+  [6, 22, 4],
+  [14, 28, 12],
+];
+/** A point on one of them: the wire is a quadratic whose control point is
+ *  midway across, so x is just how far along it is. */
+const onWire = (wire: [number, number, number], x: number) => {
+  const t = x / 100;
+  return (1 - t) ** 2 * wire[0] + 2 * (1 - t) * t * wire[1] + t ** 2 * wire[2];
+};
+
 const BULBS = ["#ff5f5f", "#ffd35c", "#6fe08a", "#6fb8ff", "#ff8fe0"];
 /** Four dips of fairy-light wire across the top, in a 100×14 box. */
 const WIRE = "M0 2 Q12.5 12 25 2 Q37.5 12 50 2 Q62.5 12 75 2 Q87.5 12 100 2";
@@ -876,6 +943,88 @@ const DECOR: Record<DecorId, () => ReactNode> = {
       <Candle left="5%" height={22} delay={0} />
       <Candle left="11%" height={14} delay={0.7} />
       <Candle left="90%" height={18} delay={0.35} />
+    </>
+  ),
+  // The rainy tram stop: chunky pixel rain, and now and then the tram
+  // going by under its wire.
+  tramline: () => (
+    <>
+      <span className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(200_230_220/0.14),transparent_70%)]" />
+      {/* The overhead wire, and the rail a tram's height below it. */}
+      <span className="absolute inset-x-0 top-[38%] h-px bg-[#4a5a55]/70" />
+      <span className="absolute inset-x-0 top-[calc(38%+29px)] h-0.5 bg-[#3a4a46]/80" />
+      {pieces(139, 16, [2, 2], [1.3, 2]).map((p, i) => (
+        <Faller key={i} p={{ ...p, drift: 0, spin: 0 }}>
+          <span className="block h-2 w-0.5 bg-[#dff2ec]/60" />
+        </Faller>
+      ))}
+      <Crosser top="calc(38% - 1px)" duration={30} delay={-9}>
+        <span className="-ml-8 block">
+          <PixelTram />
+        </span>
+      </Crosser>
+    </>
+  ),
+  // The overgrown city: a sign's neon still lit among the vines, and
+  // fireflies in the green.
+  neonvines: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_40%_60%,rgb(255_80_200/0.12),transparent_60%)]" />
+      <NeonSign d="M3 6 Q10 2 17 6 T27 8 M23 5 L27 8 L23 11" color="#ff6fcf" period={7} delay={-2} className="top-[30%] left-[24%] w-14" />
+      <NeonSign d="M11 1 V19 M19 4 V16" color="#5f9bff" period={11} delay={-6} className="top-[14%] right-[14%] w-12" />
+      <Ivy side="left" length={84} delay={0} />
+      <Ivy side="right" length={60} delay={-3} />
+      {spots(149, 6, [10, 50, 90, 85]).map((p, i) => (
+        <span
+          key={i}
+          className="absolute"
+          style={
+            {
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              "--drift": `${(p.a - 0.5) * 40}px`,
+              animation: `home-wander ${6 + p.b * 5}s ease-in-out ${-p.a * 6}s infinite`,
+            } as CSSProperties
+          }
+        >
+          <span
+            className="block size-1.5 rounded-full bg-[#e9ff8a] shadow-[0_0_8px_2px_rgb(220_255_120/0.6)]"
+            style={{ animation: `home-flicker ${1.8 + p.b * 2}s ease-in-out ${-p.a * 3}s infinite` }}
+          />
+        </span>
+      ))}
+    </>
+  ),
+  // The hazy overpass: sparrows on the wires in the low sun, dust in it,
+  // and one flying over now and then.
+  wires: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_100%_0%,rgb(255_220_160/0.24),transparent_65%)]" />
+      <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-12 w-full" aria-hidden="true">
+        {WIRES.map(([a, b, c]) => (
+          <path key={a} d={`M0 ${a} Q50 ${b} 100 ${c}`} stroke="#2a2420" strokeWidth="0.5" fill="none" vectorEffect="non-scaling-stroke" />
+        ))}
+      </svg>
+      {[
+        { wire: 0, x: 24, flip: false, delay: 0 },
+        { wire: 0, x: 31, flip: true, delay: -1.3 },
+        { wire: 0, x: 66, flip: false, delay: -0.6 },
+        { wire: 1, x: 44, flip: true, delay: -2 },
+        { wire: 1, x: 80, flip: false, delay: -0.9 },
+      ].map((s) => (
+        <span
+          key={`${s.wire}-${s.x}`}
+          className="absolute -translate-x-1/2"
+          // The svg is 48px tall for 30 units; the sparrow is 10px, feet at the bottom.
+          style={{ left: `${s.x}%`, top: onWire(WIRES[s.wire], s.x) * 1.6 - 10 }}
+        >
+          <Sparrow flip={s.flip} delay={s.delay} />
+        </span>
+      ))}
+      <Risers seed={151} count={10} box={[40, 30, 95, 90]} rise={-60} duration={[7, 12]} className="size-1 rounded-full bg-[#fff0d0] shadow-[0_0_4px_rgb(255_235_200/0.8)]" />
+      <Crosser top="30%" duration={22} delay={-15} bob={-10}>
+        <Gull color="#5a4636" glow="" />
+      </Crosser>
     </>
   ),
   // Moonlight: the moon behind the snow, and frost at the edges.

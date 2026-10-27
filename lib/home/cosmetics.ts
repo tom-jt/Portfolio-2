@@ -1,7 +1,7 @@
 "use client";
 
 import { DEV_UNLOCKS, levelFromXp, totalXp, type GardenState } from "./garden";
-import type { SceneId } from "./scenes";
+import { getScene, type SceneId } from "./scenes";
 
 /**
  * Cosmetics: pots, garden decor, and the locked colour themes and ambient
@@ -68,6 +68,9 @@ export type PotId =
   | "maple"
   | "ashen"
   | "frost"
+  | "tram"
+  | "reclaimed"
+  | "steel"
   // Made to match the frames.
   | "wood"
   | "stained"
@@ -82,35 +85,38 @@ export interface PotMeta {
 
 /**
  * The matching sets: every pot comes with a frame and a window decor of its
- * own, opening one level after another (the pot, then its frame, then its
- * window), and each set three levels after the last, so no two of them open
- * together. The scenes' own sets come in the order the scenes do, with the
- * rest between; the long-haul four are spaced out towards level 100.
+ * own, opening one level after another: the pot, then its frame, then its
+ * window. A scene's own pot opens with the scene, so its set is there to
+ * match it from the start; the rest keep levels of their own.
  */
+const at = (scene: SceneId) => getScene(scene).unlockLevel;
 const SETS: { pot: Exclude<PotId, "classic">; window: DecorId; level: number }[] = [
   { pot: "terracotta", window: "herbs", level: 1 },
-  { pot: "slick", window: "streaks", level: 4 },
-  { pot: "daisy", window: "dandelions", level: 7 },
-  { pot: "porcelain", window: "willow", level: 10 },
-  { pot: "dusk", window: "gulls", level: 13 },
-  { pot: "marble", window: "cosy", level: 16 },
-  { pot: "borealis", window: "ribbons", level: 19 },
-  { pot: "stone", window: "ivy", level: 22 },
-  { pot: "bark", window: "sunbeams", level: 25 },
-  { pot: "nebula", window: "starfield", level: 28 },
-  { pot: "copper", window: "lamps", level: 31 },
-  { pot: "coral", window: "fronds", level: 34 },
-  { pot: "enamel", window: "butterflies", level: 37 },
-  { pot: "midnight", window: "moonrise", level: 40 },
-  { pot: "maple", window: "maples", level: 43 },
-  { pot: "ashen", window: "embers", level: 46 },
-  { pot: "gilded", window: "golddust", level: 49 },
-  { pot: "frost", window: "moonsnow", level: 52 },
-  { pot: "diamond", window: "prisms", level: 55 },
-  { pot: "wood", window: "acorns", level: 62 },
-  { pot: "stained", window: "panes", level: 70 },
-  { pot: "brass", window: "clockwork", level: 78 },
-  { pot: "gothic", window: "candles", level: 86 },
+  { pot: "slick", window: "streaks", level: at("rain") },
+  { pot: "daisy", window: "dandelions", level: at("hill") },
+  { pot: "dusk", window: "gulls", level: at("sunset") },
+  { pot: "marble", window: "cosy", level: at("cafe") },
+  { pot: "porcelain", window: "willow", level: 4 },
+  { pot: "borealis", window: "ribbons", level: at("p-aurora") },
+  { pot: "bark", window: "sunbeams", level: at("p-forest") },
+  { pot: "stone", window: "ivy", level: 7 },
+  { pot: "nebula", window: "starfield", level: at("p-space") },
+  { pot: "copper", window: "lamps", level: 10 },
+  { pot: "coral", window: "fronds", level: at("p-sunset") },
+  { pot: "enamel", window: "butterflies", level: at("p-alps") },
+  { pot: "midnight", window: "moonrise", level: 14 },
+  { pot: "maple", window: "maples", level: at("p-autumn") },
+  { pot: "ashen", window: "embers", level: at("p-majula") },
+  { pot: "frost", window: "moonsnow", level: at("p-moonlight") },
+  { pot: "gilded", window: "golddust", level: 19 },
+  { pot: "tram", window: "tramline", level: at("p-tram") },
+  { pot: "reclaimed", window: "neonvines", level: at("p-ruins") },
+  { pot: "steel", window: "wires", level: at("p-overpass") },
+  { pot: "diamond", window: "prisms", level: 30 },
+  { pot: "wood", window: "acorns", level: 35 },
+  { pot: "stained", window: "panes", level: 50 },
+  { pot: "brass", window: "clockwork", level: 65 },
+  { pot: "gothic", window: "candles", level: 85 },
 ];
 
 /** A set piece's unlock: `step` levels after its set opens (none at level 1). */
@@ -141,6 +147,9 @@ const POT_NAMES: Record<PotId, string> = {
   gilded: "gilded",
   ashen: "ashen",
   nebula: "nebula",
+  tram: "tram livery",
+  reclaimed: "reclaimed concrete",
+  steel: "painted steel",
   diamond: "diamond",
   wood: "oak",
   stained: "stained glass",
@@ -260,7 +269,10 @@ export type DecorId =
   | "butterflies"
   | "maples"
   | "embers"
-  | "moonsnow";
+  | "moonsnow"
+  | "tramline"
+  | "neonvines"
+  | "wires";
 
 export interface DecorMeta {
   id: DecorId;
@@ -288,6 +300,9 @@ const WINDOW_NAMES: Partial<Record<DecorId, string>> = {
   embers: "bonfire embers",
   golddust: "gold dust",
   moonsnow: "moonlit snow",
+  tramline: "passing tram",
+  neonvines: "neon and vines",
+  wires: "wires and sparrows",
   prisms: "prism light",
   acorns: "falling acorns",
   panes: "coloured light",
@@ -329,6 +344,9 @@ export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
   "p-autumn": { decor: "maples", pot: "maple" },
   "p-majula": { decor: "embers", pot: "ashen" },
   "p-moonlight": { decor: "moonsnow", pot: "frost" },
+  "p-tram": { decor: "tramline", pot: "tram" },
+  "p-ruins": { decor: "neonvines", pot: "reclaimed" },
+  "p-overpass": { decor: "wires", pot: "steel" },
 };
 
 /** The frame to draw for a pick: the scene's own if it's unlocked, else plain. */
