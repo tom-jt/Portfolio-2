@@ -313,12 +313,19 @@ const CatchGame = ({ label }: { label: string }) => {
         }
       });
       if (best >= 0) take(best);
-      // Sweeping hands: keep the press, and catch along the drag.
+      // Sweeping hands: keep the press, and catch along the drag. The
+      // browser's own handling of a press-and-drag is turned off, or it can
+      // start selecting or dragging something instead and take the pointer
+      // (the "not allowed" cursor). That also skips the usual focus on
+      // press, so focus here by hand, for Space to keep working.
       if (hasSwipe(gardenStore.get())) {
+        e.preventDefault();
+        canvas.focus({ preventScroll: true });
         sweep = { x: px, y: py };
         canvas.setPointerCapture(e.pointerId);
       }
     };
+    const noDrag = (e: Event) => e.preventDefault();
 
     /** Where a sweep last was, while one is under way. */
     let sweep: { x: number; y: number } | null = null;
@@ -353,6 +360,9 @@ const CatchGame = ({ label }: { label: string }) => {
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", endSweep);
     canvas.addEventListener("pointercancel", endSweep);
+    canvas.addEventListener("lostpointercapture", endSweep);
+    canvas.addEventListener("dragstart", noDrag);
+    canvas.addEventListener("selectstart", noDrag);
     canvas.addEventListener("keydown", onKey);
 
     const draw = (t: number) => {
@@ -644,6 +654,9 @@ const CatchGame = ({ label }: { label: string }) => {
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", endSweep);
       canvas.removeEventListener("pointercancel", endSweep);
+      canvas.removeEventListener("lostpointercapture", endSweep);
+      canvas.removeEventListener("dragstart", noDrag);
+      canvas.removeEventListener("selectstart", noDrag);
       canvas.removeEventListener("keydown", onKey);
     };
   }, [reduced]);
@@ -654,7 +667,8 @@ const CatchGame = ({ label }: { label: string }) => {
       tabIndex={0}
       role="application"
       aria-label={label}
-      className="focus-visible:ring-glow absolute inset-0 h-full w-full cursor-pointer touch-manipulation rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
+      draggable={false}
+      className="focus-visible:ring-glow absolute inset-0 h-full w-full cursor-pointer touch-manipulation rounded-[inherit] select-none focus-visible:ring-2 focus-visible:outline-none"
     />
   );
 };

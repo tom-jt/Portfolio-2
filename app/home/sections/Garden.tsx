@@ -905,7 +905,11 @@ const LevelTimeline = ({
 }) => {
   const level = Math.floor(progress);
   const next = useRef<HTMLLIElement>(null);
-  useEffect(() => next.current?.scrollIntoView({ block: "center" }), []);
+  // In braces, so nothing is returned: newer browsers return a promise from
+  // scrollIntoView, and React would call it as a cleanup when this closes.
+  useEffect(() => {
+    next.current?.scrollIntoView({ block: "center" });
+  }, []);
   const upcoming = LEVEL_REWARDS.find((r) => r.level > level)?.level;
 
   return (

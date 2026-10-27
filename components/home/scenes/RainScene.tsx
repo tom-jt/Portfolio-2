@@ -351,12 +351,39 @@ const RainScene = () => {
         const set = bead.y > h * 0.55 ? warmSprites : coolSprites;
         return set[Math.min(set.length - 1, Math.max(0, Math.round(bead.r) - 1))];
       };
-      const drawBead = (bead: Bead, alpha = 1, stretch = 1) => {
+      const drawBead = (bead: Bead, alpha = 1, stretch = 1, into = ctx) => {
         const s = spriteFor(bead);
         const k = bead.r / s.r;
         const size = (s.r + s.pad) * 2 * k;
-        ctx.globalAlpha = alpha;
-        ctx.drawImage(s.canvas, bead.x - size / 2, bead.y - (size * stretch) / 2, size, size * stretch);
+        into.globalAlpha = alpha;
+        into.drawImage(s.canvas, bead.x - size / 2, bead.y - (size * stretch) / 2, size, size * stretch);
+      };
+
+      // The resting beads: hundreds of them, and most frames none changes, so
+      // they live on a layer of their own rather than being drawn one by one
+      // every frame. A bead that lands is added to it as it lands; one that a
+      // runner swallows has the layer redrawn, at most ten times a second.
+      // (It sits under the runner that took it, so the wait never shows.)
+      const beadLayer = document.createElement("canvas");
+      beadLayer.width = front.width;
+      beadLayer.height = front.height;
+      const beadCtx = beadLayer.getContext("2d")!;
+      beadCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      let beadsGone = true;
+      let redrawnAt = -Infinity;
+      const addBead = (bead: Bead) => {
+        beads.push(bead);
+        drawBead(bead, 1, 1, beadCtx);
+      };
+      const drawBeads = (now: number) => {
+        if (beadsGone && now - redrawnAt >= 0.1) {
+          beadCtx.clearRect(0, 0, w, h);
+          for (const bead of beads) drawBead(bead, 1, 1, beadCtx);
+          beadsGone = false;
+          redrawnAt = now;
+        }
+        ctx.globalAlpha = 1;
+        ctx.drawImage(beadLayer, 0, 0, w, h);
       };
 
       const area = w * h;
@@ -380,9 +407,9 @@ const RainScene = () => {
         })),
       );
 
-      const drawGlass = () => {
+      const drawGlass = (now = 0) => {
         for (const t of trails) drawBead(t, Math.min(1, t.life / t.max) * 0.9);
-        for (const bead of beads) drawBead(bead);
+        drawBeads(now);
         for (const run of runners) drawBead(run, 1, run.speed > 0 ? 1.18 : 1.05);
         ctx.globalAlpha = 1;
       };
@@ -396,7 +423,7 @@ const RainScene = () => {
       let beadClock = 0;
       let runnerClock = 0.4;
 
-      stop = animate((_, dt) => {
+      stop = animate((t, dt) => {
         ctx.clearRect(0, 0, w, h);
 
         // Rain outside the window.
@@ -421,7 +448,7 @@ const RainScene = () => {
         beadClock += dt * 26;
         while (beadClock >= 1) {
           beadClock -= 1;
-          if (beads.length < beadTarget) beads.push(newBead());
+          if (beads.length < beadTarget) addBead(newBead());
         }
 
         // Every so often a drop gets heavy enough to run.
@@ -470,6 +497,7 @@ const RainScene = () => {
             if (dx * dx + by * by < reach * reach) {
               run.r = Math.min(7.5, Math.sqrt(run.r * run.r + bead.r * bead.r * 0.5));
               beads.splice(j, 1);
+              beadsGone = true;
             }
           }
 
@@ -481,7 +509,7 @@ const RainScene = () => {
           if (trails[i].life <= 0) trails.splice(i, 1);
         }
 
-        drawGlass();
+        drawGlass(t);
       });
     };
 

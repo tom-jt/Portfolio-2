@@ -33,33 +33,18 @@ export const cappedDpr = (cap: number) =>
   Math.min(typeof window === "undefined" ? 1 : window.devicePixelRatio || 1, cap);
 
 /**
- * Runs `frame` on animation frames with a clamped delta, so a tab that was in
- * the background resumes smoothly instead of jumping. Returns a stop function.
- *
- * On a fast screen (120 Hz and up) it draws on every other refresh, or every
- * third or fourth on faster still, for 60 to 72 a second: plenty for rain,
- * at half the work. Always a whole number of refreshes apart, so the frames
- * stay evenly spaced; capping at exactly 60 on a 144 Hz screen would mean
- * gaps of two refreshes, then three, which judders.
+ * Runs `frame` on every animation frame with a clamped delta, so a tab that
+ * was in the background resumes smoothly instead of jumping. Returns a stop
+ * function.
  */
 export function animate(frame: (t: number, dt: number) => void) {
   let raf = 0;
   let last = performance.now();
-  let prev = last;
-  /** The screen's refresh interval, smoothed. */
-  let refresh = 1000 / 60;
-  let count = 0;
   const loop = (now: number) => {
-    raf = requestAnimationFrame(loop);
-    const gap = now - prev;
-    prev = now;
-    // Long gaps are stalls or a hidden tab, not the refresh rate.
-    if (gap > 0 && gap < 40) refresh += (gap - refresh) * 0.05;
-    const every = Math.max(1, Math.floor(1000 / 60 / refresh + 0.25));
-    if (++count % every) return;
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     frame(now / 1000, dt);
+    raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
   return () => cancelAnimationFrame(raf);

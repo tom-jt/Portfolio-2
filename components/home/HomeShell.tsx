@@ -97,7 +97,9 @@ function useAmbience() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ambienceOn, kind]);
 
-  useEffect(() => setAmbienceVolume(ambienceVolume), [ambienceVolume]);
+  useEffect(() => {
+    setAmbienceVolume(ambienceVolume);
+  }, [ambienceVolume]);
 
   useEffect(() => stopAmbience, []);
 }

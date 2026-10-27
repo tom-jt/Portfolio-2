@@ -264,14 +264,38 @@ function every(c: AudioContext, play: (at: number) => number) {
   return () => clearInterval(timer);
 }
 
-/** Swells `param` up to `level` for a few seconds at a time, with long
- *  quiet spells between. Returns a stop function. */
-function bursts(c: AudioContext, param: AudioParam, level: number, { on, off }: NonNullable<Layer["bursts"]>) {
+/** Seconds each burst takes to fade in, and again to fade out. */
+const BURST_FADE = 1.2;
+
+/**
+ * A layer heard only now and then, for a few seconds at a time with long
+ * quiet spells between. Each burst is a sound of its own: a fresh source,
+ * filter and fade, started somewhere in the recording and thrown away after.
+ * Nothing lives longer than one burst, so nothing can drift into a bad state
+ * and stay there. (It used to be one endless source swelled up and down by
+ * setTargetAtTime; in Vivaldi that ended, a minute or so in, in a second of
+ * screech and then silence until the sound was restarted.) Returns a stop
+ * function.
+ */
+function bursts(c: AudioContext, buffer: AudioBuffer, layer: Layer, out: AudioNode) {
+  const { on, off } = layer.bursts!;
   const span = ([min, max]: [number, number]) => min + Math.random() * (max - min);
   return every(c, (at) => {
     const hold = span(on);
-    param.setTargetAtTime(level, at, 0.8);
-    param.setTargetAtTime(0, at + hold, 1.2);
+    const end = at + BURST_FADE + hold + BURST_FADE;
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const level = gain(c, 0);
+    level.gain.setValueAtTime(0, at);
+    level.gain.linearRampToValueAtTime(layer.gain, at + BURST_FADE);
+    level.gain.setValueAtTime(layer.gain, end - BURST_FADE);
+    level.gain.linearRampToValueAtTime(0, end);
+    const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
+    route(src, out, ...chain, level);
+    src.start(at, Math.random() * buffer.duration);
+    src.stop(end + 0.05);
+    src.onended = () => level.disconnect();
     return hold + span(off);
   });
 }
@@ -780,15 +804,14 @@ export function playAmbience(kind: AmbienceKind, v: number) {
       if (stopped) return;
       buffers.forEach((buffer, i) => {
         const layer = recipe.layers[i];
+        if (layer.bursts) return void stoppers.push(bursts(c, buffer, layer, bus));
         const src = c.createBufferSource();
         src.buffer = buffer;
         src.loop = true;
         const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
-        const level = gain(c, layer.bursts ? 0 : layer.gain);
-        route(src, bus, ...chain, level);
+        route(src, bus, ...chain, gain(c, layer.gain));
         src.start(0, (layer.offset ?? 0) % buffer.duration);
         sources.push(src);
-        if (layer.bursts) stoppers.push(bursts(c, level.gain, layer.gain, layer.bursts));
       });
       if (recipe.extra) stoppers.push(recipe.extra(c, bus));
       bus.gain.setTargetAtTime(1, c.currentTime, FADE / 3);
