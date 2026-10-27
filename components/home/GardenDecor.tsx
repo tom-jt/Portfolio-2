@@ -184,12 +184,21 @@ const MapleLeaf = ({ hue }: { hue: string }) => (
 );
 
 /** A gull, lit warm from below by the low sun so it shows on dark glass,
- *  its wings beating now and then gliding. */
-const Gull = ({ flap = 0 }: { flap?: number }) => (
-  <svg viewBox="0 0 16 6" className="block w-4 overflow-visible drop-shadow-[0_0_3px_rgb(255_170_120/0.6)]" aria-hidden="true">
+ *  its wings beating now and then gliding. Drawn in another colour, it's
+ *  the willow pattern's birds. */
+const Gull = ({
+  flap = 0,
+  color = "#ffe3cc",
+  glow = "drop-shadow-[0_0_3px_rgb(255_170_120/0.6)]",
+}: {
+  flap?: number;
+  color?: string;
+  glow?: string;
+}) => (
+  <svg viewBox="0 0 16 6" className={`block w-4 overflow-visible ${glow}`} aria-hidden="true">
     <path
       d="M0 4 Q4 0 8 4 Q12 0 16 4"
-      stroke="#ffe3cc"
+      stroke={color}
       strokeWidth="1.3"
       fill="none"
       strokeLinecap="round"
@@ -231,6 +240,151 @@ const Frond = ({ side, delay }: { side: "left" | "right"; delay: number }) => (
         );
       })}
     </svg>
+  </span>
+);
+
+/** Hung from the top of the window on a cord, swaying from it. */
+const Hanging = ({ left, length, period = 4, delay, cord, children }: {
+  left: string;
+  length: number;
+  period?: number;
+  delay: number;
+  cord: string;
+  children: ReactNode;
+}) => (
+  <span
+    className="absolute top-0 flex -translate-x-1/2 origin-top flex-col items-center"
+    style={{ left, animation: `home-sway ${period}s ease-in-out ${delay}s infinite alternate` }}
+  >
+    <span className="block w-px" style={{ height: length, background: cord }} />
+    {children}
+  </span>
+);
+
+/** Terracotta: a bunch of herbs hung upside down to dry. */
+const HerbBunch = ({ hue }: { hue: string }) => (
+  <svg viewBox="0 0 16 26" className="block w-4" aria-hidden="true">
+    <rect x="6" y="0" width="4" height="2.5" rx="0.8" fill="#c0703f" />
+    <g fill={hue}>
+      <ellipse cx="5" cy="9" rx="2.2" ry="4" transform="rotate(20 5 9)" />
+      <ellipse cx="11" cy="9" rx="2.2" ry="4" transform="rotate(-20 11 9)" />
+      <ellipse cx="8" cy="12" rx="2.4" ry="5" />
+      <ellipse cx="3.8" cy="16" rx="1.8" ry="3.4" transform="rotate(30 3.8 16)" />
+      <ellipse cx="12.2" cy="16" rx="1.8" ry="3.4" transform="rotate(-30 12.2 16)" />
+      <ellipse cx="8" cy="20" rx="2" ry="3.8" />
+    </g>
+    <path d="M8 2 V22 M8 6 L5 11 M8 6 L11 11" stroke="rgb(0 0 0 / 0.25)" strokeWidth="0.5" fill="none" />
+  </svg>
+);
+
+/** Mossy stone: ivy trailing down from a top corner. */
+const Ivy = ({ side, length, delay }: { side: "left" | "right"; length: number; delay: number }) => {
+  const leaves = Array.from({ length: Math.round(length / 9) }, (_, i) => i);
+  return (
+    <span
+      className={`absolute top-0 ${side === "left" ? "left-1 origin-top-left" : "right-1 origin-top-right"}`}
+      style={{ animation: `home-sway 7s ease-in-out ${delay}s infinite alternate` }}
+    >
+      <svg viewBox={`0 0 30 ${length}`} className={`block w-8 ${side === "right" ? "-scale-x-100" : ""}`} style={{ height: length }} aria-hidden="true">
+        <path d={`M4 0 Q14 ${length * 0.25} 8 ${length * 0.5} T12 ${length}`} stroke="#3c5a34" strokeWidth="1.2" fill="none" />
+        {leaves.map((i) => {
+          const y = 6 + i * 9;
+          const x = 8 + Math.sin(i * 1.3) * 4;
+          const flip = i % 2 ? 1 : -1;
+          return (
+            <path
+              key={i}
+              d={`M${x} ${y} c${flip * 3} -4 ${flip * 9} -2 ${flip * 8} 3 c-1 3 -5 4 ${flip * -8} -3Z`}
+              fill={i % 3 ? "#4f7a3f" : "#3f6633"}
+            />
+          );
+        })}
+      </svg>
+    </span>
+  );
+};
+
+/** Copper: a lamp with a warm, unsteady light behind its glass. */
+const CopperLamp = ({ delay }: { delay: number }) => (
+  <span className="relative block">
+    <span
+      className="absolute top-1/2 left-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgb(255_190_110/0.35),transparent_65%)]"
+      style={{ animation: `home-flicker 3.2s ease-in-out ${delay}s infinite` }}
+    />
+    <svg viewBox="0 0 16 26" className="relative block w-4" aria-hidden="true">
+      <path d="M4 5 L12 5 L14 8 L2 8 Z" fill="#b8733a" />
+      <rect x="7" y="2" width="2" height="3" fill="#a5652f" />
+      <rect x="3" y="8" width="10" height="13" rx="1" fill="#ffd08a" opacity="0.85" />
+      <path d="M3 8 V21 M13 8 V21 M8 8 V21" stroke="#b8733a" strokeWidth="0.9" />
+      <path d="M2 21 L14 21 L12 24 L4 24 Z" fill="#b8733a" />
+      <circle cx="4.5" cy="22.5" r="0.8" fill="#5fae8f" />
+      <circle cx="11" cy="6.5" r="0.7" fill="#5fae8f" />
+    </svg>
+  </span>
+);
+
+/** Oak: an acorn in its cup. */
+const Acorn = () => (
+  <svg viewBox="0 0 10 12" className="size-full" aria-hidden="true">
+    <ellipse cx="5" cy="7.5" rx="3.2" ry="4" fill="#a8742f" />
+    <path d="M1.4 5 Q5 1.5 8.6 5 Q5 6.6 1.4 5Z" fill="#6b4a26" />
+    <path d="M5 1.2 V3" stroke="#5a3d1f" strokeWidth="0.8" strokeLinecap="round" />
+  </svg>
+);
+
+/** Oak: a lobed leaf. */
+const OakLeaf = ({ hue }: { hue: string }) => (
+  <svg viewBox="0 0 10 14" className="size-full" aria-hidden="true">
+    <path
+      d="M5 13 C4 11 2 11 2.4 9.4 C1 9 0.8 7.4 2.2 7 C1 6.4 1.4 4.6 2.8 4.8 C2.4 3.2 3.8 2.4 4.6 3.4 C4.6 1.6 5.4 1 5.4 1 C5.4 1 6.2 1.6 6.2 3.4 C7 2.4 8.4 3.2 8 4.8 C9.4 4.6 9.8 6.4 8.6 7 C10 7.4 9.8 9 8.4 9.4 C8.8 11 6.8 11 5.8 13Z"
+      fill={hue}
+    />
+    <path d="M5.4 13 V2.6" stroke="rgb(0 0 0 / 0.25)" strokeWidth="0.5" />
+  </svg>
+);
+
+/** Brass: a cog, `teeth` round its rim, turning slowly. */
+function Cog({ size, teeth, period, reverse, className }: {
+  size: number;
+  teeth: number;
+  period: number;
+  reverse?: boolean;
+  className: string;
+}) {
+  const points = Array.from({ length: teeth * 4 }, (_, i) => {
+    const a = (i / (teeth * 4)) * Math.PI * 2;
+    const r = i % 4 < 2 ? 50 : 42;
+    return `${(50 + r * Math.cos(a)).toFixed(1)},${(50 + r * Math.sin(a)).toFixed(1)}`;
+  }).join(" ");
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className={`absolute ${className}`}
+      style={{ width: size, height: size, animation: `home-spin ${period}s linear infinite ${reverse ? "reverse" : "normal"}` }}
+      aria-hidden="true"
+    >
+      <polygon points={points} fill="#b8893a" stroke="#6f521f" strokeWidth="2" />
+      <circle cx="50" cy="50" r="28" fill="#d9b166" stroke="#6f521f" strokeWidth="2" />
+      <circle cx="50" cy="50" r="9" fill="#6f521f" />
+      {[0, 60, 120].map((d) => (
+        <rect key={d} x="47" y="24" width="6" height="52" fill="#b8893a" transform={`rotate(${d} 50 50)`} />
+      ))}
+    </svg>
+  );
+}
+
+/** Gothic stone: a candle on the sill, its flame flickering. */
+const Candle = ({ left, height, delay }: { left: string; height: number; delay: number }) => (
+  <span className="absolute bottom-3.5" style={{ left }}>
+    <span
+      className="absolute bottom-full left-1/2 size-14 -translate-x-1/2 translate-y-3 rounded-full bg-[radial-gradient(circle,rgb(255_180_90/0.35),transparent_65%)]"
+      style={{ animation: `home-flicker 2.4s ease-in-out ${delay}s infinite` }}
+    />
+    <span
+      className="absolute bottom-full left-1/2 mb-px h-3 w-1.5 origin-bottom rounded-[50%_50%_50%_50%/60%_60%_40%_40%] bg-[linear-gradient(to_top,#ffb347,#fff3c4)] shadow-[0_0_6px_2px_rgb(255_190_100/0.6)]"
+      style={{ animation: `home-flame ${0.9 + delay * 0.2}s ease-in-out ${delay}s infinite alternate` }}
+    />
+    <span className="block w-2.5 rounded-t-[2px] bg-[linear-gradient(to_right,#e8dcc2,#f7efdc_45%,#cfc1a2)]" style={{ height }} />
   </span>
 );
 
@@ -534,6 +688,194 @@ const DECOR: Record<DecorId, () => ReactNode> = {
     <>
       <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,rgb(255_130_50/0.28),transparent_70%)]" />
       <Risers seed={107} count={18} box={[15, 72, 85, 92]} rise={-150} duration={[3.5, 6.5]} className="size-1 rounded-full bg-[#ffb35c] shadow-[0_0_6px_2px_rgb(255_140_60/0.7)]" />
+    </>
+  ),
+  // Terracotta: herbs drying on a length of twine, in a warm kitchen glow.
+  herbs: () => (
+    <>
+      <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgb(214_128_92/0.16),transparent)]" />
+      <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-3 w-full" aria-hidden="true">
+        <path d="M0 1 Q50 6 100 1" stroke="#c9a57a" strokeWidth="0.6" fill="none" />
+      </svg>
+      {[
+        { left: "18%", length: 6, hue: "#8fae7a", delay: 0 },
+        { left: "38%", length: 10, hue: "#a98fc9", delay: -1.2 },
+        { left: "62%", length: 10, hue: "#6f9a6a", delay: -2.1 },
+        { left: "82%", length: 6, hue: "#9bb38a", delay: -0.6 },
+      ].map((h) => (
+        <Hanging key={h.left} left={h.left} length={h.length} delay={h.delay} period={4.6} cord="#c9a57a">
+          <HerbBunch hue={h.hue} />
+        </Hanging>
+      ))}
+    </>
+  ),
+  // Porcelain: a blue-and-white willow pattern, its two birds flying.
+  willow: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_0%,rgb(120_160_230/0.16),transparent_60%)]" />
+      <svg viewBox="0 0 60 40" className="absolute top-0 left-0 block w-24" aria-hidden="true">
+        <path d="M0 4 Q20 6 34 18 Q42 25 54 26" stroke="#3a66b8" strokeWidth="1.4" fill="none" />
+        {[8, 16, 24, 32, 40, 48].map((x, i) => (
+          <path
+            key={x}
+            d={`M${x} ${5 + x * 0.42} q${i % 2 ? 3 : -2} ${5} ${i % 2 ? 1 : -1} ${10}`}
+            stroke="#5b84cf"
+            strokeWidth="1"
+            fill="none"
+            strokeLinecap="round"
+          />
+        ))}
+      </svg>
+      {[
+        { top: "22%", duration: 28, delay: -6, bob: -5, flap: 0 },
+        { top: "28%", duration: 28, delay: -7.2, bob: -3, flap: -0.4 },
+      ].map((b) => (
+        <Crosser key={b.top} top={b.top} duration={b.duration} delay={b.delay} bob={b.bob}>
+          <Gull flap={b.flap} color="#7fa6ec" glow="drop-shadow-[0_0_3px_rgb(120_160_240/0.6)]" />
+        </Crosser>
+      ))}
+    </>
+  ),
+  // Mossy stone: ivy creeping down from both top corners.
+  ivy: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgb(110_150_90/0.14),transparent_60%)]" />
+      <Ivy side="left" length={92} delay={0} />
+      <Ivy side="right" length={70} delay={-3} />
+    </>
+  ),
+  // Copper: two lamps hung in the window, glowing warm.
+  lamps: () => (
+    <>
+      {[
+        { left: "26%", length: 14, delay: 0 },
+        { left: "72%", length: 26, delay: -1.6 },
+      ].map((l) => (
+        <Hanging key={l.left} left={l.left} length={l.length} delay={l.delay} period={5} cord="#8a5a2e">
+          <CopperLamp delay={l.delay} />
+        </Hanging>
+      ))}
+    </>
+  ),
+  // Midnight: a crescent moon, and stars coming and going.
+  moonrise: () => (
+    <>
+      <span className="absolute top-[8%] right-[10%] size-16 rounded-full bg-[radial-gradient(circle,rgb(240_230_190/0.3),transparent_65%)]" />
+      <svg viewBox="0 0 20 20" className="absolute top-[12%] right-[14%] block w-7" aria-hidden="true">
+        <path d="M13 2 A8 8 0 1 0 18 15 A6.5 6.5 0 1 1 13 2Z" fill="#f3ecd2" />
+      </svg>
+      {spots(113, 12, [4, 4, 92, 58]).map((p, i) => (
+        <span
+          key={i}
+          className="absolute rounded-full bg-white shadow-[0_0_4px_rgb(255_255_255/0.8)]"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: 1.5 + p.a * 1.5,
+            height: 1.5 + p.a * 1.5,
+            animation: `home-flicker ${2.5 + p.b * 3}s ease-in-out ${-p.a * 4}s infinite`,
+          }}
+        />
+      ))}
+    </>
+  ),
+  // Gilded: gold dust drifting down, catching the light.
+  golddust: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgb(246_217_119/0.14),transparent_65%)]" />
+      {pieces(127, 22, [2, 4], [8, 13]).map((p, i) => (
+        <Faller key={i} p={{ ...p, drift: p.drift * 0.5 }}>
+          <span
+            className="block size-full rotate-45 bg-[#f6d977] shadow-[0_0_5px_1px_rgb(246_217_119/0.7)]"
+            style={{ animation: `home-flicker ${1.2 + (i % 5) * 0.3}s ease-in-out ${-i * 0.2}s infinite` }}
+          />
+        </Faller>
+      ))}
+    </>
+  ),
+  // Diamond: light split into rainbows across the glass, and sparkles.
+  prisms: () => (
+    <>
+      {[
+        { top: "18%", period: 26, delay: 0 },
+        { top: "44%", period: 32, delay: -11 },
+        { top: "66%", period: 29, delay: -5 },
+      ].map((b) => (
+        <span
+          key={b.top}
+          className="absolute -inset-x-1/4 h-3 -rotate-[24deg] opacity-25 bg-[linear-gradient(90deg,transparent,#ff6b6b,#ffb86b,#fff36b,#6bff9a,#6bc4ff,#b36bff,transparent)]"
+          style={{ top: b.top, "--dx": "12%", animation: `home-drift ${b.period}s ease-in-out ${b.delay}s infinite alternate` } as CSSProperties}
+        />
+      ))}
+      {spots(131, 9, [6, 6, 94, 70]).map((p, i) => (
+        <svg
+          key={i}
+          viewBox="0 0 10 10"
+          className="absolute block w-2.5"
+          style={{ left: `${p.x}%`, top: `${p.y}%`, animation: `home-flicker ${1.8 + p.b * 2.4}s ease-in-out ${-p.a * 3}s infinite` }}
+          aria-hidden="true"
+        >
+          <path d="M5 0 L6 4 L10 5 L6 6 L5 10 L4 6 L0 5 L4 4Z" fill="#ffffff" />
+        </svg>
+      ))}
+    </>
+  ),
+  // Oak: acorns and oak leaves coming down.
+  acorns: () => (
+    <>
+      {pieces(137, 12, [11, 16], [9, 14]).map((p, i) => (
+        <Faller key={i} p={i % 3 ? p : { ...p, spin: p.spin * 0.3 }}>
+          {i % 3 ? <OakLeaf hue={["#8a6a2a", "#a2732e", "#6f7a34"][i % 3]} /> : <Acorn />}
+        </Faller>
+      ))}
+    </>
+  ),
+  // Stained glass: pools of coloured light drifting over the glass.
+  panes: () => (
+    <>
+      {[
+        { left: "12%", top: "18%", size: 64, color: "rgb(246 170 190 / 0.22)", period: 34 },
+        { left: "58%", top: "10%", size: 54, color: "rgb(246 214 140 / 0.2)", period: 41 },
+        { left: "34%", top: "46%", size: 70, color: "rgb(160 220 180 / 0.18)", period: 37 },
+        { left: "72%", top: "48%", size: 58, color: "rgb(160 196 246 / 0.2)", period: 45 },
+        { left: "4%", top: "56%", size: 46, color: "rgb(206 180 246 / 0.2)", period: 39 },
+      ].map((pool) => (
+        <span
+          key={pool.left + pool.top}
+          className="absolute"
+          style={{ left: pool.left, top: pool.top, "--dx": "18px", animation: `home-drift ${pool.period}s ease-in-out infinite alternate` } as CSSProperties}
+        >
+          {/* A pane's shape in light: a soft-edged diamond, brightest at
+              its middle, with a faint rim where the leading would be. */}
+          <span
+            className="block rotate-45 rounded-sm"
+            style={{
+              width: pool.size,
+              height: pool.size,
+              background: `radial-gradient(closest-side, ${pool.color}, transparent), linear-gradient(${pool.color}, ${pool.color})`,
+              opacity: 0.85,
+              boxShadow: `inset 0 0 6px ${pool.color}`,
+            }}
+          />
+        </span>
+      ))}
+    </>
+  ),
+  // Brass: clockwork turning in the corners, the two cogs meshing.
+  clockwork: () => (
+    <>
+      <Cog size={56} teeth={12} period={40} className="-top-4 -left-4 opacity-80" />
+      <Cog size={34} teeth={8} period={26.7} reverse className="top-[22px] left-[28px] opacity-80" />
+      <Cog size={44} teeth={10} period={33} reverse className="-top-3 -right-3 opacity-70" />
+    </>
+  ),
+  // Gothic stone: candles burning on the sill.
+  candles: () => (
+    <>
+      <span className="absolute inset-x-0 bottom-0 h-1/3 bg-[radial-gradient(ellipse_at_bottom,rgb(255_170_80/0.16),transparent_70%)]" />
+      <Candle left="5%" height={22} delay={0} />
+      <Candle left="11%" height={14} delay={0.7} />
+      <Candle left="90%" height={18} delay={0.35} />
     </>
   ),
   // Moonlight: the moon behind the snow, and frost at the edges.

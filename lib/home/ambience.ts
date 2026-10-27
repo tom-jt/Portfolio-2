@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import type { DropKind } from "./garden";
 import type { AmbienceKind } from "./scenes";
+import { hushSpotify } from "./spotify";
 
 /**
  * Ambient sound. The beds are recordings (public/home/sounds, see the README
@@ -218,7 +219,7 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
   shore: {
     layers: [
       { file: "waves", gain: 0.85 },
-      { file: "seagulls", gain: 0.3, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
+      { file: "seagulls", gain: 0.42, lowpass: 5000, bursts: { on: [5, 10], off: [14, 32] } },
     ],
     // No crickets: their pure 4–5 kHz pulses read as a whine over surf.
   },
@@ -718,11 +719,11 @@ const curve = (v: number) => 0.8 * 10 ** ((-TAPER_DB * (1 - v)) / 20) * Math.min
 /** The ambience's own level, kept so a chime's dip can return to it. */
 let volume = 0;
 /** Ambience dips to this share of its level under a chime: easing down over
- *  a second, resting there two before the chime rings and two after it has
+ *  a second, resting there one before the chime rings and one after it has
  *  faded, then easing back up over a second. */
 const DUCK = 0.3;
 const DUCK_EASE = 1;
-const DUCK_HOLD = 2;
+const DUCK_HOLD = 1;
 /** When the current dip is all the way down, and when it starts back up,
  *  in context time. */
 let duckDown = 0;
@@ -881,7 +882,12 @@ function bell(
   const last = Math.max(...notes.map(([, d]) => d));
   // The dip holds through the notes and their ring, until it's faded out
   // (by 0.6 of the decay it's down 48 dB); the chime waits for the dip.
-  const lead = duck(last + decay * 0.6) ?? 0;
+  const ring = last + decay * 0.6;
+  let lead = duck(ring) ?? 0;
+  // Spotify can only be paused, not dipped: paused now and played again
+  // once the chime has rung and the ambience is back up. A paused player
+  // takes a moment to fall silent, so the chime waits for that too.
+  if (hushSpotify((lead + ring + DUCK_HOLD + DUCK_EASE) * 1000)) lead = Math.max(lead, 0.6);
   for (const [freq, at] of notes) {
     const delay = at + lead;
     for (const [mult, amount] of [

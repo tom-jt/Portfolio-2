@@ -21,7 +21,7 @@ const ASPECT: Record<PhotoId, number> = {
   space: 16 / 9,
   sunset: 16 / 9,
   alps: 16 / 9,
-  autumn: 3 / 2,
+  autumn: 2560 / 1582,
   majula: 16 / 9,
   moonlight: 16 / 9,
 };
@@ -515,12 +515,14 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
   autumn: () => (
     <>
-      {/* Warm light wandering through the canopy and over the path. */}
-      <Glow x={48} y={42} size={42} color="rgb(255 190 110 / 0.35)" period={9} />
-      <Glow x={22} y={28} size={30} color="rgb(255 140 60 / 0.3)" period={12} delay={-4} />
-      <Glow x={70} y={60} size={34} color="rgb(255 110 60 / 0.25)" period={14} delay={-7} />
-      <Glow x={45} y={85} size={40} color="rgb(255 120 70 / 0.25)" period={11} delay={-2} />
-      <Motes seed={83} count={14} box={[30, 40, 70, 80]} color="rgb(255 215 150 / 0.7)" rise={-90} />
+      {/* Low sun through the haze beyond the trees, the canopy lit orange,
+          and warm light on the path and the meadow. */}
+      <Glow x={58} y={30} size={44} color="rgb(255 215 150 / 0.35)" period={9} />
+      <Glow x={30} y={18} size={30} color="rgb(255 140 60 / 0.28)" period={12} delay={-4} />
+      <Glow x={52} y={74} size={34} color="rgb(255 190 120 / 0.25)" period={11} delay={-2} />
+      <Glow x={78} y={66} size={30} color="rgb(240 220 120 / 0.2)" period={14} delay={-7} />
+      {/* Dust turning in the shaft of light. */}
+      <Motes seed={83} count={14} box={[45, 25, 68, 62]} color="rgb(255 225 170 / 0.7)" rise={-90} />
       <Leaves seed={89} count={34} box={[0, -8, 100, 40]} />
     </>
   ),

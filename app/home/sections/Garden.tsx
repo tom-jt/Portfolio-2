@@ -33,6 +33,7 @@ import {
   isUnlocked,
   POTS,
   resolveDecor,
+  resolveFrame,
   resolvePot,
   type PotPick,
   type Unlock,
@@ -52,7 +53,6 @@ import {
   luckLeft,
   maxAffordable,
   milestoneStep,
-  nextUnlock,
   plantCost,
   plantCostScale,
   plantCount,
@@ -73,10 +73,8 @@ import {
   useGarden,
   type GardenState,
 } from "@/lib/home/garden";
-import { PETS } from "@/lib/home/pets";
+import { levelRewards, nextRewards } from "@/lib/home/rewards";
 import { setPrefs, usePrefs, type GardenTab } from "@/lib/home/prefs";
-import { SCENES } from "@/lib/home/scenes";
-import { THEMES } from "@/lib/home/themes";
 import {
   BRANCHES,
   getSkill,
@@ -596,6 +594,7 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
   const how = (u: Unlock | undefined) =>
     u ? describeUnlock(u, achievementName) : "";
   const auto = resolveDecor("auto", prefs.scene, garden);
+  const sceneFrame = resolveFrame("scene", prefs.scene, garden);
   const scenePot = resolvePot("scene", prefs.scene, garden);
   const decorName = (id: string | null) =>
     DECOR.find((d) => d.id === id)?.name ?? "none";
@@ -675,7 +674,15 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
 
       <Eyebrow className="mt-4">frame</Eyebrow>
       <ul className="mt-2 grid grid-cols-3 gap-1.5">
-        {FRAMES.map((f) => {
+        {[
+          // Follows the scene: its own frame, once that's unlocked.
+          {
+            id: "scene" as const,
+            name: `match scene: ${FRAMES.find((f) => f.id === sceneFrame)?.name}`,
+            unlock: undefined,
+          },
+          ...FRAMES,
+        ].map((f) => {
           const locked = !isUnlocked(f.unlock, garden);
           const active = prefs.frame === f.id;
           return (
@@ -706,7 +713,7 @@ const ShedTab = ({ garden }: { garden: GardenState }) => {
         {[
           {
             id: "auto" as const,
-            name: `auto: ${decorName(auto)}`,
+            name: `match scene: ${decorName(auto)}`,
             unlock: undefined,
           },
           { id: "none" as const, name: "bare window", unlock: undefined },
@@ -841,54 +848,6 @@ const TAB_TRIGGER =
 
 // --------------------------------------------------------------- levels
 
-/** The timeline's headings, in the order each level lists them. */
-const REWARD_KINDS = [
-  "cosmetics",
-  "garden decor",
-  "plants",
-  "upgrades",
-  "pets",
-] as const;
-type RewardKind = (typeof REWARD_KINDS)[number];
-
-/**
- * Every reward each level opens, from the same lists the game unlocks by,
- * grouped under headings.
- */
-function levelRewards() {
-  const byLevel = new Map<number, Map<RewardKind, string[]>>();
-  const add = (level: number | undefined, kind: RewardKind, item: string) => {
-    if (!level || level < 2) return;
-    const kinds = byLevel.get(level) ?? new Map<RewardKind, string[]>();
-    kinds.set(kind, [...(kinds.get(kind) ?? []), item]);
-    byLevel.set(level, kinds);
-  };
-  for (const s of SCENES) add(s.unlockLevel, "cosmetics", `${s.name} scene`);
-  for (const t of THEMES)
-    add(t.unlock?.level, "cosmetics", `${t.name} colours`);
-  for (let l = 10; l <= 100; l += 10)
-    add(l, "cosmetics", `the title "${titleFor(l)}"`);
-  for (const d of DECOR)
-    add(d.unlock?.level, "garden decor", `${d.name} window`);
-  for (const f of FRAMES)
-    add(f.unlock?.level, "garden decor", `${f.name} frame`);
-  for (const p of POTS) add(p.unlock?.level, "garden decor", `${p.name} pot`);
-  add(GOLD_LEAF.level, "garden decor", "gilded plants");
-  for (const p of PLANTS) add(p.unlockLevel, "plants", p.name);
-  for (const u of UPGRADES) add(u.unlockLevel, "upgrades", u.name);
-  for (const p of PETS) add(p.unlock.level, "pets", `a ${p.name}`);
-  return [...byLevel.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([level, kinds]) => ({
-      level,
-      groups: REWARD_KINDS.filter((k) => kinds.has(k)).map(
-        (k) => [k, kinds.get(k)!] as const,
-      ),
-    }));
-}
-
-const LEVEL_REWARDS = levelRewards();
-
 /**
  * Every level that opens something, as a timeline: a line down the side
  * with a dot for each, filled once reached, and the line lit as far as the
@@ -910,7 +869,8 @@ const LevelTimeline = ({
   useEffect(() => {
     next.current?.scrollIntoView({ block: "center" });
   }, []);
-  const upcoming = LEVEL_REWARDS.find((r) => r.level > level)?.level;
+  const rewards = levelRewards();
+  const upcoming = rewards.find((r) => r.level > level)?.level;
 
   return (
     <div className="bg-glass-strong absolute inset-x-0 top-16 bottom-0 z-20 flex flex-col rounded-b-[1.75rem] px-5 pb-5">
@@ -926,9 +886,9 @@ const LevelTimeline = ({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto pr-2">
         <ol className="pl-6">
-          {LEVEL_REWARDS.map(({ level: l, groups }, i) => {
+          {rewards.map(({ level: l, groups }, i) => {
             const reached = l <= level;
-            const after = LEVEL_REWARDS[i + 1]?.level;
+            const after = rewards[i + 1]?.level;
             // How much of the line from this dot to the next is lit.
             const lit = after
               ? Math.min(1, Math.max(0, (progress - l) / (after - l)))
@@ -1024,12 +984,13 @@ const Garden = ({
     ? resolveDecor(prefs.decor, prefs.scene, garden)
     : null;
   const pot = resolvePot(prefs.pot, prefs.scene, garden);
+  const frame = resolveFrame(prefs.frame, prefs.scene, garden);
   const goldLeaf = prefs.goldLeaf && isUnlocked(GOLD_LEAF, garden);
   const lucky = luckLeft(garden) > 0;
   const now = useNow(1000, lucky);
   const luck = lucky && now ? luckLeft(garden, now) : 0;
   const { level, into, span } = levelProgress(totalXp(garden));
-  const next = nextUnlock(level);
+  const next = nextRewards(level);
   const perSecond = rate(garden);
   const sill = PLANTS.filter((p) => (garden.plants[p.id] ?? 0) > 0);
   // The last tab open, unless that's a season tab that isn't there.
@@ -1133,10 +1094,10 @@ const Garden = ({
       <div
         className={cn(
           "relative mt-4 h-[min(14rem,22dvh)] min-h-28 shrink-0 overflow-hidden bg-[linear-gradient(to_bottom,rgb(255_255_255/0.04),rgb(0_0_0/0.18))]",
-          frameShape(prefs.frame),
+          frameShape(frame),
         )}
       >
-        <FrameRing id={prefs.frame} />
+        <FrameRing id={frame} />
         {/* Ladybug luck, pinned in the window's corner so it moves nothing
             when it comes and goes. */}
         {luck > 0 && (

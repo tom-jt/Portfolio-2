@@ -80,33 +80,78 @@ export interface PotMeta {
   unlock?: Unlock;
 }
 
+/**
+ * The matching sets: every pot comes with a frame and a window decor of its
+ * own, opening one level after another (the pot, then its frame, then its
+ * window), and each set three levels after the last, so no two of them open
+ * together. The scenes' own sets come in the order the scenes do, with the
+ * rest between; the long-haul four are spaced out towards level 100.
+ */
+const SETS: { pot: Exclude<PotId, "classic">; window: DecorId; level: number }[] = [
+  { pot: "terracotta", window: "herbs", level: 1 },
+  { pot: "slick", window: "streaks", level: 4 },
+  { pot: "daisy", window: "dandelions", level: 7 },
+  { pot: "porcelain", window: "willow", level: 10 },
+  { pot: "dusk", window: "gulls", level: 13 },
+  { pot: "marble", window: "cosy", level: 16 },
+  { pot: "borealis", window: "ribbons", level: 19 },
+  { pot: "stone", window: "ivy", level: 22 },
+  { pot: "bark", window: "sunbeams", level: 25 },
+  { pot: "nebula", window: "starfield", level: 28 },
+  { pot: "copper", window: "lamps", level: 31 },
+  { pot: "coral", window: "fronds", level: 34 },
+  { pot: "enamel", window: "butterflies", level: 37 },
+  { pot: "midnight", window: "moonrise", level: 40 },
+  { pot: "maple", window: "maples", level: 43 },
+  { pot: "ashen", window: "embers", level: 46 },
+  { pot: "gilded", window: "golddust", level: 49 },
+  { pot: "frost", window: "moonsnow", level: 52 },
+  { pot: "diamond", window: "prisms", level: 55 },
+  { pot: "wood", window: "acorns", level: 62 },
+  { pot: "stained", window: "panes", level: 70 },
+  { pot: "brass", window: "clockwork", level: 78 },
+  { pot: "gothic", window: "candles", level: 86 },
+];
+
+/** A set piece's unlock: `step` levels after its set opens (none at level 1). */
+const setUnlock = (pot: PotId, step: number): Unlock | undefined => {
+  const set = SETS.find((x) => x.pot === pot);
+  const level = set ? set.level + step : 1;
+  return level > 1 ? { level } : undefined;
+};
+
+/** The pot of each set; mixed is the default, free from the start. */
+const POT_NAMES: Record<PotId, string> = {
+  classic: "mixed",
+  terracotta: "terracotta",
+  slick: "rain-slick",
+  porcelain: "porcelain",
+  daisy: "daisy glaze",
+  marble: "café marble",
+  stone: "mossy stone",
+  dusk: "dusk glaze",
+  bark: "bark",
+  copper: "copper",
+  enamel: "alpine enamel",
+  maple: "maple",
+  borealis: "borealis",
+  midnight: "midnight",
+  coral: "coral",
+  frost: "frost",
+  gilded: "gilded",
+  ashen: "ashen",
+  nebula: "nebula",
+  diamond: "diamond",
+  wood: "oak",
+  stained: "stained glass",
+  brass: "brass",
+  gothic: "gothic stone",
+};
+
 /** In the order they open up. */
 export const POTS: PotMeta[] = [
-  { id: "classic", name: "mixed" },
-  { id: "terracotta", name: "terracotta" },
-  { id: "slick", name: "rain-slick", unlock: { level: 3 } },
-  { id: "porcelain", name: "porcelain", unlock: { level: 4 } },
-  { id: "daisy", name: "daisy glaze", unlock: { level: 5 } },
-  { id: "marble", name: "café marble", unlock: { level: 6 } },
-  { id: "stone", name: "mossy stone", unlock: { level: 7 } },
-  { id: "dusk", name: "dusk glaze", unlock: { level: 8 } },
-  { id: "bark", name: "bark", unlock: { level: 9 } },
-  { id: "copper", name: "copper", unlock: { level: 10 } },
-  { id: "enamel", name: "alpine enamel", unlock: { level: 11 } },
-  { id: "maple", name: "maple", unlock: { level: 12 } },
-  { id: "borealis", name: "borealis", unlock: { level: 13 } },
-  { id: "midnight", name: "midnight", unlock: { level: 14 } },
-  { id: "coral", name: "coral", unlock: { level: 16 } },
-  { id: "frost", name: "frost", unlock: { level: 17 } },
-  { id: "gilded", name: "gilded", unlock: { level: 19 } },
-  { id: "ashen", name: "ashen", unlock: { level: 21 } },
-  { id: "nebula", name: "nebula", unlock: { level: 24 } },
-  { id: "diamond", name: "diamond", unlock: { level: 30 } },
-  // The long-haul ones.
-  { id: "wood", name: "oak", unlock: { level: 35 } },
-  { id: "stained", name: "stained glass", unlock: { level: 50 } },
-  { id: "brass", name: "brass", unlock: { level: 65 } },
-  { id: "gothic", name: "gothic stone", unlock: { level: 85 } },
+  { id: "classic", name: POT_NAMES.classic },
+  ...SETS.map(({ pot }) => ({ id: pot, name: POT_NAMES[pot], unlock: setUnlock(pot, 0) })),
 ];
 
 export const isPotId = (v: unknown): v is PotId => POTS.some((p) => p.id === v);
@@ -119,9 +164,9 @@ export const isPotPick = (v: unknown): v is PotPick =>
 // ---------------------------------------------------------------- frames
 
 /**
- * Frames for the garden window: one to match every pot, sharing its id,
- * name and unlock, so a pot and its frame always come as a pair. "Mixed"
- * pots have no single look, so their match is the plain frame.
+ * Frames for the garden window: one to match every pot, sharing its id and
+ * name and opening the level after it. "Mixed" pots have no single look, so
+ * their match is the plain frame.
  */
 export type FrameId = "plain" | Exclude<PotId, "classic">;
 
@@ -133,17 +178,16 @@ export interface FrameMeta {
 
 export const FRAMES: FrameMeta[] = [
   { id: "plain", name: "plain" },
-  ...POTS.filter((p): p is PotMeta & { id: FrameId } => p.id !== "classic").map(
-    ({ id, name, unlock }) => ({
-      id,
-      name,
-      unlock,
-    }),
-  ),
+  ...SETS.map(({ pot }) => ({ id: pot, name: POT_NAMES[pot], unlock: setUnlock(pot, 1) })),
 ];
 
 export const isFrameId = (v: unknown): v is FrameId =>
   FRAMES.some((f) => f.id === v);
+
+/** A frame pick: one frame, or whichever suits the scene. */
+export type FramePick = FrameId | "scene";
+export const isFramePick = (v: unknown): v is FramePick =>
+  v === "scene" || isFrameId(v);
 
 /** Gilded plants, gold leaf on every one: the reward for reaching level 100. */
 export const GOLD_LEAF: Unlock = { level: 100 };
@@ -193,7 +237,18 @@ export type DecorId =
   | "autumn"
   | "winter"
   | HolidayId
-  // One made for each scene.
+  // One for each set's pot.
+  | "herbs"
+  | "willow"
+  | "ivy"
+  | "lamps"
+  | "moonrise"
+  | "golddust"
+  | "prisms"
+  | "acorns"
+  | "panes"
+  | "clockwork"
+  | "candles"
   | "streaks"
   | "dandelions"
   | "gulls"
@@ -213,30 +268,48 @@ export interface DecorMeta {
   unlock?: Unlock;
 }
 
+/** What each set's window is called. */
+const WINDOW_NAMES: Partial<Record<DecorId, string>> = {
+  herbs: "drying herbs",
+  streaks: "rain on the glass",
+  dandelions: "dandelion seeds",
+  willow: "willow-pattern birds",
+  gulls: "gulls at dusk",
+  cosy: "café lights",
+  ribbons: "aurora ribbons",
+  ivy: "creeping ivy",
+  sunbeams: "sunbeams",
+  starfield: "starfield",
+  lamps: "copper lamps",
+  fronds: "palm fronds",
+  butterflies: "butterflies",
+  moonrise: "crescent moon",
+  maples: "maple leaves",
+  embers: "bonfire embers",
+  golddust: "gold dust",
+  moonsnow: "moonlit snow",
+  prisms: "prism light",
+  acorns: "falling acorns",
+  panes: "coloured light",
+  clockwork: "clockwork",
+  candles: "candlelight",
+};
+
 export const DECOR: DecorMeta[] = [
-  { id: "spring", name: "spring blossom", unlock: { level: 2 } },
-  { id: "summer", name: "summer fireflies", unlock: { level: 3 } },
-  { id: "autumn", name: "autumn leaves", unlock: { level: 4 } },
-  { id: "winter", name: "winter snow", unlock: { level: 5 } },
+  // The seasons: free, as they're what a window wears with no set of its own.
+  { id: "spring", name: "spring blossom" },
+  { id: "summer", name: "summer fireflies" },
+  { id: "autumn", name: "autumn leaves" },
+  { id: "winter", name: "winter snow" },
+  // Each set's own, two levels after its pot.
+  ...SETS.map(({ pot, window }) => ({ id: window, name: WINDOW_NAMES[window]!, unlock: setUnlock(pot, 2) })),
+  // Made for festives and holiday seasons
   { id: "halloween", name: "halloween", unlock: { holiday: "halloween" } },
   { id: "festive", name: "festive lights", unlock: { holiday: "festive" } },
   { id: "lunar", name: "lunar lanterns", unlock: { holiday: "lunar" } },
-  // Made for a scene each, in the order they open up.
-  { id: "streaks", name: "rain on the glass", unlock: { level: 6 } },
-  { id: "dandelions", name: "dandelion seeds", unlock: { level: 7 } },
-  { id: "cosy", name: "café lights", unlock: { level: 8 } },
-  { id: "gulls", name: "gulls at dusk", unlock: { level: 9 } },
-  { id: "sunbeams", name: "sunbeams", unlock: { level: 10 } },
-  { id: "butterflies", name: "butterflies", unlock: { level: 11 } },
-  { id: "maples", name: "maple leaves", unlock: { level: 12 } },
-  { id: "ribbons", name: "aurora ribbons", unlock: { level: 14 } },
-  { id: "fronds", name: "palm fronds", unlock: { level: 16 } },
-  { id: "moonsnow", name: "moonlit snow", unlock: { level: 18 } },
-  { id: "embers", name: "bonfire embers", unlock: { level: 21 } },
-  { id: "starfield", name: "starfield", unlock: { level: 24 } },
 ];
 
-/** "auto" follows the scene and the calendar, and "none" is a bare window. */
+/** "auto" matches the scene, and "none" is a bare window. */
 export type DecorPick = DecorId | "auto" | "none";
 
 export const isDecorPick = (v: unknown): v is DecorPick =>
@@ -257,6 +330,19 @@ export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
   "p-majula": { decor: "embers", pot: "ashen" },
   "p-moonlight": { decor: "moonsnow", pot: "frost" },
 };
+
+/** The frame to draw for a pick: the scene's own if it's unlocked, else plain. */
+export function resolveFrame(
+  pick: FramePick,
+  scene: SceneId,
+  s: GardenState,
+): FrameId {
+  if (pick !== "scene") return pick;
+  const frame = SCENE_STYLE[scene].pot as FrameId;
+  return isUnlocked(FRAMES.find((f) => f.id === frame)?.unlock, s)
+    ? frame
+    : "plain";
+}
 
 /** The pot to draw for a pick: the scene's own if it's unlocked, else mixed. */
 export function resolvePot(
@@ -317,8 +403,9 @@ export function currentSeason(
 }
 
 /**
- * The decor to draw for a pick. On auto: the holiday while one is on, else
- * the scene's own once it's unlocked, else the season outside.
+ * The decor to draw for a pick. On auto: the scene's own once it's
+ * unlocked, else the season outside. Holidays are never chosen for you;
+ * they're there to pick.
  */
 export function resolveDecor(
   pick: DecorPick,
@@ -328,8 +415,6 @@ export function resolveDecor(
 ): DecorId | null {
   if (pick === "none") return null;
   if (pick !== "auto") return pick;
-  const holiday = currentHoliday(now);
-  if (holiday) return holiday;
   const decor = SCENE_STYLE[scene].decor;
   if (isUnlocked(DECOR.find((d) => d.id === decor)?.unlock, s)) return decor;
   return currentSeason(now);

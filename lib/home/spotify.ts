@@ -57,6 +57,8 @@ export const useSpotifyPlaying = () =>
 export interface SpotifyController {
   addListener: (event: "playback_update", cb: (e: { data: { isPaused: boolean } }) => void) => void;
   togglePlay?: () => void;
+  pause?: () => void;
+  resume?: () => void;
   destroy?: () => void;
 }
 
@@ -81,6 +83,33 @@ export const useSpotifyReady = () =>
   useSyncExternalStore(subscribeController, () => !!controller?.togglePlay, () => false);
 
 export const toggleSpotify = () => controller?.togglePlay?.();
+
+/** Whether the music was paused for a chime, and when to pick it up again. */
+let hushed = false;
+let hushTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * Pauses the music for a chime, and plays it again `ms` later. Spotify's
+ * player can't be turned down from the page, only paused, and its sound
+ * doesn't pass through ours to be dipped. A chime during a pause it made
+ * only pushes the restart back. Returns whether the music was paused, so
+ * the chime can wait a moment for it to stop.
+ */
+export function hushSpotify(ms: number) {
+  const pausing = playing && !!controller;
+  if (pausing) {
+    (controller!.pause ?? controller!.togglePlay)?.();
+    hushed = true;
+  }
+  if (!hushed) return false;
+  clearTimeout(hushTimer);
+  hushTimer = setTimeout(() => {
+    hushed = false;
+    // Only if it's still paused: they may have started it again themselves.
+    if (!playing) (controller?.resume ?? controller?.togglePlay)?.();
+  }, ms);
+  return pausing;
+}
 
 interface SpotifyIframeApi {
   createController: (

@@ -12,10 +12,10 @@ import {
 } from "./scenes";
 import {
   isDecorPick,
-  isFrameId,
+  isFramePick,
   isPotPick,
   type DecorPick,
-  type FrameId,
+  type FramePick,
   type PotPick,
 } from "./cosmetics";
 import { isPetId, type PetId } from "./pets";
@@ -69,7 +69,7 @@ export interface HomePrefs {
   pot: PotPick;
   decor: DecorPick;
   /** The garden window's frame, and gold-leaf foliage (once earned). */
-  frame: FrameId;
+  frame: FramePick;
   goldLeaf: boolean;
   /** The pet on the chips, or none. */
   pet: PetId | null;
@@ -104,7 +104,7 @@ export const prefsStore = createPersistentStore<HomePrefs>(
       merged.gardenTab = init.gardenTab;
     if (!isPotPick(merged.pot)) merged.pot = init.pot;
     if (!isDecorPick(merged.decor)) merged.decor = init.decor;
-    if (!isFrameId(merged.frame)) merged.frame = init.frame;
+    if (!isFramePick(merged.frame)) merged.frame = init.frame;
     merged.goldLeaf = merged.goldLeaf === true;
     if (!isPetId(merged.pet)) merged.pet = null;
     merged.ambienceVolume = Math.min(

@@ -2,7 +2,7 @@
 
 import { liveGames } from "@/data/home/games";
 import { dayKey, formatNumber, previousDayKey } from "./format";
-import { SCENES } from "./scenes";
+import { rewardsAt } from "./rewards";
 import { getSkill, RETIRED_SKILLS, SKILLS, type SkillId } from "./skills";
 import { useSyncExternalStore } from "react";
 import { createPersistentStore, useStore } from "./store";
@@ -802,27 +802,6 @@ export function levelProgress(xp: number) {
 }
 
 /** Everything a level opens up, for level-up toasts and the "next" teaser. */
-export function unlocksAt(level: number) {
-  return [
-    ...SCENES.filter((s) => s.unlockLevel === level).map(
-      (s) => `${s.name} scene`,
-    ),
-    ...PLANTS.filter((p) => p.unlockLevel === level).map((p) => p.name),
-    ...UPGRADES.filter((u) => u.unlockLevel === level).map((u) => u.name),
-    ...(level % 10 === 0 && level <= 100
-      ? [`the title "${titleFor(level)}"`]
-      : []),
-  ];
-}
-
-export function nextUnlock(level: number) {
-  for (let l = level + 1; l <= level + 20; l++) {
-    const items = unlocksAt(l);
-    if (items.length) return { level: l, items };
-  }
-  return null;
-}
-
 const levelBonus = (level: number) => 50 * level;
 
 // ---------------------------------------------------------- achievements
@@ -1039,7 +1018,7 @@ function commit(
   }
   if (after > before) {
     const items: string[] = [];
-    for (let l = before + 1; l <= after; l++) items.push(...unlocksAt(l));
+    for (let l = before + 1; l <= after; l++) items.push(...rewardsAt(l));
     pushToast({
       kind: "level",
       title: `level ${after}`,

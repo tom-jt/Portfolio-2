@@ -1189,6 +1189,13 @@ html:has([data-site="home"]) {
   }
 }
 
+/* A cog turning: one whole turn a loop. */
+@keyframes home-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* A gull's wings: two beats, then a glide. */
 @keyframes home-gull {
   0%,
