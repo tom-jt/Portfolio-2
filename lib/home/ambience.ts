@@ -254,6 +254,52 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
     ],
     extra: (c, out) => jazz(c, route(gain(c, 0.6), out)),
   },
+  library: {
+    layers: [
+      { file: "library", gain: 0.55 },
+      { file: "clock", gain: 0.3 },
+      // The rain on the tall window, heard from the reading room.
+      { file: "rain-on-window", gain: 0.2, lowpass: 1200, offset: 6 },
+      // Someone turning pages, now and then.
+      { file: "paper", gain: 0.3, bursts: { on: [2, 4], off: [20, 45] } },
+    ],
+  },
+  fireside: {
+    layers: [
+      { file: "campfire", gain: 0.75 },
+      // The storm outside, through log walls.
+      { file: "howling-wind", gain: 0.28, lowpass: 700, offset: 10 },
+    ],
+  },
+  train: {
+    layers: [
+      { file: "inside-a-train", gain: 0.8 },
+      { file: "rain-on-window", gain: 0.2, lowpass: 1800, offset: 7 },
+    ],
+  },
+  cathedral: {
+    layers: [
+      // A great stone hall: footsteps and murmurs far off, all echo.
+      { file: "church", gain: 0.75 },
+      // The sconces burning, close by on the walls.
+      { file: "campfire", gain: 0.12, lowpass: 1800, offset: 30 },
+    ],
+  },
+  greenhouse: {
+    // Rain pattering on the panes overhead, and now and then a drip inside.
+    layers: [{ file: "rain-on-tent", gain: 0.65 }],
+    extra: drips,
+  },
+  morning: {
+    layers: [
+      // Birds outside, through the glass.
+      { file: "birds", gain: 0.5, lowpass: 4000 },
+      // A breeze in the trees across the road.
+      { file: "wind-in-trees", gain: 0.1, lowpass: 2400, offset: 20 },
+      // The cat on the sill, purring when it stirs.
+      { file: "cat-purring", gain: 0.35, bursts: { on: [8, 15], off: [25, 50] } },
+    ],
+  },
 };
 
 // ---------------------------------------------------------------- nature
@@ -309,6 +355,35 @@ function bursts(c: AudioContext, buffer: AudioBuffer, layer: Layer, out: AudioNo
     src.stop(end + 0.05);
     src.onended = () => level.disconnect();
     return hold + span(off);
+  });
+}
+
+/**
+ * Drips in the greenhouse, every few seconds: a water drop's "plink", a
+ * short sine that bends sharply up as the drop's bubble rings, somewhere
+ * from left to right, in a little of the glasshouse's echo. Returns a stop
+ * function.
+ */
+function drips(c: AudioContext, out: AudioNode) {
+  const bus = gain(c, 1);
+  route(bus, out, room(c, 1.2), gain(c, 0.35));
+  bus.connect(out);
+  return every(c, (at) => {
+    const f = 900 + Math.random() * 700;
+    const osc = c.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(f, at);
+    osc.frequency.exponentialRampToValueAtTime(f * 2.4, at + 0.06);
+    const env = c.createGain();
+    env.gain.setValueAtTime(0, at);
+    env.gain.linearRampToValueAtTime(0.012 + Math.random() * 0.012, at + 0.004);
+    env.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
+    const place = c.createStereoPanner();
+    place.pan.value = jitter(1.4);
+    osc.connect(env).connect(place).connect(bus);
+    osc.start(at);
+    osc.stop(at + 0.2);
+    return 4 + Math.random() * 7;
   });
 }
 

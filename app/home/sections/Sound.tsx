@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Bird,
+  BookOpen,
+  FlameKindling,
+  Sprout,
+  TrainFront,
   Building2,
+  Church,
   CloudDrizzle,
   CloudLightning,
   CloudRain,
@@ -21,6 +26,7 @@ import {
   Volume1,
   Volume2,
   Snowflake,
+  Sunrise,
   Sunset,
   Waves,
   Wind,
@@ -115,6 +121,12 @@ const ICONS: Record<AmbienceKind, LucideIcon> = {
   majula: Flame,
   snow: Snowflake,
   city: Building2,
+  cathedral: Church,
+  library: BookOpen,
+  fireside: FlameKindling,
+  train: TrainFront,
+  greenhouse: Sprout,
+  morning: Sunrise,
 };
 
 /**

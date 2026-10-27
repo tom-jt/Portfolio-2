@@ -60,6 +60,11 @@ export type PotId =
   | "daisy"
   | "dusk"
   | "marble"
+  | "leather"
+  | "knit"
+  | "sleeper"
+  | "glasshouse"
+  | "sunrise"
   | "borealis"
   | "bark"
   | "nebula"
@@ -70,7 +75,7 @@ export type PotId =
   | "frost"
   | "tram"
   | "reclaimed"
-  | "steel"
+  | "signage"
   // Made to match the frames.
   | "wood"
   | "stained"
@@ -98,25 +103,30 @@ const SETS: { pot: Exclude<PotId, "classic">; window: DecorId; level: number }[]
   { pot: "marble", window: "cosy", level: at("cafe") },
   { pot: "porcelain", window: "willow", level: 4 },
   { pot: "borealis", window: "ribbons", level: at("p-aurora") },
+  { pot: "leather", window: "pages", level: at("library") },
   { pot: "bark", window: "sunbeams", level: at("p-forest") },
   { pot: "stone", window: "ivy", level: 7 },
+  { pot: "knit", window: "hearth", level: at("cabin") },
   { pot: "nebula", window: "starfield", level: at("p-space") },
   { pot: "copper", window: "lamps", level: 10 },
+  { pot: "sleeper", window: "railside", level: at("train") },
   { pot: "coral", window: "fronds", level: at("p-sunset") },
+  { pot: "glasshouse", window: "misted", level: at("greenhouse") },
   { pot: "enamel", window: "butterflies", level: at("p-alps") },
   { pot: "midnight", window: "moonrise", level: 14 },
+  { pot: "sunrise", window: "blinds", level: at("dawn") },
   { pot: "maple", window: "maples", level: at("p-autumn") },
   { pot: "ashen", window: "embers", level: at("p-majula") },
   { pot: "frost", window: "moonsnow", level: at("p-moonlight") },
   { pot: "gilded", window: "golddust", level: 19 },
   { pot: "tram", window: "tramline", level: at("p-tram") },
   { pot: "reclaimed", window: "neonvines", level: at("p-ruins") },
-  { pot: "steel", window: "wires", level: at("p-overpass") },
+  { pot: "signage", window: "wires", level: at("p-overpass") },
+  { pot: "gothic", window: "candles", level: at("p-cathedral") },
   { pot: "diamond", window: "prisms", level: 30 },
   { pot: "wood", window: "acorns", level: 35 },
   { pot: "stained", window: "panes", level: 50 },
   { pot: "brass", window: "clockwork", level: 65 },
-  { pot: "gothic", window: "candles", level: 85 },
 ];
 
 /** A set piece's unlock: `step` levels after its set opens (none at level 1). */
@@ -134,6 +144,11 @@ const POT_NAMES: Record<PotId, string> = {
   porcelain: "porcelain",
   daisy: "daisy glaze",
   marble: "café marble",
+  leather: "leather-bound",
+  knit: "fair isle knit",
+  sleeper: "sleeper car",
+  glasshouse: "glasshouse",
+  sunrise: "sunrise glaze",
   stone: "mossy stone",
   dusk: "dusk glaze",
   bark: "bark",
@@ -149,12 +164,12 @@ const POT_NAMES: Record<PotId, string> = {
   nebula: "nebula",
   tram: "tram livery",
   reclaimed: "reclaimed concrete",
-  steel: "painted steel",
+  signage: "faded signage",
   diamond: "diamond",
   wood: "oak",
   stained: "stained glass",
   brass: "brass",
-  gothic: "gothic stone",
+  gothic: "cathedral stone",
 };
 
 /** In the order they open up. */
@@ -262,6 +277,11 @@ export type DecorId =
   | "dandelions"
   | "gulls"
   | "cosy"
+  | "pages"
+  | "hearth"
+  | "railside"
+  | "misted"
+  | "blinds"
   | "ribbons"
   | "sunbeams"
   | "starfield"
@@ -288,6 +308,11 @@ const WINDOW_NAMES: Partial<Record<DecorId, string>> = {
   willow: "willow-pattern birds",
   gulls: "gulls at dusk",
   cosy: "café lights",
+  pages: "drifting pages",
+  hearth: "firelight and frost",
+  railside: "passing lights",
+  misted: "misted panes",
+  blinds: "morning blinds",
   ribbons: "aurora ribbons",
   ivy: "creeping ivy",
   sunbeams: "sunbeams",
@@ -307,7 +332,7 @@ const WINDOW_NAMES: Partial<Record<DecorId, string>> = {
   acorns: "falling acorns",
   panes: "coloured light",
   clockwork: "clockwork",
-  candles: "candlelight",
+  candles: "candlelit nave",
 };
 
 export const DECOR: DecorMeta[] = [
@@ -336,6 +361,11 @@ export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
   hill: { decor: "dandelions", pot: "daisy" },
   sunset: { decor: "gulls", pot: "dusk" },
   cafe: { decor: "cosy", pot: "marble" },
+  library: { decor: "pages", pot: "leather" },
+  cabin: { decor: "hearth", pot: "knit" },
+  train: { decor: "railside", pot: "sleeper" },
+  greenhouse: { decor: "misted", pot: "glasshouse" },
+  dawn: { decor: "blinds", pot: "sunrise" },
   "p-aurora": { decor: "ribbons", pot: "borealis" },
   "p-forest": { decor: "sunbeams", pot: "bark" },
   "p-space": { decor: "starfield", pot: "nebula" },
@@ -346,7 +376,8 @@ export const SCENE_STYLE: Record<SceneId, { decor: DecorId; pot: PotId }> = {
   "p-moonlight": { decor: "moonsnow", pot: "frost" },
   "p-tram": { decor: "tramline", pot: "tram" },
   "p-ruins": { decor: "neonvines", pot: "reclaimed" },
-  "p-overpass": { decor: "wires", pot: "steel" },
+  "p-overpass": { decor: "wires", pot: "signage" },
+  "p-cathedral": { decor: "candles", pot: "gothic" },
 };
 
 /** The frame to draw for a pick: the scene's own if it's unlocked, else plain. */

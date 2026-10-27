@@ -494,6 +494,92 @@ html[data-home-scene="cafe"] [data-site="home"] {
   --nav-fg-hover: #ffb867;
 }
 
+/* The later classic scenes, likewise only what differs. */
+html[data-home-scene="library"] [data-site="home"] {
+  --background: #17120e;
+  --muted-foreground: #c8bba3;
+  --primary: #e8c27a;
+  --primary-foreground: #2a1c08;
+  --ring: #e8c27a;
+  --accent-text: #e8c27a;
+  --glass: rgb(26 22 16 / 82%);
+  --glass-strong: rgb(23 19 13 / 93%);
+  --glass-edge: rgb(255 232 196 / 14%);
+  --glass-highlight: rgb(255 242 222 / 8%);
+  --glow: #e8c27a; /* the lamp */
+  --glow-2: #7fb08a; /* its green shade */
+  --glow-3: #c98a5a; /* the leather spines */
+  --nav-fg-hover: #e8c27a;
+}
+
+html[data-home-scene="cabin"] [data-site="home"] {
+  --background: #22140d;
+  --muted-foreground: #d6bfa8;
+  --primary: #ffa25a;
+  --primary-foreground: #2a1206;
+  --ring: #ffa25a;
+  --accent-text: #ffa25a;
+  --glass: rgb(38 22 14 / 82%);
+  --glass-strong: rgb(35 19 11 / 93%);
+  --glass-edge: rgb(255 214 180 / 14%);
+  --glass-highlight: rgb(255 236 220 / 8%);
+  --glow: #ffa25a; /* the fire */
+  --glow-2: #a9c8ff; /* the snow outside */
+  --glow-3: #d0503e; /* the wool */
+  --nav-fg-hover: #ffa25a;
+}
+
+html[data-home-scene="train"] [data-site="home"] {
+  --background: #0a0f1f;
+  --muted-foreground: #aab3cc;
+  --primary: #ffc46b;
+  --primary-foreground: #2a1a06;
+  --ring: #ffc46b;
+  --accent-text: #ffc46b;
+  --glass: rgb(12 18 38 / 82%);
+  --glass-strong: rgb(9 15 35 / 93%);
+  --glass-edge: rgb(210 222 255 / 14%);
+  --glass-highlight: rgb(236 242 255 / 8%);
+  --glow: #ffc46b; /* the carriage lamps */
+  --glow-2: #8fb4ff; /* the moonlight */
+  --glow-3: #ff9a6b; /* lights going by */
+  --nav-fg-hover: #ffc46b;
+}
+
+html[data-home-scene="greenhouse"] [data-site="home"] {
+  --background: #142219;
+  --muted-foreground: #b9cdbf;
+  --primary: #b8e6a0;
+  --primary-foreground: #13260d;
+  --ring: #b8e6a0;
+  --accent-text: #b8e6a0;
+  --glass: rgb(18 34 26 / 82%);
+  --glass-strong: rgb(15 31 23 / 93%);
+  --glass-edge: rgb(214 245 225 / 14%);
+  --glass-highlight: rgb(236 255 242 / 8%);
+  --glow: #b8e6a0; /* the leaves */
+  --glow-2: #ffd59a; /* the bulbs */
+  --glow-3: #cfe6ee; /* the misted glass */
+  --nav-fg-hover: #b8e6a0;
+}
+
+html[data-home-scene="dawn"] [data-site="home"] {
+  --background: #2c2338;
+  --muted-foreground: #d8c6d8;
+  --primary: #ffb98a;
+  --primary-foreground: #2e1608;
+  --ring: #ffb98a;
+  --accent-text: #ffb98a;
+  --glass: rgb(44 34 56 / 82%);
+  --glass-strong: rgb(41 31 53 / 93%);
+  --glass-edge: rgb(255 226 214 / 14%);
+  --glass-highlight: rgb(255 242 236 / 8%);
+  --glow: #ffb98a; /* the sun */
+  --glow-2: #c9b0f0; /* the lilac sky */
+  --glow-3: #ffe0a0; /* its gold */
+  --nav-fg-hover: #ffb98a;
+}
+
 /* Picture scenes. Only what differs from the base palette above:
    the ground, the glass tint, and glows taken from each photograph. */
 html[data-home-scene="p-aurora"] [data-site="home"] {
@@ -632,6 +718,23 @@ html[data-home-scene="p-moonlight"] [data-site="home"] {
   --glow-2: #eef7ff; /* the snow */
   --glow-3: #93aaff;
   --nav-fg-hover: #9ed6ff;
+}
+
+html[data-home-scene="p-cathedral"] [data-site="home"] {
+  --background: #12141c;
+  --muted-foreground: #b8b4c4;
+  --primary: #ffb066;
+  --primary-foreground: #2a1406;
+  --ring: #ffb066;
+  --accent-text: #ffb066;
+  --glass: rgb(18 18 26 / 84%);
+  --glass-strong: rgb(15 15 22 / 94%);
+  --glass-edge: rgb(220 220 255 / 13%);
+  --glass-highlight: rgb(240 240 255 / 7%);
+  --glow: #ffb066; /* the sconces */
+  --glow-2: #9cc4ff; /* the windows */
+  --glow-3: #c9a24a; /* the gilding */
+  --nav-fg-hover: #ffb066;
 }
 
 html[data-home-scene="p-tram"] [data-site="home"] {
@@ -813,6 +916,86 @@ html[data-home-theme="mocha"] [data-site="home"],
   --nav-fg: #e5d2bd;
 }
 
+/* Made for the night library: a green lamp and its brass. */
+html[data-home-theme="lamplight"] [data-site="home"],
+[data-home-swatch="lamplight"] {
+  --foreground: #f6eedf;
+  --muted-foreground: #c8bba3;
+  --primary-foreground: #2a1c08;
+  --glass: rgb(26 22 16 / 82%);
+  --glass-strong: rgb(23 19 13 / 93%);
+  --glass-edge: rgb(255 232 196 / 14%);
+  --glass-highlight: rgb(255 242 222 / 8%);
+  --glow: #e8c27a;
+  --glow-2: #7fb08a;
+  --glow-3: #c98a5a;
+  --nav-fg: #e2d6c0;
+}
+
+/* Made for the snowed-in cabin: firelight, wool, and snow. */
+html[data-home-theme="fireside"] [data-site="home"],
+[data-home-swatch="fireside"] {
+  --foreground: #fbefe4;
+  --muted-foreground: #d6bfa8;
+  --primary-foreground: #2a1206;
+  --glass: rgb(38 22 14 / 82%);
+  --glass-strong: rgb(35 19 11 / 93%);
+  --glass-edge: rgb(255 214 180 / 14%);
+  --glass-highlight: rgb(255 236 220 / 8%);
+  --glow: #ffa25a;
+  --glow-2: #a9c8ff;
+  --glow-3: #d0503e;
+  --nav-fg: #ecd6c2;
+}
+
+/* Made for the night train: lamplight in a dark carriage. */
+html[data-home-theme="nightrail"] [data-site="home"],
+[data-home-swatch="nightrail"] {
+  --foreground: #eef1fa;
+  --muted-foreground: #aab3cc;
+  --primary-foreground: #2a1a06;
+  --glass: rgb(12 18 38 / 82%);
+  --glass-strong: rgb(9 15 35 / 93%);
+  --glass-edge: rgb(210 222 255 / 14%);
+  --glass-highlight: rgb(236 242 255 / 8%);
+  --glow: #ffc46b;
+  --glow-2: #8fb4ff;
+  --glow-3: #ff9a6b;
+  --nav-fg: #c6cde0;
+}
+
+/* Made for the greenhouse: fern, warm bulbs, misted glass. */
+html[data-home-theme="fern"] [data-site="home"],
+[data-home-swatch="fern"] {
+  --foreground: #f0f8f1;
+  --muted-foreground: #b9cdbf;
+  --primary-foreground: #13260d;
+  --glass: rgb(18 34 26 / 82%);
+  --glass-strong: rgb(15 31 23 / 93%);
+  --glass-edge: rgb(214 245 225 / 14%);
+  --glass-highlight: rgb(236 255 242 / 8%);
+  --glow: #b8e6a0;
+  --glow-2: #ffd59a;
+  --glow-3: #cfe6ee;
+  --nav-fg: #d0e2d4;
+}
+
+/* Made for the desk at dawn: the sky as the sun comes up. */
+html[data-home-theme="daybreak"] [data-site="home"],
+[data-home-swatch="daybreak"] {
+  --foreground: #fff4ee;
+  --muted-foreground: #d8c6d8;
+  --primary-foreground: #2e1608;
+  --glass: rgb(44 34 56 / 82%);
+  --glass-strong: rgb(41 31 53 / 93%);
+  --glass-edge: rgb(255 226 214 / 14%);
+  --glass-highlight: rgb(255 242 236 / 8%);
+  --glow: #ffb98a;
+  --glow-2: #c9b0f0;
+  --glow-3: #ffe0a0;
+  --nav-fg: #ead8e2;
+}
+
 /* Made for the sunlit forest: its sunbeams and moss. */
 html[data-home-theme="canopy"] [data-site="home"],
 [data-home-swatch="canopy"] {
@@ -875,6 +1058,22 @@ html[data-home-theme="maple"] [data-site="home"],
   --glow-2: #ffd27a;
   --glow-3: #e0503a;
   --nav-fg: #ecd2bf;
+}
+
+/* Made for the candlelit cathedral: sconces, cold glass, and gilt. */
+html[data-home-theme="vespers"] [data-site="home"],
+[data-home-swatch="vespers"] {
+  --foreground: #f2eee8;
+  --muted-foreground: #b8b4c4;
+  --primary-foreground: #2a1406;
+  --glass: rgb(18 18 26 / 84%);
+  --glass-strong: rgb(15 15 22 / 94%);
+  --glass-edge: rgb(220 220 255 / 13%);
+  --glass-highlight: rgb(240 240 255 / 7%);
+  --glow: #ffb066;
+  --glow-2: #9cc4ff;
+  --glow-3: #c9a24a;
+  --nav-fg: #d6d0dc;
 }
 
 /* Made for the rainy tram stop: the tram's mint and pink in the rain. */

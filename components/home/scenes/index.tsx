@@ -4,11 +4,16 @@ import type { ComponentType } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { SceneId } from "@/lib/home/scenes";
 import { useHydrated } from "@/lib/home/store";
+import CabinScene from "./CabinScene";
 import CafeScene from "./CafeScene";
+import DawnScene from "./DawnScene";
+import GreenhouseScene from "./GreenhouseScene";
 import HillScene from "./HillScene";
+import LibraryScene from "./LibraryScene";
 import PhotoScene, { type PhotoId } from "./PhotoScene";
 import RainScene from "./RainScene";
 import SunsetScene from "./SunsetScene";
+import TrainScene from "./TrainScene";
 
 const photo = (id: PhotoId) => {
   const Scene = () => <PhotoScene id={id} />;
@@ -22,6 +27,11 @@ const BACKGROUNDS: Record<SceneId, ComponentType> = {
   hill: HillScene,
   sunset: SunsetScene,
   cafe: CafeScene,
+  library: LibraryScene,
+  cabin: CabinScene,
+  train: TrainScene,
+  greenhouse: GreenhouseScene,
+  dawn: DawnScene,
   "p-aurora": photo("aurora"),
   "p-forest": photo("forest"),
   "p-space": photo("space"),
@@ -33,6 +43,7 @@ const BACKGROUNDS: Record<SceneId, ComponentType> = {
   "p-tram": photo("tram"),
   "p-ruins": photo("ruins"),
   "p-overpass": photo("overpass"),
+  "p-cathedral": photo("cathedral"),
 };
 
 /**

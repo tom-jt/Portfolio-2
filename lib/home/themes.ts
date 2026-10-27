@@ -22,6 +22,11 @@ export type ThemeId =
   | "meadow"
   | "lavender"
   | "mocha"
+  | "lamplight"
+  | "fireside"
+  | "nightrail"
+  | "fern"
+  | "daybreak"
   | "ember"
   | "sakura"
   | "aurora"
@@ -33,7 +38,8 @@ export type ThemeId =
   | "maple"
   | "mint"
   | "overgrowth"
-  | "haze";
+  | "haze"
+  | "vespers";
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -71,6 +77,36 @@ export const THEMES: ThemeMeta[] = [
     pairsWith: "sunset",
   },
   { id: "mocha", name: "mocha", hint: "latte and cinnamon", pairsWith: "cafe" },
+  {
+    id: "lamplight",
+    name: "lamplight",
+    hint: "bottle green and brass",
+    pairsWith: "library",
+  },
+  {
+    id: "fireside",
+    name: "fireside",
+    hint: "firelight and wool red",
+    pairsWith: "cabin",
+  },
+  {
+    id: "nightrail",
+    name: "night rail",
+    hint: "navy and lamplit amber",
+    pairsWith: "train",
+  },
+  {
+    id: "fern",
+    name: "fern",
+    hint: "fern green and misted glass",
+    pairsWith: "greenhouse",
+  },
+  {
+    id: "daybreak",
+    name: "daybreak",
+    hint: "peach, lilac, and first gold",
+    pairsWith: "dawn",
+  },
   {
     id: "canopy",
     name: "canopy",
@@ -112,6 +148,12 @@ export const THEMES: ThemeMeta[] = [
     name: "haze",
     hint: "sun-faded signs and green steel",
     pairsWith: "p-overpass",
+  },
+  {
+    id: "vespers",
+    name: "vespers",
+    hint: "candlelight and cold stained glass",
+    pairsWith: "p-cathedral",
   },
   // Earned: a third row that fills in as the garden grows.
   {

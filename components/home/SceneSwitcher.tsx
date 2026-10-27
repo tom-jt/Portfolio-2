@@ -82,11 +82,11 @@ const SceneRow = ({
         aria-pressed={active}
         onClick={onPick}
         className={cn(
-          "focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-xl p-2 text-left transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed",
+          "focus-visible:ring-ring flex w-full cursor-pointer items-center gap-2 rounded-xl p-1.5 text-left transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed",
           active ? "bg-white/10" : "hover:bg-white/6",
         )}
       >
-        <span className="border-glass-edge relative size-11 shrink-0 overflow-hidden rounded-lg border">
+        <span className="border-glass-edge relative size-10 shrink-0 overflow-hidden rounded-lg border">
           <ScenePreview
             scene={s.id}
             className={cn("size-full", locked && "opacity-45")}
@@ -95,20 +95,20 @@ const SceneRow = ({
         <span className="min-w-0 flex-1">
           <span
             className={cn(
-              "block text-sm font-medium",
+              "block text-sm leading-tight font-medium",
               locked && "text-muted-foreground",
             )}
           >
             {s.name}
           </span>
-          <span className="text-muted-foreground block text-xs">
+          <span className="text-muted-foreground mt-0.5 block text-xs leading-tight">
             {locked ? `level ${s.unlockLevel}` : getAmbience(s.ambience).label}
           </span>
         </span>
         {locked ? (
-          <Lock className="text-muted-foreground size-4" />
+          <Lock className="text-muted-foreground size-3.5 shrink-0" />
         ) : active ? (
-          <Check className="text-glow size-4" />
+          <Check className="text-glow size-3.5 shrink-0" />
         ) : null}
       </button>
     </li>
@@ -168,13 +168,13 @@ const SceneSwitcher = () => {
             transition={{ duration: 0.16 }}
             // Scenes and colours side by side where there's room, each
             // scrolling on its own; stacked, scrolling together, on phones.
-            className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 flex max-h-[calc(100dvh-5rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-right flex-col gap-2 overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] md:w-[40rem] md:flex-row md:overflow-hidden"
+            className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 flex max-h-[calc(100dvh-5rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-right flex-col gap-2 overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] md:w-[min(48rem,calc(100vw-2rem))] md:flex-row md:overflow-hidden"
           >
-            <div className="md:w-72 md:shrink-0 md:overflow-y-auto">
+            <div className="md:w-[28rem] md:shrink-0 md:overflow-y-auto">
               <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
                 classic scenes
               </p>
-              <ul className="flex flex-col gap-1">
+              <ul className="grid gap-1 md:grid-cols-2">
                 {SCENES.filter((s) => !s.photo).map((s) => (
                   <SceneRow
                     key={s.id}
@@ -188,7 +188,7 @@ const SceneSwitcher = () => {
               <p className="text-muted-foreground px-2.5 pt-4 pb-2 text-xs font-medium">
                 picture scenes
               </p>
-              <ul className="flex flex-col gap-1">
+              <ul className="grid gap-1 md:grid-cols-2">
                 {SCENES.filter((s) => s.photo).map((s) => (
                   <SceneRow
                     key={s.id}

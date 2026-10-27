@@ -25,7 +25,8 @@ export type PhotoId =
   | "moonlight"
   | "tram"
   | "ruins"
-  | "overpass";
+  | "overpass"
+  | "cathedral";
 
 const ASPECT: Record<PhotoId, number> = {
   aurora: 16 / 9,
@@ -39,6 +40,7 @@ const ASPECT: Record<PhotoId, number> = {
   tram: 16 / 9,
   ruins: 16 / 9,
   overpass: 2560 / 1192,
+  cathedral: 16 / 9,
 };
 
 export const photoSrc = (id: PhotoId) => `/home/scenes/${id}.webp`;
@@ -602,6 +604,11 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       <Glow x={30} y={18} size={30} color="rgb(255 140 60 / 0.28)" period={12} delay={-4} />
       <Glow x={52} y={74} size={34} color="rgb(255 190 120 / 0.25)" period={11} delay={-2} />
       <Glow x={78} y={66} size={30} color="rgb(240 220 120 / 0.2)" period={14} delay={-7} />
+      {/* Shafts of low sun fanning out through the trees, swaying slowly. */}
+      <Beam x={47} y={22} width={12} length={95} angle={30} color="rgb(255 215 140 / 0.3)" period={18} />
+      <Beam x={53} y={24} width={8} length={95} angle={12} color="rgb(255 230 170 / 0.26)" period={23} delay={-7} />
+      <Beam x={58} y={24} width={10} length={95} angle={-12} color="rgb(255 210 140 / 0.26)" period={26} delay={-12} />
+      <Beam x={62} y={22} width={7} length={90} angle={-30} color="rgb(255 225 160 / 0.22)" period={21} delay={-4} />
       {/* Dust turning in the shaft of light. */}
       <Motes seed={83} count={14} box={[45, 25, 68, 62]} color="rgb(255 225 170 / 0.7)" rise={-90} />
       <Leaves seed={89} count={34} box={[0, -8, 100, 40]} />
@@ -709,8 +716,36 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       <Neon x={38.3} y={40} size={4} color="rgb(110 150 255 / 0.4)" period={7} delay={-4} />
       {/* Dust in the sunlight, and birds now and then over the rooftops. */}
       <Motes seed={157} count={20} box={[50, 15, 98, 75]} color="rgb(255 235 200 / 0.75)" rise={-100} />
-      <Flock x={58} y={6} across={30} period={40} color="rgb(60 50 45 / 0.85)" />
-      <Flock x={8} y={14} across={25} period={55} delay={-25} color="rgb(60 50 45 / 0.75)" />
+      <Flock x={58} y={6} across={30} period={40} color="rgb(255 255 255 / 0.9)" />
+      <Flock x={8} y={14} across={25} period={55} delay={-25} color="rgb(255 255 255 / 0.8)" />
+    </>
+  ),
+  cathedral: () => (
+    <>
+      {/* Cold light through the tall windows behind the altar, falling down
+          the nave, with dust turning in it. */}
+      <Glow x={49.5} y={16} size={30} color="rgb(140 190 255 / 0.3)" period={10} />
+      <Beam x={41} y={14} width={6} length={60} angle={8} color="rgb(170 210 255 / 0.14)" period={19} />
+      <Beam x={47} y={14} width={7} length={64} angle={0} color="rgb(170 210 255 / 0.16)" period={23} delay={-8} />
+      <Beam x={53} y={14} width={6} length={60} angle={-8} color="rgb(170 210 255 / 0.14)" period={21} delay={-4} />
+      <Motes seed={163} count={18} box={[40, 20, 60, 62]} color="rgb(200 220 255 / 0.6)" rise={-80} />
+      {/* The sconces on the pillars, and the ember on the altar steps. */}
+      {[
+        [18.4, 25.5, 3],
+        [28, 32.5, 2.2],
+        [81.1, 25.5, 3],
+        [71.8, 33, 2.2],
+      ].map(([x, y, size], i) => (
+        <span key={x}>
+          <Glow x={x} y={y - 1} size={size * 4} color="rgb(255 170 80 / 0.4)" period={1.4 + i * 0.2} delay={-i * 0.3} />
+          <Fire x={x} y={y} size={size} />
+        </span>
+      ))}
+      <Glow x={49.7} y={49} size={6} color="rgb(255 150 60 / 0.5)" period={1.8} />
+      <Motes seed={167} count={8} box={[48.5, 44, 51, 50]} color="rgb(255 160 70 / 0.9)" rise={-120} />
+      {/* The windows' light shimmering on the wet floor. */}
+      <Glow x={50} y={76} size={30} color="rgb(120 160 255 / 0.16)" period={6} />
+      <Twinkles seed={173} count={20} box={[35, 60, 65, 95]} color="#cfe0ff" size={[0.8, 1.8]} speed={[1.5, 4]} />
     </>
   ),
 };
@@ -795,6 +830,7 @@ const MOTION: Partial<Record<PhotoId, string>> = {
   moonlight: "home-slow-zoom 130s ease-in-out infinite alternate",
   ruins: "home-slow-zoom 140s ease-in-out infinite alternate",
   overpass: "home-slow-zoom 150s ease-in-out infinite alternate",
+  cathedral: "home-slow-zoom 140s ease-in-out infinite alternate",
   // Not the tram: zoomed, pixel art shimmers.
 };
 

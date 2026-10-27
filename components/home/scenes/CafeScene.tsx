@@ -18,6 +18,8 @@ interface Layout {
   counter: number;
   cup: { x: number; y: number; s: number };
   lamps: { x: number; y: number }[];
+  /** Where the things along the counter stand, or null where there's no room. */
+  deco: { plant: number; books: number | null; candle: number; croissant: number | null };
 }
 
 function layout(w: number, h: number): Layout {
@@ -37,7 +39,155 @@ function layout(w: number, h: number): Layout {
           { x: w * 0.3, y: h * 0.13 },
           { x: w * 0.7, y: h * 0.13 },
         ],
+    // Spread out from the middle either side of the cup; a phone keeps the
+    // plant and the candle only.
+    deco: portrait
+      ? { plant: w * 0.17, books: null, candle: w * 0.44, croissant: null }
+      : { plant: w * 0.27, books: w * 0.385, candle: w * 0.5, croissant: w * 0.775 },
   };
+}
+
+/** A shadow on the counter under something standing on it. */
+function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, s: number) {
+  ctx.fillStyle = "rgba(10,5,2,0.4)";
+  ctx.beginPath();
+  ctx.ellipse(x + 6 * s, y + 4 * s, rx, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** A succulent in a little terracotta pot. */
+function drawPlant(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rand: () => number) {
+  shadow(ctx, x, y, 22 * s, s);
+  // Leaves first, fanning out of the soil: the back ones darker.
+  for (let i = 0; i < 11; i++) {
+    const back = i < 5;
+    const a = lerp(-1.25, 1.25, (i % 6) / 5) + lerp(-0.12, 0.12, rand());
+    const len = (back ? lerp(18, 24, rand()) : lerp(12, 18, rand())) * s;
+    ctx.save();
+    ctx.translate(x, y - 22 * s);
+    ctx.rotate(a);
+    ctx.fillStyle = back ? "#3f6e4a" : ["#5f9a6a", "#6fae78", "#7cba82"][i % 3];
+    ctx.beginPath();
+    ctx.moveTo(-3.6 * s, 0);
+    ctx.quadraticCurveTo(-4 * s, -len * 0.6, 0, -len);
+    ctx.quadraticCurveTo(4 * s, -len * 0.6, 3.6 * s, 0);
+    ctx.fill();
+    // A blush at the tip, as succulents get.
+    ctx.fillStyle = "rgba(220,120,110,0.45)";
+    ctx.beginPath();
+    ctx.ellipse(0, -len + 2 * s, 1.4 * s, 2.4 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // The pot: rim, then a tapered body, lit from the left.
+  const body = ctx.createLinearGradient(x - 14 * s, 0, x + 14 * s, 0);
+  body.addColorStop(0, "#c8724a");
+  body.addColorStop(1, "#7e3f24");
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(x - 13 * s, y - 18 * s);
+  ctx.lineTo(x + 13 * s, y - 18 * s);
+  ctx.lineTo(x + 10 * s, y);
+  ctx.lineTo(x - 10 * s, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#b5623e";
+  ctx.fillRect(x - 15 * s, y - 24 * s, 30 * s, 7 * s);
+  ctx.fillStyle = "rgba(255,210,170,0.25)";
+  ctx.fillRect(x - 15 * s, y - 24 * s, 30 * s, 1.5 * s);
+}
+
+/** Two books lying one on the other, and a pen across the top. */
+function drawBooks(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  shadow(ctx, x, y, 44 * s, s);
+  const book = (bx: number, by: number, bw: number, bh: number, cover: string) => {
+    // The cover, and the pages showing along the near edge.
+    ctx.fillStyle = cover;
+    ctx.fillRect(bx - bw / 2, by - bh, bw, bh);
+    ctx.fillStyle = "#e9dcc4";
+    ctx.fillRect(bx - bw / 2 + 3 * s, by - bh + 2.5 * s, bw - 6 * s, bh - 5 * s);
+    ctx.fillStyle = "rgba(120,95,70,0.35)";
+    for (let ly = by - bh + 4 * s; ly < by - 3 * s; ly += 1.8 * s) ctx.fillRect(bx - bw / 2 + 3 * s, ly, bw - 6 * s, 0.6 * s);
+    ctx.fillStyle = "rgba(255,225,190,0.2)";
+    ctx.fillRect(bx - bw / 2, by - bh, bw, 1.2 * s);
+  };
+  book(x, y, 84 * s, 13 * s, "#3f5a6a");
+  book(x - 4 * s, y - 13 * s, 70 * s, 11 * s, "#7a3b2e");
+  // The pen, lying slightly askew.
+  ctx.save();
+  ctx.translate(x + 2 * s, y - 25.5 * s);
+  ctx.rotate(-0.08);
+  ctx.fillStyle = "#1f1a18";
+  ctx.fillRect(-28 * s, -1.8 * s, 50 * s, 3.6 * s);
+  ctx.fillStyle = "#c9a45a";
+  ctx.fillRect(14 * s, -2 * s, 3 * s, 4 * s);
+  ctx.fillRect(-28 * s, -1.8 * s, 4 * s, 3.6 * s);
+  ctx.restore();
+}
+
+/** A candle in a glass, its flame drawn on the front canvas. */
+function drawCandle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  shadow(ctx, x, y, 18 * s, s);
+  // Wax, cream and lit warm from its own flame.
+  const wax = ctx.createLinearGradient(0, y - 24 * s, 0, y);
+  wax.addColorStop(0, "#fff0cf");
+  wax.addColorStop(1, "#d9c09a");
+  ctx.fillStyle = wax;
+  ctx.fillRect(x - 11 * s, y - 22 * s, 22 * s, 22 * s);
+  ctx.fillStyle = "#f6dfb0";
+  ctx.beginPath();
+  ctx.ellipse(x, y - 22 * s, 11 * s, 2.6 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#2a1a10";
+  ctx.lineWidth = 1.2 * s;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 22 * s);
+  ctx.lineTo(x + 0.6 * s, y - 27 * s);
+  ctx.stroke();
+  // The glass round it: faint, with a bright edge where the light catches.
+  ctx.fillStyle = "rgba(255,235,210,0.1)";
+  ctx.fillRect(x - 14 * s, y - 36 * s, 28 * s, 36 * s);
+  ctx.strokeStyle = "rgba(255,230,200,0.35)";
+  ctx.lineWidth = 1.2 * s;
+  ctx.strokeRect(x - 14 * s, y - 36 * s, 28 * s, 36 * s);
+  ctx.fillStyle = "rgba(255,245,230,0.35)";
+  ctx.fillRect(x - 11 * s, y - 33 * s, 2 * s, 28 * s);
+}
+
+/** A croissant on a small plate. */
+function drawCroissant(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  shadow(ctx, x, y, 40 * s, s);
+  ctx.fillStyle = "#d9cab5";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 38 * s, 7 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#c4b39c";
+  ctx.beginPath();
+  ctx.ellipse(x, y - 1 * s, 26 * s, 4.4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Its segments, plumpest in the middle, each a little darker at the seam.
+  const segs = [-22, -13, -4, 5, 14, 22];
+  for (const [i, dx] of segs.entries()) {
+    const mid = 1 - Math.abs(i - 2.5) / 3;
+    const rx = lerp(6, 9, mid) * s;
+    const ry = lerp(5, 10, mid) * s;
+    const cy = y - 4 * s - ry + Math.abs(dx) * 0.12 * s;
+    const g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
+    g.addColorStop(0, "#e8a85a");
+    g.addColorStop(1, "#9a5a26");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x + dx * s, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90,45,15,0.5)";
+    ctx.lineWidth = 0.8 * s;
+    ctx.stroke();
+  }
+  // A shine across the top.
+  ctx.fillStyle = "rgba(255,225,170,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(x - 2 * s, y - 20 * s, 9 * s, 2 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawStreet(ctx: CanvasRenderingContext2D, win: Layout["win"], rand: () => number) {
@@ -308,6 +458,13 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.ellipse(cx, cy - 34 * s, 21 * s, 3.6 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // The rest of the counter, out either side of the cup.
+  const { plant, books, candle, croissant } = l.deco;
+  drawPlant(ctx, plant, l.counter, s, rand);
+  if (books !== null) drawBooks(ctx, books, l.counter, s);
+  drawCandle(ctx, candle, l.counter, s);
+  if (croissant !== null) drawCroissant(ctx, croissant, l.counter, s);
+
   // Pendant lamps: cord and shade. Their glow is on the front canvas.
   for (const lamp of l.lamps) {
     ctx.strokeStyle = "#0d0805";
@@ -405,6 +562,28 @@ const CafeScene = () => {
 
       const steam = Array.from({ length: 22 }, () => ({ age: rand() * 4, seed: rand() * 10 }));
 
+      // The candle's flame and its glow, drawn once and stamped each frame.
+      const fs = l.cup.s;
+      const flame = document.createElement("canvas");
+      flame.width = Math.ceil(10 * fs);
+      flame.height = Math.ceil(20 * fs);
+      {
+        const g = flame.getContext("2d")!;
+        const fw = flame.width;
+        const fh = flame.height;
+        const grad = g.createLinearGradient(0, fh, 0, 0);
+        grad.addColorStop(0, "#ff9a3c");
+        grad.addColorStop(0.45, "#ffd27a");
+        grad.addColorStop(1, "#fff6d8");
+        g.fillStyle = grad;
+        g.beginPath();
+        g.moveTo(fw / 2, 0);
+        g.quadraticCurveTo(fw, fh * 0.62, fw / 2, fh);
+        g.quadraticCurveTo(0, fh * 0.62, fw / 2, 0);
+        g.fill();
+      }
+      const candleGlow = glowSprite(46 * fs, "255,180,100");
+
       const frame = (t: number, dt: number) => {
         ctx.clearRect(0, 0, w, h);
 
@@ -485,6 +664,19 @@ const CafeScene = () => {
           g.addColorStop(1, "rgba(255,170,90,0)");
           ctx.fillStyle = g;
           ctx.fillRect(lamp.x - r, cy - r, r * 2, r * 2);
+        }
+
+        // The candle flickering in its glass.
+        {
+          const fx = l.deco.candle;
+          const fy = l.counter - 27 * fs;
+          const flick = 1 + Math.sin(t * 9.1) * 0.06 + Math.sin(t * 13.7) * 0.05;
+          ctx.globalAlpha = 0.32 * flick;
+          ctx.drawImage(candleGlow, fx - candleGlow.width / 2, fy - candleGlow.height / 2);
+          ctx.globalAlpha = 1;
+          const fw = flame.width * (2 - flick);
+          const fh = flame.height * flick;
+          ctx.drawImage(flame, fx - fw / 2 + Math.sin(t * 5.3) * 0.6 * fs, fy - fh, fw, fh);
         }
 
         // Steam off the cup.

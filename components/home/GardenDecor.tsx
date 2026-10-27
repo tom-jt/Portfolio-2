@@ -455,6 +455,54 @@ const onWire = (wire: [number, number, number], x: number) => {
   return (1 - t) ** 2 * wire[0] + 2 * (1 - t) * t * wire[1] + t ** 2 * wire[2];
 };
 
+/** Drifting pages: a loose leaf from a book, lines of print on it. */
+const Page = () => (
+  <svg viewBox="0 0 10 12" className="size-full" aria-hidden="true">
+    <path d="M0.5 0.5 H8 L9.5 2 V11.5 H0.5 Z" fill="#f3e8d0" />
+    <path d="M2 3 H8 M2 4.8 H8 M2 6.6 H7 M2 8.4 H8 M2 10 H6" stroke="#a89878" strokeWidth="0.4" />
+  </svg>
+);
+
+/** Passing lights: a lamp going by, a bright head trailing a streak that
+ *  fades behind it, the glow round both from one soft gradient so the two
+ *  meet without a seam. */
+const PassingLight = ({ length, color }: { length: number; color: string }) => (
+  <span className="relative block h-2" style={{ width: length }}>
+    <span
+      className="absolute inset-0 rounded-full"
+      style={{ background: `radial-gradient(ellipse 100% 50% at 100% 50%, rgb(${color} / 0.35), transparent 70%)` }}
+    />
+    <span
+      className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2"
+      style={{ background: `linear-gradient(to right, transparent, rgb(${color} / 0.9))` }}
+    />
+    <span
+      className="absolute top-1/2 right-0 size-1 translate-x-1/3 -translate-y-1/2 rounded-full"
+      style={{ background: `rgb(${color})`, boxShadow: `0 0 4px 1px rgb(${color} / 0.8)` }}
+    />
+  </span>
+);
+
+/** Misted panes: a fern trailing from its basket. */
+const HangingFern = () => (
+  <svg viewBox="0 0 24 26" className="block w-10" aria-hidden="true">
+    <path d="M3 5 Q12 10 21 5 L19 9 H5 Z" fill="#8a6a44" />
+    <g stroke="#4f8a4a" strokeWidth="1.1" fill="none" strokeLinecap="round">
+      <path d="M8 8 Q4 14 3 22" />
+      <path d="M11 9 Q10 16 8 25" />
+      <path d="M14 9 Q15 16 17 24" />
+      <path d="M17 8 Q21 13 22 19" />
+    </g>
+    <g fill="#6aa65f">
+      {[
+        [4.6, 14], [3.6, 19], [9.6, 15], [8.8, 21], [15, 15], [16.2, 20], [19.8, 12], [21.2, 16],
+      ].map(([x, y]) => (
+        <ellipse key={`${x}-${y}`} cx={x} cy={y} rx="1.6" ry="0.8" transform={`rotate(30 ${x} ${y})`} />
+      ))}
+    </g>
+  </svg>
+);
+
 const BULBS = ["#ff5f5f", "#ffd35c", "#6fe08a", "#6fb8ff", "#ff8fe0"];
 /** Four dips of fairy-light wire across the top, in a 100×14 box. */
 const WIRE = "M0 2 Q12.5 12 25 2 Q37.5 12 50 2 Q62.5 12 75 2 Q87.5 12 100 2";
@@ -936,13 +984,115 @@ const DECOR: Record<DecorId, () => ReactNode> = {
       <Cog size={44} teeth={10} period={33} reverse className="-top-3 -right-3 opacity-70" />
     </>
   ),
-  // Gothic stone: candles burning on the sill.
+  // The candlelit cathedral: tall lancets of blue glass far off, light
+  // falling from them, and candles on the sill.
   candles: () => (
     <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_10%,rgb(120_170_255/0.2),transparent_60%)]" />
+      {[38, 46, 54].map((x, i) => (
+        <span
+          key={x}
+          className="absolute top-[8%] h-[34%] w-[6%] rounded-t-full bg-[linear-gradient(to_bottom,rgb(190_220_255/0.55),rgb(120_170_255/0.25))] shadow-[0_0_12px_2px_rgb(140_190_255/0.35)]"
+          style={{ left: `${x}%`, animation: `home-flicker ${9 + i * 2}s ease-in-out ${-i * 3}s infinite` }}
+        />
+      ))}
+      <span
+        className="absolute top-[30%] left-[34%] h-[80%] w-[32%] origin-top mix-blend-screen bg-[linear-gradient(to_right,transparent,rgb(170_205_255/0.14)_30%,rgb(170_205_255/0.14)_70%,transparent)] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+        style={{ animation: "home-sway-beam 16s ease-in-out infinite alternate" }}
+      />
       <span className="absolute inset-x-0 bottom-0 h-1/3 bg-[radial-gradient(ellipse_at_bottom,rgb(255_170_80/0.16),transparent_70%)]" />
       <Candle left="5%" height={22} delay={0} />
       <Candle left="11%" height={14} delay={0.7} />
       <Candle left="90%" height={18} delay={0.35} />
+    </>
+  ),
+  // The night library: lamplight in one corner, loose pages drifting down
+  // through it, and dust.
+  pages: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_100%,rgb(255_200_120/0.22),transparent_60%)]" />
+      {pieces(157, 7, [10, 13], [11, 17]).map((p, i) => (
+        <Faller key={i} p={{ ...p, spin: p.spin * 0.6 }}>
+          <Page />
+        </Faller>
+      ))}
+      <Risers seed={163} count={10} box={[5, 50, 45, 95]} rise={-50} duration={[7, 12]} className="size-1 rounded-full bg-[#ffe6b8] shadow-[0_0_4px_rgb(255_220_160/0.8)]" />
+    </>
+  ),
+  // The snowed-in cabin: firelight flickering up from below, frost in the
+  // corners, and snow.
+  hearth: () => (
+    <>
+      <span
+        className="absolute inset-x-0 bottom-0 h-3/5 bg-[radial-gradient(ellipse_at_bottom,rgb(255_140_60/0.3),transparent_70%)]"
+        style={{ animation: "home-flicker 1.9s ease-in-out infinite" }}
+      />
+      <span className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgb(235_245_255/0.4),transparent_22%),radial-gradient(circle_at_100%_0%,rgb(235_245_255/0.35),transparent_20%),radial-gradient(circle_at_100%_100%,rgb(235_245_255/0.25),transparent_18%)]" />
+      <Snow seed={167} count={14} />
+    </>
+  ),
+  // The night train: lights going by in streaks, rain blown across.
+  railside: () => (
+    <>
+      <span className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(20_30_70/0.25),transparent_60%)]" />
+      {spots(173, 6, [0, 25, 100, 80]).map((p, i) => (
+        <Crosser key={i} top={`${p.y}%`} duration={1.6 + p.a * 2.4} delay={-p.b * 4}>
+          <PassingLight length={22 + p.a * 34} color={i % 3 ? "255 205 130" : "160 205 255"} />
+        </Crosser>
+      ))}
+      {pieces(179, 12, [1.5, 2], [1, 1.6]).map((p, i) => (
+        <Faller key={`r${i}`} p={{ ...p, drift: -80, spin: 0 }}>
+          <span className="block h-3 w-px rotate-[22deg] bg-[linear-gradient(to_bottom,transparent,rgb(200_220_255/0.5))]" />
+        </Faller>
+      ))}
+    </>
+  ),
+  // The greenhouse: white glazing bars, mist on the glass, drops running
+  // down it, and a fern hung from the roof.
+  misted: () => (
+    <>
+      <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgb(225_240_235/0.2),transparent_75%)]" />
+      <span className="absolute inset-0 bg-[linear-gradient(90deg,transparent_calc(50%-1px),rgb(244_250_247/0.35)_calc(50%-1px)_calc(50%+1px),transparent_calc(50%+1px)),linear-gradient(transparent_calc(45%-1px),rgb(244_250_247/0.3)_calc(45%-1px)_calc(45%+1px),transparent_calc(45%+1px))]" />
+      {pieces(181, 8, [2, 2.5], [5, 9]).map((p, i) => (
+        <Faller key={i} p={{ ...p, drift: 3, spin: 0 }}>
+          <span className="block size-1.5 rounded-full bg-white/40 shadow-[inset_0_-1px_1px_rgb(255_255_255/0.5)]" />
+        </Faller>
+      ))}
+      <Hanging left="78%" length={24} delay={-1} period={6} cord="#8a7a5a">
+        <HangingFern />
+      </Hanging>
+    </>
+  ),
+  // The desk at dawn: light through the blinds sliding slowly across, and
+  // dust turning in it.
+  blinds: () => (
+    <>
+      <span className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(190_160_230/0.1),rgb(255_190_140/0.12))]" />
+      {/* Shafts from the top right, fanning out so between them they light
+          the whole sill, each striped by the slats. */}
+      {[
+        { angle: 24, width: "18%", delay: 0 },
+        { angle: 42, width: "22%", delay: -5 },
+        { angle: 58, width: "26%", delay: -9 },
+      ].map((b) => (
+        <span
+          key={b.angle}
+          className="absolute -top-[6%] right-[2%] h-[230%] origin-top mix-blend-screen"
+          style={{ width: b.width, transform: `translateX(50%) rotate(${b.angle}deg)` }}
+        >
+          <span
+            className="absolute inset-0"
+            style={{
+              background: "repeating-linear-gradient(to bottom, rgb(255 226 170 / 0.17) 0 11px, rgb(255 226 170 / 0.11) 11px 14px)",
+              maskImage: "linear-gradient(to right, transparent, black 22%, black 78%, transparent), linear-gradient(to bottom, black 40%, transparent 70%)",
+              maskComposite: "intersect",
+              WebkitMaskComposite: "source-in",
+              animation: `home-sway-beam ${14 + b.angle / 6}s ease-in-out ${b.delay}s infinite alternate`,
+            }}
+          />
+        </span>
+      ))}
+      <Risers seed={191} count={12} box={[20, 30, 90, 90]} rise={-50} duration={[8, 13]} className="size-1 rounded-full bg-[#fff0d0] shadow-[0_0_4px_rgb(255_235_200/0.8)]" />
     </>
   ),
   // The rainy tram stop: chunky pixel rain, and now and then the tram

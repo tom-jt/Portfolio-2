@@ -113,6 +113,24 @@ const STYLES: Record<Exclude<FrameId, "plain">, FrameStyle> = {
     edge: "#7a5ad0",
   },
   // The tram's livery: mint over pink, a white stripe between.
+  // Leather, with a gold-tooled line round it.
+  leather: {
+    surface: "linear-gradient(135deg, #7a4329, #5a2f1c 50%, #74402a)",
+    edge: "#d6b05a",
+  },
+  // A knitted band: cream, with a red zigzag running round it.
+  knit: {
+    surface:
+      "repeating-linear-gradient(45deg, transparent 0 3px, #b8322e 3px 4.5px, transparent 4.5px 6px), repeating-linear-gradient(-45deg, transparent 0 3px, #b8322e 3px 4.5px, transparent 4.5px 6px), #efe4d0",
+    edge: "#c9b99c",
+  },
+  sleeper: { surface: "linear-gradient(135deg, #2a3a6e, #1a2548)", edge: "#d6b05a" },
+  // White-painted glazing bars.
+  glasshouse: {
+    surface: "repeating-linear-gradient(90deg, #f4faf7 0 3px, #cfe3dc 3px 22px)",
+    edge: "#9fbfb3",
+  },
+  sunrise: { surface: "linear-gradient(135deg, #ffd29a, #ffb38a 40%, #b79ad8)", edge: "rgb(0 0 0 / 0.25)" },
   tram: { surface: "linear-gradient(#bfe8cf 0 47%, #ffffff 47% 53%, #f6c1cf 53%)", edge: "#7fae95" },
   // Concrete gone green with moss, a neon tube still lit inside it.
   reclaimed: {
@@ -120,10 +138,16 @@ const STYLES: Record<Exclude<FrameId, "plain">, FrameStyle> = {
     edge: DARK,
     extra: <NeonTube />,
   },
-  // The footbridge's railings: green-painted bars, rusting.
-  steel: {
-    surface: `${scatter(37, ["#a0582c", "#b8693a", "#8a4a26"], 9, [1, 2.8], [120, 80])}, repeating-linear-gradient(90deg, #5d9157 0 3px, #3f6a3b 3px 9px)`,
-    edge: "#2f4f2c",
+  // A row of old shop signs round the window, sun-faded and grimy, the odd
+  // tube of neon still lit among them.
+  signage: {
+    surface: [
+      "linear-gradient(rgb(40 32 26 / 0.3), transparent 45%, rgb(40 32 26 / 0.35))",
+      scatter(37, ["#fff6e6", "#ffffff"], 22, [0.5, 1.1], [120, 70]),
+      scatter(41, ["#ff6fcf", "#7fd4ff"], 4, [0.8, 1.4], [150, 90]),
+      "repeating-linear-gradient(90deg, #b8524a 0 34px, #e3d5b8 34px 58px, #4f78a8 58px 80px, #d9b04f 80px 104px, #5f8a62 104px 122px, #e3d5b8 122px 140px)",
+    ].join(", "),
+    edge: "#2a2622",
   },
   wood: { surface: "repeating-linear-gradient(90deg, #7a4e2a 0 9px, #6b4423 9px 11px, #83582f 11px 14px)", edge: "#3a2414" },
   // Pastel panes cut into diamonds by pale leading.
@@ -141,9 +165,12 @@ const STYLES: Record<Exclude<FrameId, "plain">, FrameStyle> = {
     shape: "rounded-[2.5rem]",
     extra: <Rivets />,
   },
+  // Dark carved stone round a pointed arch, ribbed, warm candlelight on one
+  // side and cold window light on the other, trimmed in gold.
   gothic: {
-    surface: "repeating-linear-gradient(90deg, transparent 0 22px, rgb(0 0 0 / 0.25) 22px 23px), linear-gradient(#8f8f98, #6a6a72)",
-    edge: "rgb(0 0 0 / 0.3)",
+    surface:
+      "linear-gradient(90deg, rgb(255 170 90 / 0.25), transparent 30%, transparent 70%, rgb(140 180 255 / 0.2)), repeating-linear-gradient(90deg, transparent 0 14px, rgb(0 0 0 / 0.35) 14px 16px, rgb(255 255 255 / 0.06) 16px 17px), linear-gradient(#4a4752, #2e2c34)",
+    edge: "#c9a24a",
     shape: "rounded-b-md [border-top-left-radius:50%_42%] [border-top-right-radius:50%_42%]",
   },
 };

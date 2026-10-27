@@ -20,6 +20,11 @@ export type SceneId =
   | "hill"
   | "sunset"
   | "cafe"
+  | "library"
+  | "cabin"
+  | "train"
+  | "greenhouse"
+  | "dawn"
   | "p-aurora"
   | "p-forest"
   | "p-space"
@@ -30,7 +35,8 @@ export type SceneId =
   | "p-moonlight"
   | "p-tram"
   | "p-ruins"
-  | "p-overpass";
+  | "p-overpass"
+  | "p-cathedral";
 
 /** Ambient sounds. Each scene has a default, and the visitor can pick another.
  *  Their recipes are in lib/home/ambience.ts. */
@@ -49,7 +55,13 @@ export type AmbienceKind =
   | "shore"
   | "majula"
   | "snow"
-  | "city";
+  | "city"
+  | "library"
+  | "fireside"
+  | "train"
+  | "greenhouse"
+  | "morning"
+  | "cathedral";
 
 export interface AmbienceMeta {
   id: AmbienceKind;
@@ -68,6 +80,11 @@ export const AMBIENCES: AmbienceMeta[] = [
   { id: "hill", label: "hilltop rain", short: "hill" },
   { id: "waves", label: "ocean waves", short: "waves" },
   { id: "cafe", label: "café and jazz", short: "café" },
+  { id: "library", label: "quiet library", short: "library" },
+  { id: "fireside", label: "fireside", short: "fire" },
+  { id: "train", label: "rattling carriage", short: "train" },
+  { id: "greenhouse", label: "rain on the glasshouse", short: "glasshouse" },
+  { id: "morning", label: "morning birdsong", short: "morning" },
   { id: "lake", label: "night by the lake", short: "lake" },
   { id: "woods", label: "forest birdsong", short: "birds" },
   { id: "cosmos", label: "deep space", short: "space" },
@@ -75,6 +92,7 @@ export const AMBIENCES: AmbienceMeta[] = [
   { id: "majula", label: "majula bonfire", short: "majula" },
   { id: "snow", label: "falling snow", short: "snow" },
   { id: "city", label: "empty city", short: "city" },
+  { id: "cathedral", label: "cathedral hush", short: "nave" },
   // Belonging to no scene: more ways to have it rain.
   { id: "storm", label: "thunderstorm", short: "storm" },
   { id: "wind", label: "wind and drizzle", short: "wind" },
@@ -115,6 +133,17 @@ export const SCENES: SceneMeta[] = [
     ambience: "waves",
   },
   { id: "cafe", name: "late-night café", unlockLevel: 4, ambience: "cafe" },
+  // Later classic scenes, on the even levels between the picture scenes.
+  { id: "library", name: "night library", unlockLevel: 6, ambience: "library" },
+  { id: "cabin", name: "snowed-in cabin", unlockLevel: 8, ambience: "fireside" },
+  { id: "train", name: "night train", unlockLevel: 10, ambience: "train" },
+  {
+    id: "greenhouse",
+    name: "greenhouse in the rain",
+    unlockLevel: 12,
+    ambience: "greenhouse",
+  },
+  { id: "dawn", name: "desk at dawn", unlockLevel: 14, ambience: "morning" },
   // Picture scenes: photographs with motion layered on. The first opens at
   // level 5, then one every two levels.
   {
@@ -193,6 +222,13 @@ export const SCENES: SceneMeta[] = [
     unlockLevel: 25,
     ambience: "city",
     photo: "overpass",
+  },
+  {
+    id: "p-cathedral",
+    name: "candlelit cathedral",
+    unlockLevel: 27,
+    ambience: "cathedral",
+    photo: "cathedral",
   },
 ];
 

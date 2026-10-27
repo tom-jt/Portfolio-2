@@ -649,6 +649,97 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
           </g>
         ),
       };
+    case "leather":
+      // The night library: bound in brown leather, ridged like a spine,
+      // with a gold-tooled title.
+      return {
+        fill: "#6b3a24",
+        detail: (
+          <g>
+            <path
+              d="M10.2 38 H29.8 M10.8 41 H29.2 M11.4 44 H28.6"
+              stroke="#4a2616"
+              strokeWidth="0.7"
+            />
+            <rect x="16" y="38.8" width="8" height="1.6" rx="0.3" fill="#d6b05a" />
+            <path d="M8 33.2 H32" stroke="#d6b05a" strokeWidth="0.5" />
+          </g>
+        ),
+      };
+    case "knit":
+      // The snowed-in cabin: a cream jumper with a red Fair Isle band.
+      return {
+        fill: "#efe4d0",
+        detail: (
+          <g>
+            <path
+              d="M9 33.2 H31"
+              stroke="#d8ccb6"
+              strokeWidth="2.6"
+              strokeDasharray="0.6 0.9"
+            />
+            <path
+              d="M10.6 39.5 l1.5 -1.5 1.5 1.5 1.5 -1.5 1.5 1.5 1.5 -1.5 1.5 1.5 1.5 -1.5 1.5 1.5 1.5 -1.5 1.5 1.5 1.5 -1.5 1.5 1.5"
+              stroke="#b8322e"
+              strokeWidth="0.9"
+              fill="none"
+            />
+            {[12.5, 16, 19.5, 23, 26.5].map((x) => (
+              <circle key={x} cx={x} cy="42.6" r="0.55" fill="#3f6b4a" />
+            ))}
+          </g>
+        ),
+      };
+    case "sleeper":
+      // The night train: carriage navy, gold lining, and a lit window.
+      return {
+        fill: "#1f2c55",
+        detail: (
+          <g>
+            <path d="M10.2 37.4 H29.8 M11.6 44 H28.4" stroke="#d6b05a" strokeWidth="0.5" />
+            <rect x="15.5" y="38.8" width="9" height="3.6" rx="0.6" fill="#ffc46b" />
+            <path d="M20 38.8 V42.4" stroke="#1f2c55" strokeWidth="0.5" />
+          </g>
+        ),
+      };
+    case "glasshouse":
+      // The greenhouse: misted glass in white glazing bars, beaded with rain.
+      return {
+        fill: "#bcd9cf",
+        detail: (
+          <g>
+            <path
+              d="M14 35.5 L15 46 M20 35.5 V46 M26 35.5 L25 46 M9.9 40.5 H30.1"
+              stroke="#f4faf7"
+              strokeWidth="0.7"
+            />
+            <rect x="8" y="31" width="24" height="4.5" rx="1.2" fill="#e8f2ee" />
+            {[
+              [12, 38],
+              [17.5, 43],
+              [23, 37.5],
+              [27.5, 43.5],
+            ].map(([x, y]) => (
+              <ellipse key={x} cx={x} cy={y} rx="0.5" ry="0.7" fill="#ffffff" opacity="0.8" />
+            ))}
+          </g>
+        ),
+      };
+    case "sunrise":
+      // The desk at dawn: glazed lilac up to peach, with light through the
+      // blinds slanting across it.
+      return {
+        fill: `url(#${gid})`,
+        gradient: ["#ffb38a", "#b79ad8"],
+        detail: (
+          <path
+            d="M10 41 L22 36 M11 44 L26 37 M14 46 L29 39"
+            stroke="#fff3dc"
+            strokeWidth="1"
+            opacity="0.45"
+          />
+        ),
+      };
     case "tram":
       // The rainy tram stop: the tram's livery, mint over pink, a white
       // stripe between, and a row of its windows.
@@ -703,24 +794,34 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
           </g>
         ),
       };
-    case "steel":
-      // The hazy overpass: steel painted green like its railings, the bars
-      // picked out, and rust coming through.
+    case "signage":
+      // The hazy overpass: weathered concrete pasted with a faded shop sign,
+      // grime streaking down from the rim, and a dot of neon.
       return {
-        fill: "#4f7f4a",
+        fill: "#8f8a80",
         detail: (
           <g>
-            <rect x="8" y="31" width="24" height="4.5" rx="1.2" fill="#3f6a3b" />
+            <rect x="11" y="37.4" width="13" height="4.6" rx="0.4" fill="#c25a50" />
             <path
-              d="M13 36 V45.5 M16.5 36 V45.5 M20 36 V45.5 M23.5 36 V45.5 M27 36 V45.5"
-              stroke="#6fa066"
-              strokeWidth="0.7"
+              d="M12.6 38.6 V40.8 M12.6 39.7 H14.4 M15.6 38.6 H17.6 V40.8 M19 38.6 V40.8 H21 M22.2 38.6 V40.8"
+              stroke="#fff4e4"
+              strokeWidth="0.55"
             />
-            <g fill="#a0582c" opacity="0.75">
-              <ellipse cx="14.5" cy="43" rx="1.6" ry="0.9" />
-              <ellipse cx="26" cy="38" rx="1.2" ry="0.8" />
-              <circle cx="21.5" cy="33.2" r="0.7" />
-            </g>
+            <rect x="24.6" y="37.4" width="4" height="4.6" rx="0.4" fill="#4f78a8" />
+            <path d="M25.6 38.6 H27.6 M25.6 40 H27.6" stroke="#e8eef8" strokeWidth="0.5" />
+            <path
+              d="M12 35.6 V37 M18 35.6 V36.8 M27 35.6 V37.2 M15 42.4 V45 M25.5 42.4 V44.2"
+              stroke="#5a554c"
+              strokeWidth="0.5"
+              opacity="0.7"
+            />
+            <circle
+              cx="14"
+              cy="43.8"
+              r="0.6"
+              fill="#ff6fcf"
+              style={{ filter: "drop-shadow(0 0 1.2px #ff4fc0)" }}
+            />
           </g>
         ),
       };
@@ -773,20 +874,31 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
         ),
       };
     case "gothic":
-      // Gothic stone: grey blocks with a pointed arch carved in.
+      // The candlelit cathedral: dark carved stone, gold-trimmed, with a
+      // pointed window of blue glass glowing in it.
       return {
-        fill: "#7d7d86",
+        fill: "#3e3c46",
         detail: (
           <g>
+            <rect x="8" y="31" width="24" height="4.5" rx="1.2" fill="#4a4752" />
+            <path d="M8.4 33.2 H31.6" stroke="#c9a24a" strokeWidth="0.5" />
             <path
-              d="M9.8 39.5 H30.2 M11 43 H29"
-              stroke="#5f5f68"
+              d="M17.2 45.6 V40 Q20 35.8 22.8 40 V45.6 Z"
+              fill="#8fc2ff"
+              style={{ filter: "drop-shadow(0 0 1.4px #7fb4ff)" }}
+            />
+            <path
+              d="M20 37.4 V45.6 M17.2 41.6 H22.8"
+              stroke="#2a2830"
+              strokeWidth="0.45"
+            />
+            <path
+              d="M16.6 45.8 V40 Q20 34.8 23.4 40 V45.8"
+              stroke="#c9a24a"
               strokeWidth="0.5"
+              fill="none"
             />
-            <path
-              d="M17.5 45.5 V40.5 Q20 36.5 22.5 40.5 V45.5 Z"
-              fill="#4c4c55"
-            />
+            <path d="M10.6 38 L12 46 M29.4 38 L28 46" stroke="#2a2830" strokeWidth="0.5" />
           </g>
         ),
       };
