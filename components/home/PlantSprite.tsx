@@ -567,12 +567,16 @@ function potPaint(pot: PotId, plant: PlantId, gid: string) {
         ),
       };
     case "coral":
-      // The tropical sunset: coral pink, ridged like a shell.
+      // The tropical sunset: deep pink coral, ridged like a shell, with a
+      // gold rim like the sun on the water.
       return {
-        fill: "#ff8a73",
+        fill: "#e04f78",
         detail: (
-          <g stroke="#ffc2b2" strokeWidth="0.6" fill="none" opacity="0.8">
-            <path d="M13 36 Q15 41 14 46 M17 36 Q18 41 17.5 46 M21 36 V46 M25 36 Q24 41 24.5 46 M28.5 36 Q27 41 27 45" />
+          <g>
+            <g stroke="#ff9ab8" strokeWidth="0.6" fill="none" opacity="0.8">
+              <path d="M13 36 Q15 41 14 46 M17 36 Q18 41 17.5 46 M21 36 V46 M25 36 Q24 41 24.5 46 M28.5 36 Q27 41 27 45" />
+            </g>
+            <path d="M8.4 33.2 H31.6" stroke="#ffc15e" strokeWidth="0.6" />
           </g>
         ),
       };

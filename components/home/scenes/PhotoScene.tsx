@@ -32,7 +32,7 @@ const ASPECT: Record<PhotoId, number> = {
   aurora: 16 / 9,
   forest: 2560 / 1667,
   space: 16 / 9,
-  sunset: 2500 / 1406,
+  sunset: 16 / 9,
   alps: 16 / 9,
   autumn: 2560 / 1582,
   majula: 16 / 9,
@@ -525,15 +525,17 @@ const Fire = ({ x, y, size }: { x: number; y: number; size: number }) => (
   </span>
 );
 
-// The strip of sea in the sunset under the horizon, cut where the palm trunks
-// and the hammock stand in front of it: the sun's path, and either side.
-const SUNSET_WATER: [number, number, number, number][] = [
-  [34, 85.5, 48.5, 97],
-  [56, 85.5, 76, 88.5],
-  [83, 85.5, 100, 97],
-  [22.5, 85.5, 30.5, 97],
-  [13, 85.5, 19, 97],
-  [0, 85.5, 10, 97],
+// The sea in the sunset, traced under the horizon, round the headland and
+// along the curve of the beach.
+const SUNSET_WATER: Pt[] = [
+  [0, 77.5],
+  [55, 77.5],
+  [62, 79],
+  [80, 81],
+  [72, 85],
+  [55, 92],
+  [42, 100],
+  [0, 100],
 ];
 
 // The aurora's curtains fade in and out along their whole length.
@@ -648,25 +650,17 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
   sunset: () => (
     <>
-      {/* The sun just gone under the horizon, and the pink it leaves. */}
-      <Glow x={55} y={80} size={42} color="rgb(255 200 110 / 0.42)" period={7} />
-      <Glow x={26} y={75} size={30} color="rgb(255 120 150 / 0.24)" period={10} delay={-4} />
-      {/* The low clouds drifting along the horizon. */}
-      <CloudStreak x={68} y={70} width={50} height={6} color="rgb(255 170 190 / 0.24)" period={80} />
-      <CloudStreak x={24} y={73} width={40} height={5} color="rgb(255 190 150 / 0.2)" period={95} delay={-30} />
-      {/* Glitter only on the water, never on the trunks: thickest in the
-          sun's path. */}
-      {SUNSET_WATER.map((box, i) => (
-        <Twinkles
-          key={i}
-          seed={53 + i * 6}
-          count={i === 0 ? 30 : 10}
-          box={box}
-          color={i < 2 ? "#fff0d8" : "#ffd6ef"}
-          size={[1, 2.4]}
-          speed={[0.8, 2.4]}
-        />
-      ))}
+      {/* The sun setting by the headland, and the sky burning round it. */}
+      <Glow x={55.5} y={68} size={16} color="rgb(255 210 110 / 0.45)" period={6} />
+      <Glow x={50} y={60} size={60} color="rgb(255 60 110 / 0.2)" period={12} delay={-4} />
+      {/* Thin cloud drifting across the glow. */}
+      <CloudStreak x={40} y={57} width={60} height={5} color="rgb(255 120 160 / 0.22)" period={90} />
+      <CloudStreak x={60} y={40} width={30} height={4} color="rgb(255 140 200 / 0.18)" period={80} delay={-30} />
+      {/* The first stars, high in the violet. */}
+      <Twinkles seed={47} count={14} box={[2, 2, 55, 24]} color="#ffe6f4" size={[0.8, 1.6]} speed={[2.5, 5]} />
+      {/* Glitter on the water, thickest in the sun's path. */}
+      <Twinkles seed={53} count={30} box={[52, 77.5, 61, 92]} within={SUNSET_WATER} color="#fff0c8" size={[1.2, 2.6]} speed={[0.8, 2]} />
+      <Twinkles seed={59} count={30} box={[0, 77.5, 80, 100]} within={SUNSET_WATER} color="#ffc4dc" size={[1, 2]} speed={[1, 2.6]} />
     </>
   ),
   tram: () => (
@@ -731,13 +725,13 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       <Motes seed={163} count={18} box={[40, 20, 60, 62]} color="rgb(200 220 255 / 0.6)" rise={-80} />
       {/* The sconces on the pillars, and the ember on the altar steps. */}
       {[
-        [18.4, 25.5, 3],
-        [28, 32.5, 2.2],
-        [81.1, 25.5, 3],
-        [71.8, 33, 2.2],
+        [18.4, 27.5, 5],
+        [27.8, 33.5, 3.5],
+        [81.2, 27.5, 5],
+        [71.8, 33.5, 3.5],
       ].map(([x, y, size], i) => (
         <span key={x}>
-          <Glow x={x} y={y - 1} size={size * 4} color="rgb(255 170 80 / 0.4)" period={1.4 + i * 0.2} delay={-i * 0.3} />
+          <Glow x={x} y={y - 3} size={size * 3} color="rgb(255 170 80 / 0.4)" period={1.4 + i * 0.2} delay={-i * 0.3} />
           <Fire x={x} y={y} size={size} />
         </span>
       ))}

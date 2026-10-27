@@ -759,12 +759,13 @@ const DECOR: Record<DecorId, () => ReactNode> = {
   // The tropical sunset: palm fronds hanging in, and blossom drifting down.
   fronds: () => (
     <>
-      <span className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(to_top,rgb(255_140_110/0.18),transparent)]" />
+      <span className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(to_top,rgb(255_60_120/0.2),transparent)]" />
+      <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_55%_100%,rgb(255_190_90/0.22),transparent_60%)]" />
       <Frond side="left" delay={0} />
       <Frond side="right" delay={-2} />
       {pieces(89, 6, [7, 9], [12, 18]).map((p, i) => (
         <Faller key={i} p={p}>
-          <Petal hue={i % 2 ? "#ff6f91" : "#ffb38a"} />
+          <Petal hue={i % 2 ? "#ff4f8a" : "#ffc15e"} />
         </Faller>
       ))}
     </>
