@@ -8,6 +8,7 @@ import { levelFromXp, totalXp, useGarden } from "@/lib/home/garden";
 import { activeTheme, setPrefs, usePrefs } from "@/lib/home/prefs";
 import {
   getAmbience,
+  getScene,
   SCENES,
   type SceneId,
   type SceneMeta,
@@ -115,6 +116,10 @@ const SceneRow = ({
   );
 };
 
+/** The picker's parts, as tabs on phones. */
+type Section = "classic" | "picture" | "colours" | "pets";
+const SECTIONS: Section[] = ["classic", "picture", "colours", "pets"];
+
 /**
  * Scene and colour picker. Locked scenes show the garden level that opens
  * them. Colours stay open on a pick, so they can be tried one after another.
@@ -128,6 +133,10 @@ const SceneSwitcher = () => {
   const garden = useGarden();
   const level = levelFromXp(totalXp(garden));
   const [open, setOpen] = useState(false);
+  // Phones show one part at a time, opening on the one the scene is in.
+  const [section, setSection] = useState<Section>("classic");
+  /** Hidden on phones unless it's the part picked; always shown wider. */
+  const only = (id: Section) => (section === id ? undefined : "max-md:hidden");
   const root = useRef<HTMLDivElement>(null);
   const pick = (id: SceneId) => {
     setPrefs({ scene: id });
@@ -154,7 +163,10 @@ const SceneSwitcher = () => {
         label="Scene and colours"
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (!open) setSection(getScene(scene).photo ? "picture" : "classic");
+          setOpen((o) => !o);
+        }}
       >
         <Palette className="size-4" />
       </IconButton>
@@ -167,179 +179,214 @@ const SceneSwitcher = () => {
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.16 }}
             // Scenes and colours side by side where there's room, each
-            // scrolling on its own; stacked, scrolling together, on phones.
-            className="bg-glass-strong border-glass-edge absolute top-12 right-0 z-50 flex max-h-[calc(100dvh-5rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-right flex-col gap-2 overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] md:w-[min(48rem,calc(100vw-2rem))] md:flex-row md:overflow-hidden"
+            // scrolling on its own; on phones, across the screen, one part at
+            // a time, by tab.
+            className="bg-glass-strong border-glass-edge fixed inset-x-4 top-16 z-50 flex max-h-[calc(100dvh-12rem-env(safe-area-inset-bottom))] md:absolute md:inset-x-auto md:top-12 md:right-0 origin-top-right flex-col gap-2 overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)] md:max-h-[calc(100dvh-5rem)] md:w-[min(48rem,calc(100vw-2rem))] md:flex-row md:overflow-hidden"
           >
+            <div
+              role="tablist"
+              aria-label="picker sections"
+              className="bg-glass-strong sticky top-0 z-10 -mx-2 -mt-2 grid grid-cols-4 gap-1 p-2 pb-1 md:hidden"
+            >
+              {SECTIONS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={section === id}
+                  onClick={() => setSection(id)}
+                  className={cn(
+                    "focus-visible:ring-ring h-8 cursor-pointer rounded-lg text-xs transition focus-visible:ring-2 focus-visible:outline-none",
+                    section === id
+                      ? "text-foreground bg-white/12"
+                      : "text-muted-foreground hover:bg-white/6",
+                  )}
+                >
+                  {id}
+                </button>
+              ))}
+            </div>
+
             <div className="md:w-[28rem] md:shrink-0 md:overflow-y-auto">
-              <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
-                classic scenes
-              </p>
-              <ul className="grid gap-1 md:grid-cols-2">
-                {SCENES.filter((s) => !s.photo).map((s) => (
-                  <SceneRow
-                    key={s.id}
-                    s={s}
-                    level={level}
-                    active={s.id === scene}
-                    onPick={() => pick(s.id)}
-                  />
-                ))}
-              </ul>
-              <p className="text-muted-foreground px-2.5 pt-4 pb-2 text-xs font-medium">
-                picture scenes
-              </p>
-              <ul className="grid gap-1 md:grid-cols-2">
-                {SCENES.filter((s) => s.photo).map((s) => (
-                  <SceneRow
-                    key={s.id}
-                    s={s}
-                    level={level}
-                    active={s.id === scene}
-                    onPick={() => pick(s.id)}
-                  />
-                ))}
-              </ul>
+              <div className={only("classic")}>
+                <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium">
+                  classic scenes
+                </p>
+                <ul className="grid gap-1 md:grid-cols-2">
+                  {SCENES.filter((s) => !s.photo).map((s) => (
+                    <SceneRow
+                      key={s.id}
+                      s={s}
+                      level={level}
+                      active={s.id === scene}
+                      onPick={() => pick(s.id)}
+                    />
+                  ))}
+                </ul>
+              </div>
+              <div className={only("picture")}>
+                <p className="text-muted-foreground px-2.5 pt-1.5 pb-2 text-xs font-medium md:pt-4">
+                  picture scenes
+                </p>
+                <ul className="grid gap-1 md:grid-cols-2">
+                  {SCENES.filter((s) => s.photo).map((s) => (
+                    <SceneRow
+                      key={s.id}
+                      s={s}
+                      level={level}
+                      active={s.id === scene}
+                      onPick={() => pick(s.id)}
+                    />
+                  ))}
+                </ul>
+              </div>
             </div>
 
             <div className="md:border-glass-edge md:min-w-0 md:flex-1 md:overflow-y-auto md:border-l md:pl-2">
-              <div className="flex items-center justify-between gap-2 px-2.5 pt-4 pb-1 md:pt-1.5">
-                <p className="text-muted-foreground text-xs font-medium">
-                  colours
-                </p>
-                {theme && (
-                  <button
-                    type="button"
-                    onClick={() => setPrefs({ theme: null })}
-                    className={cn(textButton, "text-muted-foreground text-xs")}
-                  >
-                    match scene
-                  </button>
-                )}
-              </div>
-              <ul className="grid grid-cols-4 gap-1">
-                {THEMES.map((t) => {
-                  const locked = !isUnlocked(t.unlock, garden);
-                  return (
-                    <li key={t.id}>
-                      <Swatch
-                        name={t.name}
-                        title={
-                          locked && t.unlock
-                            ? `${t.name}: ${describeUnlock(t.unlock)}`
-                            : describeTheme(t)
-                        }
-                        active={wearing === t.id}
-                        disabled={locked}
-                        // Picking the scene's own goes back to following it.
-                        onClick={() =>
-                          setPrefs({ theme: t.id === own ? null : t.id })
-                        }
-                      >
-                        <span
-                          data-home-swatch={t.id}
-                          className={cn(
-                            TILE,
-                            "bg-glass-strong grid place-items-center",
-                            wearing === t.id && "ring-glow ring-2",
-                          )}
-                        >
-                          {/* Locked ones still show their colours, as a preview. */}
-                          <span className="size-5 rounded-full bg-[linear-gradient(135deg,var(--glow)_50%,var(--glow-2)_50%)]" />
-                          {locked && (
-                            <span className="absolute inset-0 grid place-items-center bg-black/45">
-                              <Lock className="size-3.5 text-white/85" />
-                            </span>
-                          )}
-                        </span>
-                      </Swatch>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
-                {theme
-                  ? describeTheme(THEMES.find((t) => t.id === theme)!)
-                  : `following the scene${own ? `: ${THEMES.find((t) => t.id === own)!.hint}` : ""}`}
-              </p>
-
-              <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-xs font-medium">
-                pets
-              </p>
-              <ul className="grid grid-cols-4 gap-1">
-                <li>
-                  <Swatch
-                    name="none"
-                    title="no pet"
-                    active={!pet}
-                    onClick={() => setPrefs({ pet: null })}
-                  >
-                    <span
+              <div className={only("colours")}>
+                <div className="flex items-center justify-between gap-2 px-2.5 pt-1.5 pb-1">
+                  <p className="text-muted-foreground text-xs font-medium">
+                    colours
+                  </p>
+                  {theme && (
+                    <button
+                      type="button"
+                      onClick={() => setPrefs({ theme: null })}
                       className={cn(
-                        TILE,
-                        "grid place-items-center bg-white/4",
-                        !pet && "ring-glow ring-2",
+                        textButton,
+                        "text-muted-foreground text-xs",
                       )}
                     >
-                      <Ban className="text-muted-foreground size-4" />
-                    </span>
-                  </Swatch>
-                </li>
-                {PETS.map((p) => {
-                  const locked = !isUnlocked(p.unlock, garden);
-                  return (
-                    <li key={p.id}>
-                      <Swatch
-                        name={p.name}
-                        title={
-                          locked
-                            ? `${p.name}: ${describeUnlock(p.unlock)}`
-                            : p.name
-                        }
-                        active={pet === p.id}
-                        disabled={locked}
-                        onClick={() => setPrefs({ pet: p.id })}
-                      >
-                        <span
-                          className={cn(
-                            TILE,
-                            "bg-white/4",
-                            pet === p.id && "ring-glow ring-2",
-                          )}
+                      match scene
+                    </button>
+                  )}
+                </div>
+                <ul className="grid grid-cols-4 gap-1">
+                  {THEMES.map((t) => {
+                    const locked = !isUnlocked(t.unlock, garden);
+                    return (
+                      <li key={t.id}>
+                        <Swatch
+                          name={t.name}
+                          title={
+                            locked && t.unlock
+                              ? `${t.name}: ${describeUnlock(t.unlock)}`
+                              : describeTheme(t)
+                          }
+                          active={wearing === t.id}
+                          disabled={locked}
+                          // Picking the scene's own goes back to following it.
+                          onClick={() =>
+                            setPrefs({ theme: t.id === own ? null : t.id })
+                          }
                         >
-                          {/* Its first idle frame, facing you, at the tile's size. */}
                           <span
-                            className="absolute inset-0"
-                            style={{
-                              backgroundImage: `url(${petSheet(p.id)})`,
-                              backgroundSize: `${12 * 40}px ${PET_ROWS * 40}px`,
-                              backgroundPosition: "0 0",
-                              imageRendering: "pixelated",
-                            }}
-                          />
-                          {locked && (
-                            <span className="absolute inset-0 grid place-items-center bg-black/45">
-                              <Lock className="size-3.5 text-white/85" />
-                            </span>
-                          )}
-                        </span>
-                      </Swatch>
-                    </li>
-                  );
-                })}
-              </ul>
-              {/* The sprites are CC BY 4.0, which asks for this credit. */}
-              <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-[0.65rem] normal-case">
-                pets by{" "}
-                <a
-                  href="https://frakassets.itch.io/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline decoration-current/35 underline-offset-[3px] hover:decoration-current"
-                >
-                  Frakassets
-                </a>{" "}
-                (CC BY 4.0)
-              </p>
+                            data-home-swatch={t.id}
+                            className={cn(
+                              TILE,
+                              "bg-glass-strong grid place-items-center",
+                              wearing === t.id && "ring-glow ring-2",
+                            )}
+                          >
+                            {/* Locked ones still show their colours, as a preview. */}
+                            <span className="size-5 rounded-full bg-[linear-gradient(135deg,var(--glow)_50%,var(--glow-2)_50%)]" />
+                            {locked && (
+                              <span className="absolute inset-0 grid place-items-center bg-black/45">
+                                <Lock className="size-3.5 text-white/85" />
+                              </span>
+                            )}
+                          </span>
+                        </Swatch>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-xs">
+                  {theme
+                    ? describeTheme(THEMES.find((t) => t.id === theme)!)
+                    : `following the scene${own ? `: ${THEMES.find((t) => t.id === own)!.hint}` : ""}`}
+                </p>
+              </div>
+              <div className={only("pets")}>
+                <p className="text-muted-foreground px-2.5 pt-1.5 pb-1 text-xs font-medium md:pt-4">
+                  pets
+                </p>
+                <ul className="grid grid-cols-4 gap-1">
+                  <li>
+                    <Swatch
+                      name="none"
+                      title="no pet"
+                      active={!pet}
+                      onClick={() => setPrefs({ pet: null })}
+                    >
+                      <span
+                        className={cn(
+                          TILE,
+                          "grid place-items-center bg-white/4",
+                          !pet && "ring-glow ring-2",
+                        )}
+                      >
+                        <Ban className="text-muted-foreground size-4" />
+                      </span>
+                    </Swatch>
+                  </li>
+                  {PETS.map((p) => {
+                    const locked = !isUnlocked(p.unlock, garden);
+                    return (
+                      <li key={p.id}>
+                        <Swatch
+                          name={p.name}
+                          title={
+                            locked
+                              ? `${p.name}: ${describeUnlock(p.unlock)}`
+                              : p.name
+                          }
+                          active={pet === p.id}
+                          disabled={locked}
+                          onClick={() => setPrefs({ pet: p.id })}
+                        >
+                          <span
+                            className={cn(
+                              TILE,
+                              "bg-white/4",
+                              pet === p.id && "ring-glow ring-2",
+                            )}
+                          >
+                            {/* Its first idle frame, facing you, at the tile's size. */}
+                            <span
+                              className="absolute inset-0"
+                              style={{
+                                backgroundImage: `url(${petSheet(p.id)})`,
+                                backgroundSize: `${12 * 40}px ${PET_ROWS * 40}px`,
+                                backgroundPosition: "0 0",
+                                imageRendering: "pixelated",
+                              }}
+                            />
+                            {locked && (
+                              <span className="absolute inset-0 grid place-items-center bg-black/45">
+                                <Lock className="size-3.5 text-white/85" />
+                              </span>
+                            )}
+                          </span>
+                        </Swatch>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {/* The sprites are CC BY 4.0, which asks for this credit. */}
+                <p className="text-muted-foreground px-2.5 pt-2 pb-1 text-[0.65rem] normal-case">
+                  pets by{" "}
+                  <a
+                    href="https://frakassets.itch.io/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline decoration-current/35 underline-offset-[3px] hover:decoration-current"
+                  >
+                    Frakassets
+                  </a>{" "}
+                  (CC BY 4.0)
+                </p>
+              </div>
             </div>
           </motion.div>
         )}

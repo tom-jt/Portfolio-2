@@ -501,7 +501,6 @@ const Room = () => {
 
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 md:top-7 md:right-8 md:gap-2.5">
         <HudChip open={chipOpen("garden")} onClick={() => toggle("garden")} />
-        <QuickLinksMenu className="md:hidden" />
         <SceneSwitcher />
         <SiteSwitcher
           to="cs"
@@ -679,6 +678,8 @@ const Room = () => {
         )}
       </AnimatePresence>
 
+      {/* Phones: just above the tab bar, at the right, in thumb's reach. */}
+      <QuickLinksMenu className={cn("fixed right-4 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 md:hidden", sheet && "hidden")} />
       <TabBar active={sheet} onPick={toggle} />
     </div>
   );

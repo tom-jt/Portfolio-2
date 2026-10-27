@@ -130,6 +130,8 @@ const TaskSync = ({ onBack }: { onBack: () => void }) => {
                 placeholder="xxxx-xxxx-xxxx-xxxx-xxxx"
                 aria-label="sync code"
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
                 spellCheck={false}
                 className="border-glass-edge placeholder:text-muted-foreground/50 focus:border-glow/70 focus:ring-glow/20 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 font-mono text-[0.8rem] transition outline-none focus:ring-4"
               />

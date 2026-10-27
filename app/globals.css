@@ -1204,6 +1204,14 @@ html[data-home-theme="iridescent"] [data-site="home"],
   --nav-fg: #c3d6ec;
 }
 
+/* iPhones zoom the page into any field whose text is under 16px when it
+   takes focus. On touch screens, /home's fields never are. */
+@media (pointer: coarse) {
+  [data-site="home"] :is(input:not([type="range"]), textarea, select) {
+    font-size: max(16px, 1em);
+  }
+}
+
 /* Overscroll and the document scrollbar sit outside the wrapper, so the
    ground colour has to be lifted to <html> to avoid a white edge. */
 html:has([data-site="home"]) {

@@ -24,7 +24,11 @@ interface View {
   h: number;
   cx: number;
   vy: number;
+  /** Pixels per world unit at depth 1: up and down (and for sizes), and across. */
   f: number;
+  fx: number;
+  /** How far the eye is raised above its usual height. */
+  lift: number;
 }
 
 // The glasshouse in world units: eye at height 0, walls at x = ±1.
@@ -35,18 +39,29 @@ const BENCH = -0.36;
 /** The staging's inner edge, either side of the aisle. */
 const AISLE = 0.42;
 const Z_NEAR = 0.6;
+/** Where the floor and staging begin: off the foot of the screen, even on a
+ *  phone looking down at them. */
+const Z_CLOSE = 0.3;
 const Z_FAR = 6.5;
 /** The main frames, near to far. */
 const RAFTERS = [1.25, 1.95, 2.85, 3.95, 5.2];
 
 function view(w: number, h: number): View {
-  const portrait = w < h;
-  // On a phone, the eye a little lower and the walls further off, so the
-  // roof fills the tall screen rather than the floor.
-  return { w, h, cx: w * 0.5, vy: h * (portrait ? 0.56 : 0.5), f: portrait ? h * 0.34 : Math.max(w * 0.5, h * 0.62) };
+  if (w >= h) {
+    const f = Math.max(w * 0.5, h * 0.62);
+    return { w, h, cx: w * 0.5, vy: h * 0.5, f, fx: f, lift: 0 };
+  }
+  // On a phone, a taller, narrower house seen from a little higher, so the
+  // staging runs down to the foot of the screen as it does on a wide one
+  // rather than leaving off at its sides, and the roof fills the top.
+  const f = h * 0.34;
+  return { w, h, cx: w * 0.5, vy: h * 0.5, f, fx: f * 0.62, lift: 0.28 };
 }
 
-const at = (v: View, x: number, y: number, z: number): [number, number] => [v.cx + (x * v.f) / z, v.vy - (y * v.f) / z];
+const at = (v: View, x: number, y: number, z: number): [number, number] => [
+  v.cx + (x * v.fx) / z,
+  v.vy - ((y - v.lift) * v.f) / z,
+];
 
 /** The roof's height at x across the house. */
 const roofY = (x: number) => EAVE + (1 - Math.abs(x)) * (RIDGE - EAVE);
@@ -597,7 +612,7 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
 
   // The floor down the aisle: old boards, wet and catching the sky, gone
   // green between.
-  const floor = [at(v, -AISLE, FLOOR, Z_NEAR), at(v, -AISLE, FLOOR, Z_FAR), at(v, AISLE, FLOOR, Z_FAR), at(v, AISLE, FLOOR, Z_NEAR)];
+  const floor = [at(v, -AISLE, FLOOR, Z_CLOSE), at(v, -AISLE, FLOOR, Z_FAR), at(v, AISLE, FLOOR, Z_FAR), at(v, AISLE, FLOOR, Z_CLOSE)];
   const fg = ctx.createLinearGradient(0, v.vy, 0, h);
   fg.addColorStop(0, "#5a6152");
   fg.addColorStop(1, "#272c22");
@@ -655,12 +670,12 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
       pts.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
       ctx.fill();
     };
-    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, FLOOR, Z_FAR), at(v, side * AISLE, FLOOR, Z_NEAR)], "#16261b");
-    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side, BENCH, Z_FAR), at(v, side, BENCH, Z_NEAR)], "#3a3326");
+    quad([at(v, side * AISLE, BENCH, Z_CLOSE), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, FLOOR, Z_FAR), at(v, side * AISLE, FLOOR, Z_CLOSE)], "#16261b");
+    quad([at(v, side * AISLE, BENCH, Z_CLOSE), at(v, side * AISLE, BENCH, Z_FAR), at(v, side, BENCH, Z_FAR), at(v, side, BENCH, Z_CLOSE)], "#3a3326");
     // Green creeping in over the soil from the front edge.
-    quad([at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_NEAR)], "rgba(72,112,58,0.55)");
+    quad([at(v, side * AISLE, BENCH, Z_CLOSE), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_FAR), at(v, side * 0.7, BENCH, Z_CLOSE)], "rgba(72,112,58,0.55)");
     quad(
-      [at(v, side * AISLE, BENCH, Z_NEAR), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_NEAR)],
+      [at(v, side * AISLE, BENCH, Z_CLOSE), at(v, side * AISLE, BENCH, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_FAR), at(v, side * AISLE, BENCH - 0.07, Z_CLOSE)],
       "#5e5640",
     );
     ctx.strokeStyle = "#202418";
@@ -713,7 +728,7 @@ function drawInterior(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
         },
       });
     }
-    for (let z = Z_FAR - 0.05; z > Z_NEAR + 0.1; z -= 0.06) {
+    for (let z = Z_FAR - 0.05; z > (v.lift ? 0.4 : Z_NEAR + 0.1); z -= 0.06) {
       staged.push({ z, draw: () => groundcover(ctx, v, side, z, rand) });
     }
   }

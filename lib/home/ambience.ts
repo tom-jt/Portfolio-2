@@ -359,30 +359,45 @@ function bursts(c: AudioContext, buffer: AudioBuffer, layer: Layer, out: AudioNo
 }
 
 /**
- * Drips in the greenhouse, every few seconds: a water drop's "plink", a
- * short sine that bends sharply up as the drop's bubble rings, somewhere
- * from left to right, in a little of the glasshouse's echo. Returns a stop
- * function.
+ * Drips in the greenhouse, every few seconds. Not a tone, which reads as a
+ * synth: a drop is a soft tap and the brief ring of the bubble it leaves,
+ * so both are noise, the ring through a narrow band that rises as the bubble
+ * closes. Each falls somewhere from left to right, softened, in a little of
+ * the glasshouse's echo. Returns a stop function.
  */
 function drips(c: AudioContext, out: AudioNode) {
   const bus = gain(c, 1);
-  route(bus, out, room(c, 1.2), gain(c, 0.35));
-  bus.connect(out);
-  return every(c, (at) => {
-    const f = 900 + Math.random() * 700;
-    const osc = c.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(f, at);
-    osc.frequency.exponentialRampToValueAtTime(f * 2.4, at + 0.06);
+  route(bus, out, filter(c, "lowpass", 3800), room(c, 1.6), gain(c, 0.5));
+  route(bus, out, filter(c, "lowpass", 3800));
+  const noise = c.createBuffer(1, Math.floor(c.sampleRate * 0.25), c.sampleRate);
+  const data = noise.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+  const burst = (into: AudioNode, at: number, length: number, level: number, shape: AudioNode) => {
+    const src = c.createBufferSource();
+    src.buffer = noise;
     const env = c.createGain();
     env.gain.setValueAtTime(0, at);
-    env.gain.linearRampToValueAtTime(0.012 + Math.random() * 0.012, at + 0.004);
-    env.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
+    env.gain.linearRampToValueAtTime(level, at + 0.003);
+    env.gain.exponentialRampToValueAtTime(0.0001, at + length);
+    src.connect(shape).connect(env).connect(into);
+    src.start(at, Math.random() * 0.1);
+    src.stop(at + length + 0.02);
+  };
+
+  return every(c, (at) => {
     const place = c.createStereoPanner();
     place.pan.value = jitter(1.4);
-    osc.connect(env).connect(place).connect(bus);
-    osc.start(at);
-    osc.stop(at + 0.2);
+    place.connect(bus);
+    const level = 0.5 + Math.random() * 0.5;
+    // The tap of the drop landing.
+    burst(place, at, 0.025, 0.05 * level, filter(c, "bandpass", 2400 + Math.random() * 1200, 1.2));
+    // The bubble's ring, a narrow band of noise rising in pitch.
+    const f = 650 + Math.random() * 550;
+    const ring = filter(c, "bandpass", f, 22);
+    ring.frequency.setValueAtTime(f, at + 0.008);
+    ring.frequency.exponentialRampToValueAtTime(f * 1.9, at + 0.07);
+    burst(place, at + 0.008, 0.11, 0.9 * level, ring);
     return 4 + Math.random() * 7;
   });
 }

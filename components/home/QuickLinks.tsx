@@ -35,7 +35,7 @@ import {
 } from "@/lib/home/links";
 import { setPrefs, togglePanel, usePrefs } from "@/lib/home/prefs";
 import { cn } from "@/lib/utils";
-import { chipGlass, Eyebrow, IconButton, Panel, PrimaryButton, textButton, type PanelChrome } from "./ui";
+import { chipButton, chipGlass, Eyebrow, IconButton, Panel, PrimaryButton, textButton, type PanelChrome } from "./ui";
 
 const openLink = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
 
@@ -157,6 +157,8 @@ const LinkForm = ({ editing, onDone }: { editing: QuickLink | null; onDone: () =
         aria-label="address"
         inputMode="url"
         autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="none"
         spellCheck={false}
         className={FIELD}
       />
@@ -174,8 +176,10 @@ const LinkForm = ({ editing, onDone }: { editing: QuickLink | null; onDone: () =
           onChange={(e) => setDraft({ ...draft, key: cleanKey(e.target.value) })}
           placeholder="key"
           aria-label={`key, up to ${LINK_KEY_MAX} letters`}
-          title={`type it then enter, anywhere on the page, to open this link`}
+          title="type it then enter or space, anywhere on the page, to open this link"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
           spellCheck={false}
           className={cn(FIELD, "w-16 text-center font-mono")}
         />
@@ -292,7 +296,8 @@ const POPOVER =
   "bg-glass-strong border-glass-edge flex flex-col gap-3 overflow-y-auto rounded-2xl border p-3 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.8)]";
 
 /**
- * Phones: a button in the top row opening a drawer of the links, which can
+ * Phones: a button at the bottom right, above the tab bar, opening a drawer
+ * of the links, which can
  * be switched to editing them. (Desktop has the bar by the tasks instead.)
  */
 export const QuickLinksMenu = ({ className }: { className?: string }) => {
@@ -305,19 +310,28 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
 
   return (
     <div ref={root} className={cn("relative", className)}>
-      <IconButton label="quick links" aria-expanded={show} aria-haspopup="true" onClick={() => setShow((s) => !s)}>
-        <Link2 className="size-4" />
-      </IconButton>
+      <button
+        type="button"
+        aria-label="quick links"
+        aria-expanded={show}
+        aria-haspopup="true"
+        onClick={() => setShow((s) => !s)}
+        className={cn(chipButton, "grid size-12 place-items-center rounded-2xl", show && "border-glow/55")}
+      >
+        <Link2 className="text-glow size-5" />
+      </button>
       <AnimatePresence>
         {show && (
           <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.16 }}
-            // Across the screen under the top row: the button sits too far in
-            // for a panel anchored to it to fit.
-            className={cn(POPOVER, "fixed inset-x-4 top-16 z-50 max-h-[calc(100dvh-6rem)] origin-top")}
+            // Across the screen, just above the button.
+            className={cn(
+              POPOVER,
+              "fixed inset-x-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-50 max-h-[calc(100dvh-14rem)] origin-bottom",
+            )}
           >
             <div className="flex items-center justify-between gap-2 px-1">
               <p className="text-muted-foreground text-xs font-medium">

@@ -384,6 +384,11 @@ const Sound = ({
               }}
               placeholder="paste a spotify link…"
               aria-label="Spotify playlist, album, or track link"
+              inputMode="url"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
               aria-invalid={error}
               className={cn(
                 "border-glass-edge placeholder:text-muted-foreground/70 focus:border-glow/70 h-10 min-w-0 flex-1 rounded-full border bg-black/20 px-4 text-sm normal-case outline-none",
