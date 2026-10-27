@@ -105,6 +105,18 @@ function useAmbience() {
 }
 
 /**
+ * Registers the service worker that lets /home open offline once installed
+ * as an app (public/sw.js). Only in production builds: in development it
+ * would serve stale code.
+ */
+function useServiceWorker() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/home" }).catch(() => {});
+  }, []);
+}
+
+/**
  * Client wrapper for /home: the scene, its background, sound, the garden's
  * clock, task sync and the toasts. The layout stays a server component for metadata
  * and fonts.
@@ -129,9 +141,19 @@ const HomeShell = ({
     else delete html.dataset.homeTheme;
   }, [scene, theme]);
 
+  // The app's title bar, where it has one, wears the scene's ground colour.
+  useEffect(() => {
+    const ground = getComputedStyle(document.querySelector('[data-site="home"]') ?? document.body)
+      .getPropertyValue("--background")
+      .trim();
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (ground && meta) meta.setAttribute("content", ground);
+  }, [scene]);
+
   useGardenEngine();
   useAmbience();
   useTodoSync();
+  useServiceWorker();
 
   return (
     // Everything on /home is lowercase, set once here so labels, dates and

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Tiny5 } from "next/font/google";
 import HomeShell from "@/components/home/HomeShell";
 
@@ -30,7 +30,14 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: { title: "Tom's room", description },
+  // Installable as an app: its manifest, and what iPhones read instead.
+  manifest: "/home/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "room", statusBarStyle: "black" },
+  icons: { apple: "/home/icons/apple-touch-icon.png" },
 };
+
+/** The browser and app chrome's colour; HomeShell keeps it to the scene's. */
+export const viewport: Viewport = { themeColor: "#0a0f1f" };
 
 /**
  * Like the law layout, the fonts are loaded here so the portfolio sites never
