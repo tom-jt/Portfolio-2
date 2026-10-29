@@ -58,8 +58,8 @@ function layout(w: number, h: number): Layout {
     sun: { x: win.x + win.w * 0.64, y: roofs - win.h * 0.09, r: Math.max(10, win.h * 0.07) },
     notebook: { x: w * (portrait ? 0.36 : 0.3), y: desk },
     clock: { x: w * (portrait ? 0.36 : 0.3) - 115 * s, y: desk },
-    lamp: { x: w * (portrait ? 0.36 : 0.3) + 112 * s, y: desk },
-    mug: { x: w * (portrait ? 0.74 : 0.62), y: desk },
+    lamp: { x: w * (portrait ? 0.36 : 0.3) + 128 * s, y: desk },
+    mug: { x: w * (portrait ? 0.7 : 0.62), y: desk },
     books: { x: w * (portrait ? 0.9 : 0.8), y: desk },
     cat: { x: win.x + win.w * (portrait ? 0.3 : 0.24), y: sill },
     plant: { x: win.x + win.w * 0.86, y: sill },
@@ -326,7 +326,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.fill();
 
   // The cat itself is live; its shadow, under the curl, is not.
-  const catK = l.s * 1.1;
+  // A curled-up cat is a good three mugs long, even back on the sill.
+  const catK = l.s * 1.3;
   contactShadow(ctx, l.cat.x - 8 * catK, l.sill, 40 * catK, l.s);
   drawPlant(ctx, l, rand);
   drawBooks(ctx, l);
@@ -661,7 +662,9 @@ function drawClock(ctx: CanvasRenderingContext2D, l: Layout) {
  *  shade bent down over the notebook. Its light is live. */
 function lampShape(l: Layout) {
   const { x, y } = l.lamp;
-  const s = l.s;
+  // Its own scale: a desk lamp stands four or five mugs tall, its shade
+  // twice a mug across.
+  const s = l.s * 1.75;
   const elbow = { x: x - 4 * s, y: y - 72 * s };
   const head = { x: x - 50 * s, y: y - 84 * s };
   // The shade hangs from the head, tipped a little towards the notebook.
@@ -750,12 +753,14 @@ function drawLamp(ctx: CanvasRenderingContext2D, l: Layout) {
  */
 function lampLight(l: Layout, dpr: number) {
   const { mouth, across, s } = lampShape(l);
-  const pool = { x: mouth.x - 22 * s, y: l.desk - 12 * s, rx: 100 * s, ry: 22 * s };
+  // The pool is the desk's size, not the lamp's: over the notebook and a
+  // little past it.
+  const pool = { x: mouth.x - 14 * s, y: l.desk - 12 * l.s, rx: 125 * l.s, ry: 24 * l.s };
   const box = {
     x: pool.x - pool.rx - 10 * s,
     y: mouth.y - 10 * s,
     w: pool.rx * 2 + 60 * s,
-    h: l.desk + 16 * s - mouth.y,
+    h: l.desk + 16 * l.s - mouth.y,
   };
   const c = document.createElement("canvas");
   c.width = Math.ceil(box.w * dpr);
@@ -1014,7 +1019,7 @@ const DawnScene = () => {
       const rand = seeded(17);
       const { s, win } = l;
 
-      const catK = s * 1.1;
+      const catK = s * 1.3;
       const cat = catSprite(catK, dpr);
       const shaft = shaftSprite();
       const lamp = lampLight(l, dpr);

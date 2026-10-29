@@ -52,16 +52,16 @@ import {
   totalXp,
   luckLeft,
   maxAffordable,
-  milestoneStep,
+  milestoneBonus,
   plantCost,
-  plantCostScale,
   plantCount,
   plantMultiplier,
   PLANTS,
   rate,
   plantBoost,
+  boneMealed,
   plantRate,
-  PLANT_MILESTONE,
+  nextMilestone,
   dropsForSeeds,
   SEASON_MINIMUM,
   seasonsOpen,
@@ -87,9 +87,8 @@ import { cn } from "@/lib/utils";
 
 type Amount = "1" | "10" | "max";
 
-/** The next copy count that makes a plant better. */
-const nextMilestone = (have: number) =>
-  (Math.floor(have / PLANT_MILESTONE) + 1) * PLANT_MILESTONE;
+/** A multiplier for the shop row: ×2, ×2.2, ×2.15. */
+const formatLeap = (x: number) => `×${Number(x.toFixed(2))}`;
 
 const BuyButton = ({
   cost,
@@ -135,8 +134,7 @@ const PlantsTab = ({
 }) => {
   const [amount, setAmount] = useState<Amount>("1");
   const mult = plantMultiplier(garden);
-  const scale = plantCostScale(garden);
-  const step = milestoneStep(garden);
+  const bonus = milestoneBonus(garden);
 
   return (
     <>
@@ -160,9 +158,15 @@ const PlantsTab = ({
           const locked = level < p.unlockLevel;
           const count =
             amount === "max"
-              ? Math.max(1, maxAffordable(p, have, garden.drops, scale))
+              ? Math.max(1, maxAffordable(p, have, garden.drops))
               : Number(amount);
-          const cost = plantCost(p, have, count, scale);
+          const cost = plantCost(p, have, count);
+          // The next milestone, and how much better it makes every copy.
+          const next = nextMilestone(have);
+          // Bone meal's leap shows at the hundreds it reaches.
+          const boned = boneMealed(p, bonus);
+          const leap =
+            plantBoost(next, bonus, boned) / plantBoost(have, bonus, boned);
           return (
             <li
               key={p.id}
@@ -190,12 +194,11 @@ const PlantsTab = ({
                 ) : (
                   <p className="text-xs">
                     <span className="font-pixel text-glow-2/90">
-                      +{formatNumber(plantRate(p, have, step) * mult)}/s each
+                      +{formatNumber(plantRate(p, have, bonus) * mult)}/s each
                     </span>
                     <span className="text-muted-foreground">
                       {" "}
-                      | ×{plantBoost(nextMilestone(have), step)} at{" "}
-                      {nextMilestone(have)}
+                      | {formatLeap(leap)} at {next}
                     </span>
                   </p>
                 )}
@@ -1109,7 +1112,7 @@ const Garden = ({
               aria-hidden="true"
               className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]"
             />
-            luck ×2{" "}
+            plants ×2{" "}
             <span className="font-pixel tabular-nums">{formatClock(luck)}</span>
           </p>
         )}

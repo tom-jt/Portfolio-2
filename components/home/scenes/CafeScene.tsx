@@ -17,10 +17,14 @@ interface Layout {
   win: { x: number; y: number; w: number; h: number };
   counter: number;
   cup: { x: number; y: number; s: number };
-  lamps: { x: number; y: number }[];
+  /** Where each pendant hangs, and its shade's half-width. */
+  lamps: { x: number; y: number; r: number }[];
   /** Where the things along the counter stand, or null where there's no room. */
-  deco: { plant: number; books: number | null; candle: number; croissant: number | null };
+  deco: { plant: Spot; books: Spot | null; candle: Spot; croissant: Spot | null };
 }
+
+/** The middle of something's footprint on the counter. */
+type Spot = { x: number; y: number };
 
 function layout(w: number, h: number): Layout {
   const portrait = w < h;
@@ -29,25 +33,34 @@ function layout(w: number, h: number): Layout {
   const win = portrait ? { x, y: h * 0.24, w: w - x * 2, h: h * 0.48 } : { x, y: h * 0.1, w: w - x * 2, h: h * 0.6 };
   const counter = h * 0.8;
   const s = Math.min(w, h) / 800;
+  // Things stand a little nearer or further back on the counter top, not all
+  // along its back edge, and in the groups someone would leave them in: the
+  // coffee with its croissant, the books by the candle, the plant on its own.
+  const at = (x: number, depth: number): Spot => ({ x, y: counter + depth * s });
+  // A pendant's shade is as wide as a big bowl: a few cups across.
+  const r = Math.max(22, 60 * s);
   return {
     win,
     counter,
-    cup: { x: w * (portrait ? 0.7 : 0.64), y: counter, s },
+    cup: { ...at(w * (portrait ? 0.7 : 0.64), 5), s },
     lamps: portrait
-      ? [{ x: w * 0.5, y: h * 0.185 }]
+      ? [{ x: w * 0.5, y: h * 0.185, r }]
       : [
-          { x: w * 0.3, y: h * 0.13 },
-          { x: w * 0.7, y: h * 0.13 },
+          { x: w * 0.3, y: h * 0.13, r },
+          { x: w * 0.7, y: h * 0.13, r },
         ],
-    // Spread out from the middle either side of the cup; a phone keeps the
-    // plant and the candle only.
+    // A phone keeps the plant and the candle only.
     deco: portrait
-      ? { plant: w * 0.17, books: null, candle: w * 0.44, croissant: null }
-      : { plant: w * 0.27, books: w * 0.385, candle: w * 0.5, croissant: w * 0.775 },
+      ? { plant: at(w * 0.15, 2), books: null, candle: at(w * 0.34, 7), croissant: null }
+      : {
+          plant: at(w * 0.215, 2),
+          books: at(w * 0.355, 0),
+          candle: at(w * 0.445, 7),
+          croissant: at(w * 0.745, 10),
+        },
   };
 }
 
-/** A shadow on the counter under something standing on it. */
 /**
  * The contact shadow under something on the counter: a soft flat ellipse
  * just wider than its footprint, darkest where it touches. The lamps hang
@@ -134,15 +147,15 @@ function drawBooks(ctx: CanvasRenderingContext2D, x: number, y: number, s: numbe
   };
   book(x, y, 84 * s, 13 * s, "#3f5a6a");
   book(x - 4 * s, y - 13 * s, 70 * s, 11 * s, "#7a3b2e");
-  // The pen, lying slightly askew.
+  // The pen, lying slightly askew: most of a book's length, as a real one is.
   ctx.save();
-  ctx.translate(x + 2 * s, y - 25.5 * s);
-  ctx.rotate(-0.08);
+  ctx.translate(x + 6 * s, y - 25.5 * s);
+  ctx.rotate(-0.06);
   ctx.fillStyle = "#1f1a18";
-  ctx.fillRect(-28 * s, -1.8 * s, 50 * s, 3.6 * s);
+  ctx.fillRect(-38 * s, -1.8 * s, 70 * s, 3.6 * s);
   ctx.fillStyle = "#c9a45a";
-  ctx.fillRect(14 * s, -2 * s, 3 * s, 4 * s);
-  ctx.fillRect(-28 * s, -1.8 * s, 4 * s, 3.6 * s);
+  ctx.fillRect(20 * s, -2 * s, 3 * s, 4 * s);
+  ctx.fillRect(-38 * s, -1.8 * s, 4 * s, 3.6 * s);
   ctx.restore();
 }
 
@@ -175,30 +188,32 @@ function drawCandle(ctx: CanvasRenderingContext2D, x: number, y: number, s: numb
   ctx.fillRect(x - 11 * s, y - 33 * s, 2 * s, 28 * s);
 }
 
-/** A croissant on a small plate. */
+/** A croissant on a side plate: the plate a little wider than the cup's
+ *  saucer, the croissant longer than the cup is wide. */
 function drawCroissant(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  shadow(ctx, x, y, 38 * s, s);
+  shadow(ctx, x, y, 50 * s, s);
   ctx.fillStyle = "#d9cab5";
   ctx.beginPath();
-  ctx.ellipse(x, y, 38 * s, 7 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, 50 * s, 8.5 * s, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#c4b39c";
   ctx.beginPath();
-  ctx.ellipse(x, y - 1 * s, 26 * s, 4.4 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y - 1 * s, 35 * s, 5.4 * s, 0, 0, Math.PI * 2);
   ctx.fill();
   // Its segments, plumpest in the middle, each a little darker at the seam.
+  const c = s * 1.3;
   const segs = [-22, -13, -4, 5, 14, 22];
   for (const [i, dx] of segs.entries()) {
     const mid = 1 - Math.abs(i - 2.5) / 3;
-    const rx = lerp(6, 9, mid) * s;
-    const ry = lerp(5, 10, mid) * s;
-    const cy = y - 4 * s - ry + Math.abs(dx) * 0.12 * s;
+    const rx = lerp(6, 9, mid) * c;
+    const ry = lerp(5, 10, mid) * c;
+    const cy = y - 3 * s - ry + Math.abs(dx) * 0.12 * c;
     const g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
     g.addColorStop(0, "#e8a85a");
     g.addColorStop(1, "#9a5a26");
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.ellipse(x + dx * s, cy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + dx * c, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "rgba(90,45,15,0.5)";
     ctx.lineWidth = 0.8 * s;
@@ -207,7 +222,7 @@ function drawCroissant(ctx: CanvasRenderingContext2D, x: number, y: number, s: n
   // A shine across the top.
   ctx.fillStyle = "rgba(255,225,170,0.35)";
   ctx.beginPath();
-  ctx.ellipse(x - 2 * s, y - 20 * s, 9 * s, 2 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x - 2 * c, y - 3 * s - 16 * c, 9 * c, 2 * c, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -349,8 +364,9 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
     for (const side of [0, 1]) {
       const sx = side ? x + ww + x * 0.18 : x * 0.12;
       const sw = x * 0.7;
-      // Sized against the cup on the counter: a book stands about twice a
-      // mug's height, a jar about as tall as one.
+      // Sized against the cup on the counter, a little smaller for being
+      // further back: a book stands a good two and a half cups tall, a jar of
+      // beans half again as tall as one.
       const k = l.cup.s;
       for (const row of [0.26, 0.46]) {
         const sy = h * row;
@@ -359,8 +375,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
         // Books in groups, a jar or two between them.
         for (let bx = sx + 6; bx < sx + sw - 10; ) {
           if (rand() < 0.22) {
-            const jw = lerp(22, 30, rand()) * k;
-            const jh = lerp(30, 40, rand()) * k;
+            const jw = lerp(28, 38, rand()) * k;
+            const jh = lerp(44, 58, rand()) * k;
             ctx.fillStyle = ["#b98a5a", "#5f7a6a", "#c9b08a"][Math.floor(rand() * 3)];
             ctx.fillRect(bx, sy - jh, jw, jh);
             ctx.fillStyle = "#3a2416";
@@ -371,7 +387,7 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
           const count = 4 + Math.floor(rand() * 4);
           for (let n = 0; n < count && bx < sx + sw - 14 * k; n++) {
             const bw = lerp(11, 17, rand()) * k;
-            const bh = lerp(68, 84, rand()) * k;
+            const bh = lerp(84, 104, rand()) * k;
             const hue = ["#7a3b2e", "#4f6a5a", "#8a6a3e", "#3f4f6a", "#a3724a", "#5a3a4a"][Math.floor(rand() * 6)];
             // The last of a group sometimes leans back onto its neighbour:
             // it pivots on its outer corner, standing out from the group by
@@ -429,6 +445,11 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
 
   // The cup and saucer, lit from the lamps on the left.
   const { x: cx, y: cy, s } = l.cup;
+  // Further back on the counter first, so nearer things overlap them.
+  const { plant, books, candle } = l.deco;
+  drawPlant(ctx, plant.x, plant.y, s * 1.25, rand);
+  if (books) drawBooks(ctx, books.x, books.y, s * 1.25);
+  drawCandle(ctx, candle.x, candle.y, s);
   shadow(ctx, cx, cy + 2 * s, 44 * s, s);
   // Saucer: a wide shallow dish with a lit rim.
   ctx.fillStyle = "#d9cab5";
@@ -475,12 +496,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.ellipse(cx, cy - 34 * s, 21 * s, 3.6 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // The rest of the counter, out either side of the cup.
-  const { plant, books, candle, croissant } = l.deco;
-  drawPlant(ctx, plant, l.counter, s, rand);
-  if (books !== null) drawBooks(ctx, books, l.counter, s);
-  drawCandle(ctx, candle, l.counter, s);
-  if (croissant !== null) drawCroissant(ctx, croissant, l.counter, s);
+  // Its croissant, a little nearer.
+  if (l.deco.croissant) drawCroissant(ctx, l.deco.croissant.x, l.deco.croissant.y, s);
 
   // Pendant lamps: cord and shade. Their glow is on the front canvas.
   for (const lamp of l.lamps) {
@@ -490,7 +507,7 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
     ctx.moveTo(lamp.x, 0);
     ctx.lineTo(lamp.x, lamp.y);
     ctx.stroke();
-    const r = Math.max(22, w * 0.025);
+    const { r } = lamp;
     ctx.fillStyle = "#b5773e";
     ctx.beginPath();
     ctx.moveTo(lamp.x - r * 0.25, lamp.y);
@@ -674,7 +691,7 @@ const CafeScene = () => {
         for (const [i, lamp] of l.lamps.entries()) {
           const flicker = 0.92 + Math.sin(t * 3.1 + i * 2) * 0.03 + Math.sin(t * 7.3 + i) * 0.02;
           const r = Math.max(w, h) * 0.38;
-          const cy = lamp.y + Math.max(22, w * 0.025) * 0.7;
+          const cy = lamp.y + lamp.r * 0.7;
           const g = ctx.createRadialGradient(lamp.x, cy, 0, lamp.x, cy, r);
           g.addColorStop(0, `rgba(255,190,110,${0.32 * flicker})`);
           g.addColorStop(0.35, `rgba(255,170,90,${0.1 * flicker})`);
@@ -685,8 +702,8 @@ const CafeScene = () => {
 
         // The candle flickering in its glass.
         {
-          const fx = l.deco.candle;
-          const fy = l.counter - 27 * fs;
+          const fx = l.deco.candle.x;
+          const fy = l.deco.candle.y - 27 * fs;
           const flick = 1 + Math.sin(t * 9.1) * 0.06 + Math.sin(t * 13.7) * 0.05;
           ctx.globalAlpha = 0.32 * flick;
           ctx.drawImage(candleGlow, fx - candleGlow.width / 2, fy - candleGlow.height / 2);

@@ -186,33 +186,48 @@ export function milestonesAt(have: number) {
   return reached;
 }
 
-/** What makes milestones better: Old growth makes every leap bigger, and
- *  each one reached adds `perMilestone` (Trellis) to its plant on top. */
+/** What makes milestones better: Old growth makes every leap bigger, each
+ *  one reached adds `perMilestone` (Trellis) to its plant on top, and Bone
+ *  meal reaches the first `boneMeal` plants on the list. */
 export interface MilestoneBonus {
   leap: number;
   perMilestone: number;
+  boneMeal: number;
 }
-const NO_BONUS: MilestoneBonus = { leap: 1, perMilestone: 0 };
+const NO_BONUS: MilestoneBonus = { leap: 1, perMilestone: 0, boneMeal: 0 };
+
+/**
+ * Bone meal: +100× for every hundred copies, so ×101 at 100, ×201 at 200.
+ * Added, not multiplied: ×100 a hundred would outgrow what the cheap plants'
+ * next hundred cost (moss: 1.08^100, about 2,200×) and run away.
+ */
+const BONE_MEAL_STEP = 100;
+
+/** Whether Bone meal reaches this plant. */
+export const boneMealed = (def: PlantDef, bonus = NO_BONUS) =>
+  PLANTS.indexOf(def) < bonus.boneMeal;
 
 /** The leap the milestone at `at` copies makes. */
 export const milestoneLeap = (at: number, bonus = NO_BONUS) =>
   (at % 100 === 0 ? 3 : 2) * bonus.leap;
 
 /** How much better every copy is for owning `have`: every leap reached,
- *  times Trellis's share for each. */
-export function plantBoost(have: number, bonus = NO_BONUS) {
+ *  times Trellis's share for each, and Bone meal's if it reaches the plant
+ *  (`boned`). */
+export function plantBoost(have: number, bonus = NO_BONUS, boned = false) {
   let boost = 1;
   let reached = 0;
   for (let at = nextMilestone(0); at <= have; at = nextMilestone(at)) {
     boost *= milestoneLeap(at, bonus);
     reached++;
   }
-  return boost * (1 + bonus.perMilestone * reached);
+  const bone = boned ? 1 + BONE_MEAL_STEP * Math.floor(have / 100) : 1;
+  return boost * (1 + bonus.perMilestone * reached) * bone;
 }
 
 /** Drops per second from each copy, before the greenhouse and skills. */
 export const plantRate = (def: PlantDef, have: number, bonus = NO_BONUS) =>
-  def.rate * plantBoost(have, bonus);
+  def.rate * plantBoost(have, bonus, boneMealed(def, bonus));
 
 // -------------------------------------------------------------- upgrades
 
@@ -263,8 +278,12 @@ const JAR_LATE_GROWTH = 1.4;
  *  without the plants' output being mostly something to click for. */
 const catchSecondsAt = (jar: number) => 0.15 + 0.01 * jar;
 
-/** Trellis: what each level adds to every plant milestone's step. */
-const TRELLIS_STEP = 0.25;
+/** Trellis: what each level adds to a plant for every milestone it has
+ *  reached, on top of the leaps. Added, not multiplied, so it can never make
+ *  a milestone outgrow the cost of reaching the next. */
+const TRELLIS_STEP = 0.05;
+/** Old growth: every milestone's leap is this much bigger, ×2.2 for ×2. */
+const OLD_GROWTH_LEAP = 1.1;
 /** Seed bank: all drops, per seed ever harvested, per level. */
 const SEED_BANK_STEP = 0.001;
 
@@ -341,7 +360,7 @@ export const UPGRADES: UpgradeDef[] = [
     growth: 3,
     max: Infinity,
     unlockLevel: 6,
-    effect: (l) => `every plant milestone adds +${TRELLIS_STEP * l}× more`,
+    effect: (l) => `plant milestone add +${TRELLIS_STEP * l}× more`,
   },
   {
     id: "seedbank",
@@ -351,7 +370,7 @@ export const UPGRADES: UpgradeDef[] = [
     max: Infinity,
     unlockLevel: 15,
     effect: (l) =>
-      `+${(SEED_BANK_STEP * 100 * l).toFixed(1)}% to all drops per seed ever harvested`,
+      `+${(SEED_BANK_STEP * 100 * l).toFixed(1)}% to all drops per seed`,
   },
 ];
 
@@ -517,34 +536,28 @@ export const upgradeLevel = (s: GardenState, id: UpgradeId) =>
   s.upgrades[id] ?? 0;
 export const skillRank = (s: GardenState, id: SkillId) => s.skills[id] ?? 0;
 
-/** Plant prices after Compost. */
-export const plantCostScale = (s: GardenState) =>
-  1 - 0.04 * skillRank(s, "compost");
+/** What the garden's milestones are worth: a tenth more each with Old
+ *  growth, Trellis's share for every one reached, and how many plants Bone
+ *  meal reaches, one a rank. */
+export const milestoneBonus = (s: GardenState): MilestoneBonus => ({
+  leap: skillRank(s, "oldgrowth") ? OLD_GROWTH_LEAP : 1,
+  perMilestone: TRELLIS_STEP * upgradeLevel(s, "trellis"),
+  boneMeal: skillRank(s, "bonemeal"),
+});
 
-/** The step each plant milestone adds: ×2, or ×3 with Old growth, and a
- *  quarter more for each level of Trellis. */
-export const milestoneStep = (s: GardenState) =>
-  (skillRank(s, "oldgrowth") ? 3 : 2) +
-  TRELLIS_STEP * upgradeLevel(s, "trellis");
-
-export function plantCost(def: PlantDef, have: number, count = 1, scale = 1) {
-  const first = def.baseCost * scale * PLANT_GROWTH ** have;
-  return Math.ceil((first * (PLANT_GROWTH ** count - 1)) / (PLANT_GROWTH - 1));
+export function plantCost(def: PlantDef, have: number, count = 1) {
+  const g = def.growth;
+  const first = def.baseCost * g ** have;
+  return Math.ceil((first * (g ** count - 1)) / (g - 1));
 }
 
 /** How many of a plant the current drops can buy, for the "Max" option. */
-export function maxAffordable(
-  def: PlantDef,
-  have: number,
-  drops: number,
-  scale = 1,
-) {
-  const first = def.baseCost * scale * PLANT_GROWTH ** have;
-  const n = Math.floor(
-    Math.log((drops * (PLANT_GROWTH - 1)) / first + 1) / Math.log(PLANT_GROWTH),
-  );
+export function maxAffordable(def: PlantDef, have: number, drops: number) {
+  const g = def.growth;
+  const first = def.baseCost * g ** have;
+  const n = Math.floor(Math.log((drops * (g - 1)) / first + 1) / Math.log(g));
   // Float error can overshoot by one at exact boundaries.
-  return n > 0 && plantCost(def, have, n, scale) > drops
+  return n > 0 && plantCost(def, have, n) > drops
     ? n - 1
     : Math.max(0, n);
 }
@@ -615,10 +628,7 @@ export function catchLadybug() {
 
 /** Plant milestones reached across the whole garden, for Second bloom. */
 const milestones = (s: GardenState) =>
-  PLANTS.reduce(
-    (sum, p) => sum + Math.floor(owned(s, p.id) / PLANT_MILESTONE),
-    0,
-  );
+  PLANTS.reduce((sum, p) => sum + milestonesAt(owned(s, p.id)), 0);
 
 /** Everything that multiplies each plant's output: greenhouse, skills, luck. */
 export const plantMultiplier = (s: GardenState) =>
@@ -633,9 +643,9 @@ export const plantMultiplier = (s: GardenState) =>
 
 /** Drops per second from plants. */
 export function rate(s: GardenState) {
-  const step = milestoneStep(s);
+  const bonus = milestoneBonus(s);
   const base = PLANTS.reduce(
-    (sum, p) => sum + plantRate(p, owned(s, p.id), step) * owned(s, p.id),
+    (sum, p) => sum + plantRate(p, owned(s, p.id), bonus) * owned(s, p.id),
     0,
   );
   return base * plantMultiplier(s);
@@ -1241,7 +1251,7 @@ export function buyPlant(id: PlantId, count: number) {
   const def = PLANTS.find((p) => p.id === id);
   const s = gardenStore.get();
   if (!def || count < 1 || levelFromXp(totalXp(s)) < def.unlockLevel) return;
-  const cost = plantCost(def, owned(s, id), count, plantCostScale(s));
+  const cost = plantCost(def, owned(s, id), count);
   if (cost > s.drops) return;
   commit((g) => ({
     ...g,
@@ -1357,9 +1367,13 @@ export function skillStatus(s: GardenState, id: SkillId): SkillStatus {
   const def = getSkill(id);
   const rank = skillRank(s, id);
   if (rank >= def.costs.length) return { state: "maxed", rank };
-  const missing = (Object.keys(def.needs) as SkillId[]).filter(
-    (need) => skillRank(s, need) < (def.needs[need] ?? 1),
-  );
+  // Needs only gate the first rank, so a skill learnt before its needs rose
+  // stays open for more.
+  const missing = rank
+    ? []
+    : (Object.keys(def.needs) as SkillId[]).filter(
+        (need) => skillRank(s, need) < (def.needs[need] ?? 1),
+      );
   if (missing.length)
     return { state: "locked", rank, cost: def.costs[rank], missing };
   return { state: "open", rank, cost: def.costs[rank] };
