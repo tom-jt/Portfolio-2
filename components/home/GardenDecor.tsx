@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { seeded } from "@/components/home/scenes/canvas";
 import type { DecorId } from "@/lib/home/cosmetics";
 
@@ -1188,11 +1188,35 @@ const DECOR: Record<DecorId, () => ReactNode> = {
   ),
 };
 
-const GardenDecor = ({ decor }: { decor: DecorId }) => (
-  // A size container, so things crossing the window know its width.
-  <div data-home-decor aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden [container-type:size]">
-    {DECOR[decor]()}
-  </div>
-);
+/**
+ * The window's decor. Its animations pause while the window is out of sight
+ * (the card scrolled down past it), as the catch game under it does: a
+ * paused animation costs nothing, a running one some style work every frame
+ * whether anyone sees it or not.
+ */
+const GardenDecor = ({ decor }: { decor: DecorId }) => {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const seen = new IntersectionObserver(([entry]) => {
+      el.toggleAttribute("data-paused", !entry.isIntersecting);
+    });
+    seen.observe(el);
+    return () => seen.disconnect();
+  }, []);
+
+  return (
+    // A size container, so things crossing the window know its width.
+    <div
+      ref={root}
+      data-home-decor
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden [container-type:size]"
+    >
+      {DECOR[decor]()}
+    </div>
+  );
+};
 
 export default GardenDecor;

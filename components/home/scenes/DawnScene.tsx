@@ -157,6 +157,31 @@ function drawSky(ctx: CanvasRenderingContext2D, l: Layout, rand: () => number) {
   ctx.restore();
 }
 
+/**
+ * The shadow where something stands: a soft flat ellipse tight under its
+ * base, darkest at the contact and fading out, sized to its footprint and
+ * nudged down and to the left, away from the window. One darkness for
+ * everything, so they all sit in the same light.
+ */
+function contactShadow(ctx: CanvasRenderingContext2D, x: number, y: number, half: number, s: number) {
+  const rx = half * 1.08;
+  const ry = Math.max(2, Math.min(rx * 0.16, 6 * s));
+  const cx = x - Math.min(rx * 0.08, 5 * s);
+  const cy = y + ry * 0.45;
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, "rgba(16,8,20,0.72)");
+  g.addColorStop(0.55, "rgba(16,8,20,0.4)");
+  g.addColorStop(1, "rgba(16,8,20,0)");
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(1, ry / rx);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 /** Where the window's bars are: the blinds' bottom rail, the sash's middle
  *  bar and upright, and the pull cord. */
 function sash(l: Layout) {
@@ -300,6 +325,9 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.lineTo(win.x - win.w * 0.2, l.desk + h * 0.05);
   ctx.fill();
 
+  // The cat itself is live; its shadow, under the curl, is not.
+  const catK = l.s * 1.1;
+  contactShadow(ctx, l.cat.x - 8 * catK, l.sill, 40 * catK, l.s);
   drawPlant(ctx, l, rand);
   drawBooks(ctx, l);
   drawMug(ctx, l);
@@ -367,6 +395,7 @@ function drawPlant(ctx: CanvasRenderingContext2D, l: Layout, rand: () => number)
   const { x, y } = l.plant;
   const s = l.s * 1.4;
   const rim = y - 22 * s;
+  contactShadow(ctx, x, y, 9 * s, l.s);
   const leaf = (lx: number, ly: number, size: number, angle: number, color: string) => {
     ctx.fillStyle = color;
     ctx.save();
@@ -444,6 +473,7 @@ function drawPlant(ctx: CanvasRenderingContext2D, l: Layout, rand: () => number)
 function drawBooks(ctx: CanvasRenderingContext2D, l: Layout) {
   const { x, y } = l.books;
   const s = l.s;
+  contactShadow(ctx, x, y, 64 * s, s);
   let top = y;
   const books: [width: number, height: number, offset: number, color: string][] = [
     [128, 17, 0, "#7a4a6a"],
@@ -478,10 +508,7 @@ function drawBooks(ctx: CanvasRenderingContext2D, l: Layout) {
 function drawMug(ctx: CanvasRenderingContext2D, l: Layout) {
   const { x, y } = l.mug;
   const s = l.s;
-  ctx.fillStyle = "rgba(20,10,20,0.4)";
-  ctx.beginPath();
-  ctx.ellipse(x - 8 * s, y + 3 * s, 34 * s, 5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  contactShadow(ctx, x, y, 24 * s, s);
   ctx.strokeStyle = "#e9b9a0";
   ctx.lineWidth = 5 * s;
   ctx.beginPath();
@@ -523,10 +550,7 @@ function drawNotebook(ctx: CanvasRenderingContext2D, l: Layout) {
     ctx.closePath();
     ctx.fill();
   };
-  ctx.fillStyle = "rgba(20,10,20,0.4)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 1 * s, 86 * s, 5 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  contactShadow(ctx, x, y, 82 * s, s);
   // The cover, a little bigger than the pages.
   ctx.fillStyle = "#4a3458";
   quad([
@@ -591,10 +615,7 @@ function drawClock(ctx: CanvasRenderingContext2D, l: Layout) {
   const { x, y } = l.clock;
   const s = l.s;
   const cy = y - 28 * s;
-  ctx.fillStyle = "rgba(20,10,20,0.4)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 1 * s, 26 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  contactShadow(ctx, x, y, 19 * s, s);
   // Feet, and the bells with the hammer's post between them.
   ctx.strokeStyle = "#b8935a";
   ctx.lineWidth = 3 * s;
@@ -654,10 +675,7 @@ function lampShape(l: Layout) {
 
 function drawLamp(ctx: CanvasRenderingContext2D, l: Layout) {
   const { x, y, s, elbow, head, across, mouth } = lampShape(l);
-  ctx.fillStyle = "rgba(20,10,20,0.4)";
-  ctx.beginPath();
-  ctx.ellipse(x, y + 1 * s, 24 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  contactShadow(ctx, x, y, 20 * s, s);
   ctx.fillStyle = "#4f7a6c";
   ctx.beginPath();
   ctx.ellipse(x, y - 3 * s, 20 * s, 5 * s, 0, 0, Math.PI * 2);
@@ -792,11 +810,6 @@ function catSprite(k: number, dpr: number) {
   g.translate(60, 48);
   g.lineCap = "round";
   g.lineJoin = "round";
-
-  g.fillStyle = "rgba(20,10,20,0.35)";
-  g.beginPath();
-  g.ellipse(0, 1, 56, 4.5, 0, 0, Math.PI * 2);
-  g.fill();
 
   const body = new Path2D();
   body.moveTo(-46, 0);

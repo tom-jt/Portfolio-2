@@ -6,12 +6,14 @@ import RewardToasts from "@/components/home/RewardToasts";
 import {
   audioUnlocked,
   playAmbience,
+  primeAudio,
   setAmbienceVolume,
   stopAmbience,
 } from "@/lib/home/ambience";
 import { currentHoliday } from "@/lib/home/cosmetics";
 import { awayToast, noteHoliday, tick } from "@/lib/home/garden";
-import { activeAmbience, activeTheme, usePrefs } from "@/lib/home/prefs";
+import { activeAmbience, activeTheme, setPrefs, usePrefs } from "@/lib/home/prefs";
+import { getAmbience, getScene } from "@/lib/home/scenes";
 import { useTodoSync } from "@/lib/home/sync";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +60,51 @@ function useGardenEngine() {
       tick();
     };
   }, []);
+}
+
+/**
+ * The ambience on the lock screen and in the phone's media controls: what's
+ * playing, with play and pause that work without opening the app. Shown
+ * once it has played; where the browser offers it.
+ */
+function useMediaControls() {
+  const prefs = usePrefs();
+  const { ambienceOn, scene } = prefs;
+  const kind = activeAmbience(prefs);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    const session = navigator.mediaSession;
+    session.setActionHandler("play", () => {
+      primeAudio();
+      setPrefs({ ambienceOn: true });
+    });
+    session.setActionHandler("pause", () => setPrefs({ ambienceOn: false }));
+    return () => {
+      session.setActionHandler("play", null);
+      session.setActionHandler("pause", null);
+      session.metadata = null;
+      session.playbackState = "none";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    const session = navigator.mediaSession;
+    if (ambienceOn) {
+      session.metadata = new MediaMetadata({
+        title: getAmbience(kind).label,
+        artist: getScene(scene).name,
+        album: "Tom's room",
+        artwork: [
+          { src: "/home/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/home/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+      });
+    }
+    // Paused, the controls stay, to start it again from the lock screen.
+    if (session.metadata) session.playbackState = ambienceOn ? "playing" : "paused";
+  }, [ambienceOn, kind, scene]);
 }
 
 /**
@@ -152,6 +199,7 @@ const HomeShell = ({
 
   useGardenEngine();
   useAmbience();
+  useMediaControls();
   useTodoSync();
   useServiceWorker();
 

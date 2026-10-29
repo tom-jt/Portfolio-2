@@ -1518,6 +1518,11 @@ html:has([data-site="home"]) {
   }
 }
 
+/* The garden window's decor, scrolled out of sight: held where it is. */
+[data-home-decor][data-paused] * {
+  animation-play-state: paused !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-home-decor] * {
     animation: none !important;

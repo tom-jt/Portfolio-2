@@ -144,7 +144,12 @@ interface Layer {
   /** Seconds into the loop to start, so a recording used twice doesn't line up. */
   offset?: number;
   /** Heard only now and then: fades in for a few seconds, then away for a while. */
-  bursts?: { on: [min: number, max: number]; off: [min: number, max: number] };
+  bursts?: {
+    on: [min: number, max: number];
+    off: [min: number, max: number];
+    /** Seconds to fade in and out, if not BURST_FADE. */
+    fade?: number;
+  };
 }
 
 interface Recipe {
@@ -296,8 +301,10 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
       { file: "birds", gain: 0.5, lowpass: 4000 },
       // A breeze in the trees across the road.
       { file: "wind-in-trees", gain: 0.1, lowpass: 2400, offset: 20 },
-      // The cat on the sill, purring when it stirs.
-      { file: "cat-purring", gain: 0.35, bursts: { on: [8, 15], off: [25, 50] } },
+      // The cat on the sill: as a real one does, it settles into a steady
+      // purr for a minute or so, then sleeps quietly for a few, the purr
+      // coming and going slowly rather than in snatches.
+      { file: "cat-purring", gain: 0.32, bursts: { on: [45, 90], off: [120, 260], fade: 5 } },
     ],
   },
 };
@@ -336,18 +343,18 @@ const BURST_FADE = 1.2;
  * function.
  */
 function bursts(c: AudioContext, buffer: AudioBuffer, layer: Layer, out: AudioNode) {
-  const { on, off } = layer.bursts!;
+  const { on, off, fade = BURST_FADE } = layer.bursts!;
   const span = ([min, max]: [number, number]) => min + Math.random() * (max - min);
   return every(c, (at) => {
     const hold = span(on);
-    const end = at + BURST_FADE + hold + BURST_FADE;
+    const end = at + fade + hold + fade;
     const src = c.createBufferSource();
     src.buffer = buffer;
     src.loop = true;
     const level = gain(c, 0);
     level.gain.setValueAtTime(0, at);
-    level.gain.linearRampToValueAtTime(layer.gain, at + BURST_FADE);
-    level.gain.setValueAtTime(layer.gain, end - BURST_FADE);
+    level.gain.linearRampToValueAtTime(layer.gain, at + fade);
+    level.gain.setValueAtTime(layer.gain, end - fade);
     level.gain.linearRampToValueAtTime(0, end);
     const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
     route(src, out, ...chain, level);
@@ -359,17 +366,17 @@ function bursts(c: AudioContext, buffer: AudioBuffer, layer: Layer, out: AudioNo
 }
 
 /**
- * Drips in the greenhouse, every few seconds. Not a tone, which reads as a
- * synth: a drop is a soft tap and the brief ring of the bubble it leaves,
- * so both are noise, the ring through a narrow band that rises as the bubble
- * closes. Each falls somewhere from left to right, softened, in a little of
- * the glasshouse's echo. Returns a stop function.
+ * Drips in the greenhouse, every second or few, now and then two together.
+ * Not a tone, which reads as a synth: a drop is a soft tap and the brief,
+ * low ring of the bubble it leaves, so both are noise, the ring through a
+ * band that rises as the bubble closes. Each falls somewhere from left to
+ * right, muffled, in the glasshouse's echo. Returns a stop function.
  */
 function drips(c: AudioContext, out: AudioNode) {
   const bus = gain(c, 1);
-  route(bus, out, filter(c, "lowpass", 3800), room(c, 1.6), gain(c, 0.5));
-  route(bus, out, filter(c, "lowpass", 3800));
-  const noise = c.createBuffer(1, Math.floor(c.sampleRate * 0.25), c.sampleRate);
+  route(bus, out, filter(c, "lowpass", 2200), room(c, 1.8), gain(c, 0.55));
+  route(bus, out, filter(c, "lowpass", 2200));
+  const noise = c.createBuffer(1, Math.floor(c.sampleRate * 0.3), c.sampleRate);
   const data = noise.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
 
@@ -378,27 +385,32 @@ function drips(c: AudioContext, out: AudioNode) {
     src.buffer = noise;
     const env = c.createGain();
     env.gain.setValueAtTime(0, at);
-    env.gain.linearRampToValueAtTime(level, at + 0.003);
+    env.gain.linearRampToValueAtTime(level, at + 0.004);
     env.gain.exponentialRampToValueAtTime(0.0001, at + length);
     src.connect(shape).connect(env).connect(into);
     src.start(at, Math.random() * 0.1);
     src.stop(at + length + 0.02);
   };
 
-  return every(c, (at) => {
+  const drip = (at: number) => {
     const place = c.createStereoPanner();
     place.pan.value = jitter(1.4);
     place.connect(bus);
     const level = 0.5 + Math.random() * 0.5;
     // The tap of the drop landing.
-    burst(place, at, 0.025, 0.05 * level, filter(c, "bandpass", 2400 + Math.random() * 1200, 1.2));
-    // The bubble's ring, a narrow band of noise rising in pitch.
-    const f = 650 + Math.random() * 550;
-    const ring = filter(c, "bandpass", f, 22);
-    ring.frequency.setValueAtTime(f, at + 0.008);
-    ring.frequency.exponentialRampToValueAtTime(f * 1.9, at + 0.07);
-    burst(place, at + 0.008, 0.11, 0.9 * level, ring);
-    return 4 + Math.random() * 7;
+    burst(place, at, 0.02, 0.035 * level, filter(c, "bandpass", 1400 + Math.random() * 600, 0.9));
+    // The bubble's ring: low, and only a little pitched.
+    const f = 280 + Math.random() * 240;
+    const ring = filter(c, "bandpass", f, 9);
+    ring.frequency.setValueAtTime(f, at + 0.01);
+    ring.frequency.exponentialRampToValueAtTime(f * 1.6, at + 0.09);
+    burst(place, at + 0.01, 0.16, 0.7 * level, ring);
+  };
+
+  return every(c, (at) => {
+    drip(at);
+    if (Math.random() < 0.25) drip(at + 0.15 + Math.random() * 0.25);
+    return 1.2 + Math.random() * 4;
   });
 }
 
@@ -881,7 +893,20 @@ export function setAmbienceVolume(v: number) {
   else settle(ctx, 0.08);
 }
 
+/**
+ * Tells the phone what kind of sound this is (WebKit's Audio Session API,
+ * iPhones from iOS 17). "playback" is a music app's: it keeps playing with
+ * the screen locked or the app in the background, where it can, and so
+ * ignores the silent switch too. Only while the ambience plays; otherwise
+ * the chimes go back to following the switch.
+ */
+function setAudioSession(type: "playback" | "auto") {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session && session.type !== type) session.type = type;
+}
+
 export function playAmbience(kind: AmbienceKind, v: number) {
+  setAudioSession("playback");
   const c = context();
   if (!master) return;
   volume = v;
@@ -943,6 +968,7 @@ export function stopAmbience() {
   bed.stop();
   bed = null;
   setStatus("off");
+  setAudioSession("auto");
 }
 
 /**

@@ -51,11 +51,14 @@ function view(w: number, h: number): View {
     const f = Math.max(w * 0.5, h * 0.62);
     return { w, h, cx: w * 0.5, vy: h * 0.5, f, fx: f, lift: 0 };
   }
-  // On a phone, a taller, narrower house seen from a little higher, so the
-  // staging runs down to the foot of the screen as it does on a wide one
-  // rather than leaving off at its sides, and the roof fills the top.
-  const f = h * 0.34;
-  return { w, h, cx: w * 0.5, vy: h * 0.5, f, fx: f * 0.62, lift: 0.28 };
+  // Taller than wide, a phone: the same house, closer, the walls cropped off
+  // the sides as a camera would, and the eye raised just enough that the
+  // staging's edge runs out at the foot of the screen rather than its side.
+  const cx = w * 0.5;
+  const vy = h * 0.6;
+  const f = h * 0.46;
+  const lift = Math.max(0, (AISLE * (h - vy)) / cx + BENCH) + 0.05;
+  return { w, h, cx, vy, f, fx: f, lift };
 }
 
 const at = (v: View, x: number, y: number, z: number): [number, number] => [
@@ -475,8 +478,8 @@ interface Bulb {
  * showing through, two sunk panels below, and a brass knob.
  */
 function door(ctx: CanvasRenderingContext2D, v: View, mask: boolean) {
-  const [l, t] = at(v, -0.25, 0.36, Z_FAR);
-  const [r, b] = at(v, 0.25, FLOOR, Z_FAR);
+  const [l, t] = at(v, -0.32, 0.36, Z_FAR);
+  const [r, b] = at(v, 0.32, FLOOR, Z_FAR);
   const dw = r - l;
   const dh = b - t;
   const u = dw / 20;

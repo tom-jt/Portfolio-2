@@ -48,16 +48,37 @@ function layout(w: number, h: number): Layout {
 }
 
 /** A shadow on the counter under something standing on it. */
+/**
+ * The contact shadow under something on the counter: a soft flat ellipse
+ * just wider than its footprint, darkest where it touches. The lamps hang
+ * above, so every shadow falls straight down, all at one depth. (x, y) is
+ * the middle of the footprint and `rx` half its width.
+ */
 function shadow(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, s: number) {
-  ctx.fillStyle = "rgba(10,5,2,0.4)";
+  const r = rx * 1.12;
+  const ry = Math.max(3.5 * s, r * 0.18);
+  ctx.save();
+  ctx.translate(x, y + 1.5 * s);
+  ctx.scale(1, ry / r);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+  g.addColorStop(0, "rgba(8,4,2,0.62)");
+  g.addColorStop(0.6, "rgba(8,4,2,0.36)");
+  g.addColorStop(1, "rgba(8,4,2,0)");
+  ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(x + 6 * s, y + 4 * s, rx, 5 * s, 0, 0, Math.PI * 2);
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // The thin dark line right at the contact.
+  ctx.fillStyle = "rgba(8,4,2,0.45)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 0.5 * s, rx * 0.92, 1.4 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
 /** A succulent in a little terracotta pot. */
 function drawPlant(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, rand: () => number) {
-  shadow(ctx, x, y, 22 * s, s);
+  shadow(ctx, x, y, 11 * s, s);
   // Leaves first, fanning out of the soil: the back ones darker.
   for (let i = 0; i < 11; i++) {
     const back = i < 5;
@@ -99,7 +120,7 @@ function drawPlant(ctx: CanvasRenderingContext2D, x: number, y: number, s: numbe
 
 /** Two books lying one on the other, and a pen across the top. */
 function drawBooks(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  shadow(ctx, x, y, 44 * s, s);
+  shadow(ctx, x, y, 42 * s, s);
   const book = (bx: number, by: number, bw: number, bh: number, cover: string) => {
     // The cover, and the pages showing along the near edge.
     ctx.fillStyle = cover;
@@ -127,7 +148,7 @@ function drawBooks(ctx: CanvasRenderingContext2D, x: number, y: number, s: numbe
 
 /** A candle in a glass, its flame drawn on the front canvas. */
 function drawCandle(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  shadow(ctx, x, y, 18 * s, s);
+  shadow(ctx, x, y, 14 * s, s);
   // Wax, cream and lit warm from its own flame.
   const wax = ctx.createLinearGradient(0, y - 24 * s, 0, y);
   wax.addColorStop(0, "#fff0cf");
@@ -156,7 +177,7 @@ function drawCandle(ctx: CanvasRenderingContext2D, x: number, y: number, s: numb
 
 /** A croissant on a small plate. */
 function drawCroissant(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  shadow(ctx, x, y, 40 * s, s);
+  shadow(ctx, x, y, 38 * s, s);
   ctx.fillStyle = "#d9cab5";
   ctx.beginPath();
   ctx.ellipse(x, y, 38 * s, 7 * s, 0, 0, Math.PI * 2);
@@ -408,11 +429,7 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
 
   // The cup and saucer, lit from the lamps on the left.
   const { x: cx, y: cy, s } = l.cup;
-  // Shadow on the counter.
-  ctx.fillStyle = "rgba(10,5,2,0.45)";
-  ctx.beginPath();
-  ctx.ellipse(cx + 8 * s, cy + 6 * s, 50 * s, 7 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  shadow(ctx, cx, cy + 2 * s, 44 * s, s);
   // Saucer: a wide shallow dish with a lit rim.
   ctx.fillStyle = "#d9cab5";
   ctx.beginPath();

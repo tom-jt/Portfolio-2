@@ -46,8 +46,10 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            // Over the navbar (z-100) as well as the page: on phones the
+            // card fills the screen, and the bar would cover its close button.
             className="
-              z-10
+              z-[105]
               h-full w-full
               bg-black/20
               fixed inset-0
@@ -59,7 +61,7 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
         {active && typeof active === "object" ? (
           <div
             className="
-              grid z-90
+              grid z-[110]
               fixed inset-0 place-items-center
             "
           >
