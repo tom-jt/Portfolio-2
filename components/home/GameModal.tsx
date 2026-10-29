@@ -110,9 +110,14 @@ const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => 
             )}
           >
             <header className={cn("flex items-center justify-between gap-3 px-2 pb-3", filled && "hidden")}>
-              <h2 id="game-title" className="font-pixel truncate text-lg">
-                {game.title}
-              </h2>
+              <div className="flex min-w-0 items-baseline gap-3">
+                <h2 id="game-title" className="font-pixel truncate text-lg">
+                  {game.title}
+                </h2>
+                {game.description && (
+                  <p className="text-muted-foreground truncate font-sans text-xs">{game.description}</p>
+                )}
+              </div>
               <div className="flex gap-2">
                 <IconButton
                   label="Full screen"

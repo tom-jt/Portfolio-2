@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { lerp, seeded } from "./canvas";
+import GlassRain, { type GlassLook } from "./GlassRain";
 
 /**
  * Picture scenes: photographs with a little motion layered on. Each photo
@@ -394,6 +395,94 @@ const CloudStreak = ({
   </span>
 );
 
+/**
+ * A cloud sailing right across the sky, from off one side to off the other:
+ * one of the clouds baked by scripts/bake-glass.py, as soft as the view
+ * behind the wet glass, so it passes in front of the photo's own clouds and
+ * peaks as if it were among them. `width` and `y` are in % of the photo.
+ */
+const CloudSail = ({
+  kind,
+  y,
+  width,
+  period,
+  delay = 0,
+  flip,
+}: {
+  kind: "heap" | "puff" | "streak" | "mist";
+  y: number;
+  width: number;
+  period: number;
+  delay?: number;
+  /** Mirrored, so two of one kind don't look alike. */
+  flip?: boolean;
+}) => (
+  <span
+    className="absolute inset-y-0 left-0 w-full"
+    style={
+      {
+        "--trip": `${100 + width}%`,
+        animation: `home-cloud-cross ${period}s linear ${delay}s infinite`,
+      } as CSSProperties
+    }
+  >
+    {/* eslint-disable-next-line @next/next/no-img-element -- a cut-out laid over the photo */}
+    <img
+      src={`/home/scenes/alps-cloud-${kind}.webp`}
+      alt=""
+      draggable={false}
+      className="absolute select-none"
+      style={{ left: `${-width}%`, top: `${y}%`, width: `${width}%`, transform: flip ? "scaleX(-1)" : undefined }}
+    />
+  </span>
+);
+
+/**
+ * The alpine hill's stands of trees, cut from the blurred photo with soft
+ * edges by scripts/bake-glass.py (the boxes, in % of the photo, are its
+ * TREES; the photo behind them is filled in, so a lean uncovers hillside).
+ * Each bends from the foot as the gusts reach it, left to right, and
+ * shivers a little all the while.
+ */
+const ALPS_TREES: { box: [x0: number, y0: number, x1: number, y1: number]; lean: number }[] = [
+  { box: [0, 48, 16.5, 66], lean: 4.6 },
+  { box: [23, 52, 39, 68.5], lean: 4.2 },
+  { box: [44.5, 53.5, 57.5, 71.5], lean: 4 },
+  { box: [56.5, 66.5, 65, 79.5], lean: 4.4 },
+  { box: [69.5, 62.5, 100, 84.5], lean: 3.2 },
+];
+
+const WindyTrees = ({ period }: { period: number }) => (
+  <>
+    {ALPS_TREES.map(({ box: [x0, y0, x1, y1], lean }, i) => (
+      <span
+        key={i}
+        className="absolute origin-bottom"
+        style={
+          {
+            left: `${x0}%`,
+            top: `${y0}%`,
+            width: `${x1 - x0}%`,
+            height: `${y1 - y0}%`,
+            "--lean": `${lean}deg`,
+            // The same gust for all, reaching each stand a little later.
+            animation: `home-tree-sway ${period}s ease-in-out ${-period + i * 0.6}s infinite`,
+          } as CSSProperties
+        }
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- a cut-out laid over the photo */}
+        <img
+          src={`/home/scenes/alps-trees-${i}.webp`}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 size-full origin-bottom select-none"
+          style={{ animation: `home-tree-shiver ${1.3 + i * 0.17}s ease-in-out ${-i * 0.4}s infinite alternate` }}
+        />
+      </span>
+    ))}
+  </>
+);
+
 /** Tiles for falling rain and snow, drawn once as SVG. 200px square, so a
  *  layer sliding down by whole tiles loops without a seam. */
 const svgTile = (body: string) =>
@@ -588,11 +677,20 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
   alps: () => (
     <>
-      {/* Long streaks of cloud drifting over the peaks. */}
-      <CloudStreak x={30} y={9} width={70} height={9} color="rgb(255 255 255 / 0.45)" period={70} />
-      <CloudStreak x={72} y={17} width={60} height={8} color="rgb(240 248 255 / 0.4)" period={90} delay={-30} />
-      <CloudStreak x={50} y={30} width={80} height={7} color="rgb(255 255 255 / 0.3)" period={110} delay={-55} />
-      <CloudStreak x={15} y={36} width={50} height={6} color="rgb(235 245 255 / 0.28)" period={80} delay={-12} />
+      {/* Seen through a rainy window, so everything out there can move more
+          than it could sharp: clouds sailing right across, over the peaks
+          and along the valley, and a strong wind in the trees. */}
+      <CloudSail kind="streak" y={1} width={46} period={95} delay={-52} />
+      <CloudSail kind="heap" y={6} width={26} period={80} />
+      <CloudSail kind="puff" y={15} width={14} period={62} delay={-36} />
+      <CloudSail kind="heap" y={18} width={18} period={70} delay={-58} flip />
+      <CloudSail kind="streak" y={25} width={34} period={84} delay={-18} flip />
+      <CloudSail kind="puff" y={30} width={10} period={58} delay={-8} flip />
+      {/* Low cloud trailing along the valley below the peaks, slower for
+          being further off. */}
+      <CloudSail kind="mist" y={41} width={40} period={120} delay={-75} />
+      <CloudSail kind="mist" y={47} width={28} period={105} delay={-30} flip />
+      <WindyTrees period={9} />
       {/* A light rain, two sheets deep. */}
       <Fall tile={RAIN_TILE} period={1.6} opacity={0.35} />
       <Fall tile={RAIN_TILE} period={1.1} scale={1.6} opacity={0.25} />
@@ -838,6 +936,23 @@ const MOTION: Partial<Record<PhotoId, string>> = {
  */
 const PANE: Partial<Record<PhotoId, { src: string; className: string }>> = {
   moonlight: { src: "/home/scenes/moonlight-glass.webp", className: "scale-[1.05]" },
+  // Baked by scripts/bake-glass.py.
+  alps: { src: "/home/scenes/alps-glass.webp", className: "" },
+};
+
+/** Rain on the glass by day: drops paler than the view, gathering the sky's
+ *  white light high on the pane and the meadow's green low down. (The rain
+ *  falling outside is the photo's own Fall.) */
+const DAY_GLASS: GlassLook = {
+  high: "240,248,255",
+  low: "228,245,200",
+  split: 0.62,
+  body: ["rgba(240,248,255,0.1)", "rgba(70,95,90,0.16)", "rgba(25,40,35,0.4)"],
+};
+
+/** Photos seen through a rainy window: drops on the glass over the screen. */
+const RAINY_PANE: Partial<Record<PhotoId, GlassLook>> = {
+  alps: DAY_GLASS,
 };
 
 /** What's on the glass rather than beyond it, so it stays still. */
@@ -860,6 +975,13 @@ const PhotoScene = ({ id }: { id: PhotoId }) => (
       </div>
       {ON_GLASS[id]?.()}
     </CoverBox>
+    {RAINY_PANE[id] && (
+      <>
+        <GlassRain look={RAINY_PANE[id]} />
+        {/* Condensation gathering at the bottom of the pane. */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgb(210_225_235/0.1),transparent_35%)]" />
+      </>
+    )}
     {/* A little weight at the edges, where the cards sit. */}
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(0_0_0/0.35)_100%)]" />
   </div>

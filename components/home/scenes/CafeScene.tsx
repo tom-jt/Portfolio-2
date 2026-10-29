@@ -9,8 +9,9 @@ import { animate, cappedDpr, fitCanvas, GRAIN, lerp, onResize, seeded } from "./
  *
  *  back  — the room: wall, shelves, the counter and a cup, pendant lamps, and
  *          through the window a wet street gone soft with distance. Drawn once.
- *  front — rain outside, beads and runs on the glass, steam off the cup, a
- *          string of lights that twinkle, and the lamps' glow breathing.
+ *  front — cars swishing past outside, rain, beads and runs on the glass,
+ *          steam off the cup, a string of lights that twinkle, and the
+ *          lamps' glow breathing.
  */
 
 interface Layout {
@@ -291,23 +292,7 @@ function drawStreet(ctx: CanvasRenderingContext2D, win: Layout["win"], rand: () 
     ctx.fillRect(lx + 12 * s - r, lampY + 3 * s - r, r * 2, r * 2);
   }
 
-  // Cars on the road, softly out of focus: headlights one way, tail lights
-  // the other.
-  const lanes = street + h * 0.11;
-  for (let i = 0; i < 3; i++) {
-    const cx = x + lerp(0.12, 0.88, rand()) * w;
-    const toward = i % 2 === 0;
-    const rgb = toward ? "255,240,215" : "255,70,60";
-    const lane = lanes + (toward ? h * 0.03 : 0);
-    for (const dx of [-14, 14]) {
-      const r = (toward ? 16 : 11) * s;
-      const g = ctx.createRadialGradient(cx + dx * s, lane, 0, cx + dx * s, lane, r);
-      g.addColorStop(0, `rgba(${rgb},0.55)`);
-      g.addColorStop(1, `rgba(${rgb},0)`);
-      ctx.fillStyle = g;
-      ctx.fillRect(cx + dx * s - r, lane - r, r * 2, r * 2);
-    }
-  }
+  // The cars are live, on the front canvas (see carSprite).
 
   // Wet road reflecting it all.
   const road = ctx.createLinearGradient(0, y + h * 0.85, 0, y + h);
@@ -361,6 +346,9 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
 
   // Shelves on the side walls, when there's room for them.
   if (x > 70) {
+    // Where the trailing plant stands, near the end of the right-hand top
+    // shelf; the books there stop short of it.
+    const plant = { x: x + ww + x * 0.18 + x * 0.55, y: h * 0.26 };
     for (const side of [0, 1]) {
       const sx = side ? x + ww + x * 0.18 : x * 0.12;
       const sw = x * 0.7;
@@ -373,7 +361,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
         ctx.fillStyle = "#4a2f1d";
         ctx.fillRect(sx, sy, sw, 5 * k);
         // Books in groups, a jar or two between them.
-        for (let bx = sx + 6; bx < sx + sw - 10; ) {
+        const end = side && row === 0.26 ? plant.x - 24 * l.cup.s : sx + sw - 10;
+        for (let bx = sx + 6; bx < end; ) {
           if (rand() < 0.22) {
             const jw = lerp(28, 38, rand()) * k;
             const jh = lerp(44, 58, rand()) * k;
@@ -385,7 +374,7 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
             continue;
           }
           const count = 4 + Math.floor(rand() * 4);
-          for (let n = 0; n < count && bx < sx + sw - 14 * k; n++) {
+          for (let n = 0; n < count && bx < end - 4 * k; n++) {
             const bw = lerp(11, 17, rand()) * k;
             const bh = lerp(84, 104, rand()) * k;
             const hue = ["#7a3b2e", "#4f6a5a", "#8a6a3e", "#3f4f6a", "#a3724a", "#5a3a4a"][Math.floor(rand() * 6)];
@@ -409,28 +398,57 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
         }
       }
     }
-    // A trailing plant on the right-hand top shelf.
-    const px = x + ww + x * 0.18 + x * 0.55;
-    const py = h * 0.26;
-    ctx.strokeStyle = "#3d6a3a";
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 5; i++) {
+    // The trailing plant: a pot with a rim, its stems spilling out over
+    // either side of the rim and hanging down past the shelf's edge, leaves
+    // along them, and a tuft left standing in the pot.
+    const k = l.cup.s;
+    const rim = plant.y - 24 * k;
+    const pot = ctx.createLinearGradient(plant.x - 14 * k, 0, plant.x + 14 * k, 0);
+    pot.addColorStop(0, "#b5623e");
+    pot.addColorStop(1, "#7a3a22");
+    ctx.fillStyle = pot;
+    ctx.beginPath();
+    ctx.moveTo(plant.x - 12 * k, rim + 5 * k);
+    ctx.lineTo(plant.x + 12 * k, rim + 5 * k);
+    ctx.lineTo(plant.x + 9.5 * k, plant.y);
+    ctx.lineTo(plant.x - 9.5 * k, plant.y);
+    ctx.fill();
+    ctx.fillStyle = "#a0583a";
+    ctx.fillRect(plant.x - 14 * k, rim, 28 * k, 6 * k);
+    ctx.fillStyle = "#2a1a10";
+    ctx.fillRect(plant.x - 12 * k, rim - 1 * k, 24 * k, 1.5 * k);
+    const leaf = (lx: number, ly: number, size: number, angle: number) => {
+      ctx.fillStyle = rand() < 0.5 ? "#4f8a4a" : "#3d6a3a";
       ctx.beginPath();
-      ctx.moveTo(px, py - 4);
-      const len = lerp(40, 110, rand());
-      const dx = lerp(-18, 10, rand());
-      ctx.bezierCurveTo(px + dx, py + len * 0.3, px + dx * 1.5, py + len * 0.7, px + dx, py + len);
+      ctx.ellipse(lx, ly, size, size * 0.6, angle, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    ctx.strokeStyle = "#3d6a3a";
+    ctx.lineWidth = 1.4 * k;
+    for (let i = 0; i < 6; i++) {
+      // Out over the left of the rim or the right, then down.
+      const dir = i % 2 ? 1 : -1;
+      const len = lerp(50, 130, rand()) * k;
+      const sway = lerp(-6, 6, rand()) * k;
+      const p0 = { x: plant.x + dir * lerp(3, 9, rand()) * k, y: rim };
+      const p1 = { x: plant.x + dir * 20 * k, y: rim - 7 * k };
+      const p2 = { x: plant.x + dir * 18 * k + sway, y: rim + len * 0.45 };
+      const p3 = { x: plant.x + dir * 15 * k + sway * 1.6, y: rim + len };
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
       ctx.stroke();
-      for (let k = 0.2; k < 1; k += 0.18) {
-        ctx.fillStyle = rand() < 0.5 ? "#4f8a4a" : "#3d6a3a";
-        ctx.beginPath();
-        ctx.ellipse(px + dx * (0.6 + k), py + len * k, 5, 3, rand() * Math.PI, 0, Math.PI * 2);
-        ctx.fill();
+      // Leaves alternating along it, smaller towards the tip.
+      for (let t = 0.12; t <= 1; t += 0.11) {
+        const u = 1 - t;
+        const at = (a: number, b: number, c: number, d: number) =>
+          u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d;
+        const side = Math.round(t * 9) % 2 ? 1 : -1;
+        leaf(at(p0.x, p1.x, p2.x, p3.x) + side * 3 * k, at(p0.y, p1.y, p2.y, p3.y), lerp(5, 3, t) * k, side * 0.6);
       }
     }
-    ctx.fillStyle = "#a0583a";
-    const pk = l.cup.s;
-    ctx.fillRect(px - 13 * pk, py - 24 * pk, 26 * pk, 24 * pk);
+    // The tuft in the pot, over the stems' roots.
+    for (let i = 0; i < 7; i++) leaf(plant.x + lerp(-10, 10, i / 6) * k, rim - lerp(2, 7, rand()) * k, 5 * k, lerp(-0.8, 0.8, i / 6));
   }
 
   // Counter.
@@ -522,6 +540,149 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   }
 }
 
+/** The two lanes of the street outside, as a share of the window's height:
+ *  the far one, cars going left, and the near one, cars going right. */
+const LANES = [
+  { y: 0.875, dir: -1, size: 0.07 },
+  { y: 0.93, dir: 1, size: 0.088 },
+] as const;
+
+/**
+ * A car going by in the rain, seen side on through the wet glass and well
+ * out of focus: a dark shape against the lit street, its headlights a soft
+ * glow that throws a long, faint beam far ahead along the road, its tail
+ * lights a red haze trailing behind, and both shining back up off the wet
+ * road. Rendered once per lane, smeared along its way as if moving fast,
+ * and slid across each frame. Its speed trail, fainter and fainter copies
+ * of it and its lamps falling away behind, is a sprite of its own, so each
+ * car can draw it out as long as its speed. `len` is the car's length; it faces right, or
+ * left with `dir` -1. In the sprite, the road is at `road` and the car's
+ * middle at `mid`.
+ */
+function carSprite(len: number, dir: number, dpr: number) {
+  const w = len * 5.4;
+  const h = len * 0.8;
+  const c = document.createElement("canvas");
+  c.width = Math.ceil(w * dpr);
+  c.height = Math.ceil(h * dpr);
+  const trailCanvas = document.createElement("canvas");
+  trailCanvas.width = c.width;
+  trailCanvas.height = c.height;
+  // Room behind for the trail, and more ahead for the beam.
+  const mid = len * 2.3;
+  const road = h * 0.62;
+  const setUp = (into: HTMLCanvasElement) => {
+    const ctx = into.getContext("2d")!;
+    ctx.scale(dpr, dpr);
+    if (dir < 0) {
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+    }
+    // Well out of focus.
+    ctx.filter = `blur(${Math.max(3, len * 0.1)}px)`;
+    return ctx;
+  };
+  let g = setUp(trailCanvas);
+  const front = mid + len * 0.5;
+  const rear = mid - len * 0.5;
+  const lampY = road - len * 0.17;
+  /** A long soft streak of light along the road from `x0` to `x1`. */
+  const streak = (x0: number, x1: number, y: number, height: number, rgb: string, a: number) => {
+    const fade = g.createLinearGradient(x0, 0, x1, 0);
+    fade.addColorStop(0, `rgba(${rgb},${a})`);
+    fade.addColorStop(0.35, `rgba(${rgb},${a * 0.45})`);
+    fade.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = fade;
+    g.beginPath();
+    g.ellipse((x0 + x1) / 2, y, Math.abs(x1 - x0) / 2, height / 2, 0, 0, Math.PI * 2);
+    g.fill();
+  };
+  const glow = (x: number, y: number, r: number, rgb: string, a: number) => {
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, `rgba(${rgb},${a})`);
+    grad.addColorStop(0.4, `rgba(${rgb},${a * 0.35})`);
+    grad.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = grad;
+    g.fillRect(x - r, y - r, r * 2, r * 2);
+  };
+  // Body and cabin, dark, the roof catching the street lamps.
+  const body = () => {
+    g.fillStyle = "#0b0d18";
+    g.beginPath();
+    g.roundRect(rear, road - len * 0.26, len, len * 0.2, len * 0.05);
+    g.fill();
+    g.beginPath();
+    g.moveTo(mid - len * 0.3, road - len * 0.25);
+    g.lineTo(mid - len * 0.18, road - len * 0.4);
+    g.lineTo(mid + len * 0.12, road - len * 0.4);
+    g.lineTo(mid + len * 0.28, road - len * 0.25);
+    g.fill();
+    g.fillStyle = "rgba(255,200,150,0.14)";
+    g.fillRect(mid - len * 0.18, road - len * 0.41, len * 0.3, len * 0.02);
+    g.fillStyle = "rgba(120,140,190,0.14)";
+    g.beginPath();
+    g.moveTo(mid - len * 0.26, road - len * 0.26);
+    g.lineTo(mid - len * 0.16, road - len * 0.37);
+    g.lineTo(mid + len * 0.1, road - len * 0.37);
+    g.lineTo(mid + len * 0.23, road - len * 0.26);
+    g.fill();
+    g.fillStyle = "#05060c";
+    for (const wx of [-0.3, 0.3]) {
+      g.beginPath();
+      g.arc(mid + wx * len, road - len * 0.06, len * 0.075, 0, Math.PI * 2);
+      g.fill();
+    }
+  };
+  const draw = () => {
+    // The beam, reaching two and a half car lengths on down the road, and
+    // the red haze behind.
+    streak(front - len * 0.1, front + len * 2.6, road - len * 0.08, len * 0.22, "255,236,205", 0.16);
+    streak(rear + len * 0.1, rear - len * 0.9, road - len * 0.12, len * 0.2, "255,60,50", 0.14);
+    body();
+    // The lamps themselves: soft, not glaring.
+    glow(front, lampY, len * 0.12, "255,240,215", 0.55);
+    glow(rear, lampY, len * 0.09, "255,60,50", 0.5);
+    // Their reflections, drawn out down the wet road.
+    for (const [x, rgb, a] of [
+      [front, "255,236,205", 0.18],
+      [rear, "255,60,50", 0.16],
+    ] as const) {
+      const shine = g.createLinearGradient(0, road, 0, road + len * 0.28);
+      shine.addColorStop(0, `rgba(${rgb},${a})`);
+      shine.addColorStop(1, `rgba(${rgb},0)`);
+      g.fillStyle = shine;
+      g.fillRect(x - len * 0.05, road, len * 0.1, len * 0.28);
+    }
+  };
+  // The trail: fainter and fainter copies of the car falling away behind
+  // it, a car length and a half at an ordinary speed, its lamps drawn out
+  // into streaks.
+  const trail = 14;
+  for (let i = trail; i >= 1; i--) {
+    const k = i / trail;
+    g.save();
+    g.translate(-k * len * 1.4, 0);
+    g.globalAlpha = 0.2 * (1 - k) ** 1.5;
+    body();
+    g.globalAlpha = 0.5 * (1 - k) ** 1.2;
+    glow(front, lampY, len * 0.1, "255,240,215", 0.4);
+    glow(rear, lampY, len * 0.08, "255,60,50", 0.45);
+    g.restore();
+  }
+  // The car, smeared along its way: drawn over itself a little further on
+  // each time.
+  g = setUp(c);
+  const smear = 8;
+  g.globalAlpha = 1 / 2.6;
+  for (let i = 0; i < smear; i++) {
+    g.save();
+    g.translate((i / (smear - 1) - 0.5) * len * 0.3, 0);
+    draw();
+    g.restore();
+  }
+  return { canvas: c, trail: trailCanvas, w, h, mid: dir < 0 ? w - mid : mid, road };
+}
+
 /** A soft round glow, rendered once and stamped for each bulb. */
 function glowSprite(radius: number, rgb: string) {
   const c = document.createElement("canvas");
@@ -596,6 +757,24 @@ const CafeScene = () => {
 
       const steam = Array.from({ length: 22 }, () => ({ age: rand() * 4, seed: rand() * 10 }));
 
+      // Cars swishing by on the street outside, now and then, in either
+      // lane. Seen only through the panes, so the frame and the mullion
+      // stay in front of them.
+      const dpr = cappedDpr(1.5);
+      const lanes = LANES.map((lane) => {
+        const len = win.w * lane.size;
+        return { ...lane, sprite: carSprite(len, lane.dir, dpr), wait: lerp(0.5, 5, rand()) };
+      });
+      const cars: { lane: (typeof lanes)[number]; x: number; speed: number; trail: number }[] = [];
+      /** An ordinary speed, at which a trail is as long as it was drawn. */
+      const cruise = win.w * 0.55;
+      const edge = Math.max(10, win.w * 0.018) / 2;
+      const bar = Math.max(4, win.w * 0.008) / 2;
+      const paneW = win.w / 2 - bar - edge;
+      const panes = new Path2D();
+      panes.rect(win.x + edge, win.y + edge, paneW, win.h - edge * 2);
+      panes.rect(win.x + win.w / 2 + bar, win.y + edge, paneW, win.h - edge * 2);
+
       // The candle's flame and its glow, drawn once and stamped each frame.
       const fs = l.cup.s;
       const flame = document.createElement("canvas");
@@ -620,6 +799,44 @@ const CafeScene = () => {
 
       const frame = (t: number, dt: number) => {
         ctx.clearRect(0, 0, w, h);
+
+        // The cars, behind the rain. Sometimes one comes close behind
+        // another, mostly there's a good gap.
+        for (const lane of lanes) {
+          lane.wait -= dt;
+          if (lane.wait > 0) continue;
+          lane.wait = Math.random() < 0.25 ? lerp(0.6, 1.4, Math.random()) : lerp(3, 9, Math.random());
+          // Starting just out of sight, beam and all.
+          const { w: sw, mid } = lane.sprite;
+          const speed = win.w * lerp(0.35, 0.85, Math.random());
+          cars.push({
+            lane,
+            x: lane.dir > 0 ? win.x - (sw - mid) : win.x + win.w + mid,
+            speed,
+            trail: (speed / cruise) ** 1.5,
+          });
+        }
+        ctx.save();
+        ctx.clip(panes);
+        for (let i = cars.length - 1; i >= 0; i--) {
+          const car = cars[i];
+          car.x += car.lane.dir * car.speed * dt;
+          if (car.x < win.x - car.lane.sprite.w || car.x > win.x + win.w + car.lane.sprite.w) cars.splice(i, 1);
+        }
+        // The far lane first, so a near car passes in front of a far one.
+        for (const lane of lanes) {
+          for (const car of cars) {
+            if (car.lane !== lane) continue;
+            const { sprite, y } = lane;
+            const top = win.y + win.h * y - sprite.road;
+            // The trail drawn out from the car's middle, longer the faster
+            // it goes.
+            const tw = sprite.w * car.trail;
+            ctx.drawImage(sprite.trail, car.x - sprite.mid * car.trail, top, tw, sprite.h);
+            ctx.drawImage(sprite.canvas, car.x - sprite.mid, top, sprite.w, sprite.h);
+          }
+        }
+        ctx.restore();
 
         // Everything outside, and on, the glass.
         ctx.save();

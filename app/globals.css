@@ -1642,6 +1642,49 @@ html:has([data-site="home"]) {
   }
 }
 
+/* A cloud sailing right across, --trip of its own (full-width) layer, from
+   off one side to off the other. */
+@keyframes home-cloud-cross {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--trip, 130%), 0, 0);
+  }
+}
+
+/* Trees in a gusty wind: leaning away by --lean, easing back a little and
+   leaning again before the gust drops. Skewed from the foot, so they bend
+   rather than tilt. */
+@keyframes home-tree-sway {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  22% {
+    transform: skewX(calc(var(--lean, 2deg) * -1));
+  }
+  38% {
+    transform: skewX(calc(var(--lean, 2deg) * -0.45));
+  }
+  55% {
+    transform: skewX(calc(var(--lean, 2deg) * -1.15));
+  }
+  78% {
+    transform: skewX(calc(var(--lean, 2deg) * -0.2));
+  }
+}
+
+/* Needles and branches shivering in the wind, all the while. */
+@keyframes home-tree-shiver {
+  from {
+    transform: skewX(-0.7deg);
+  }
+  to {
+    transform: skewX(0.7deg);
+  }
+}
+
 /* A sheet of rain or snow sliding down by whole tiles (--tile). */
 @keyframes home-fall-sheet {
   from {

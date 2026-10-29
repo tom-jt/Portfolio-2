@@ -53,8 +53,10 @@ const Cartridge = ({ game, onPlay }: { game: ArcadeGame; onPlay: () => void }) =
           </span>
         )}
       </div>
-      <span className="font-pixel px-1 text-[0.95rem] leading-tight">{game.title}</span>
-      {game.tagline && <span className="text-muted-foreground px-1 text-xs">{game.tagline}</span>}
+      <span className="flex flex-col gap-0.5 px-1">
+        <span className="font-pixel text-[0.95rem] leading-tight">{game.title}</span>
+        {game.tagline && <span className="text-muted-foreground text-xs">{game.tagline}</span>}
+      </span>
     </Root>
   );
 };

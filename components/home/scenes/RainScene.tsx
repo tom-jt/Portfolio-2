@@ -2,15 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
-import {
-  animate,
-  cappedDpr,
-  fitCanvas,
-  GRAIN,
-  lerp,
-  onResize,
-  seeded,
-} from "./canvas";
+import { fitCanvas, GRAIN, lerp, onResize, seeded } from "./canvas";
+import GlassRain, { NIGHT_GLASS } from "./GlassRain";
 
 /**
  * A city at night, seen through a rainy window. Two canvases:
@@ -19,9 +12,7 @@ import {
  *          resolution and blurred with CSS, because it is out of focus behind
  *          the glass. It only redraws every few seconds, when a window light
  *          flicks on or off.
- *  front — rain falling outside, and drops on the glass. The drops are
- *          sprites; a few grow heavy and run down, swallowing the drops in
- *          their path and leaving a trail of beads behind.
+ *  front — rain falling outside, and drops on the glass (GlassRain).
  */
 
 // ------------------------------------------------------------------ city
@@ -221,108 +212,20 @@ function drawCity(ctx: CanvasRenderingContext2D, w: number, h: number, city: Cit
   }
 }
 
-// ----------------------------------------------------------------- glass
-
-/**
- * A drop on glass at night: nearly clear and slightly darker than what's
- * behind it, with a bright crescent along its lower edge where it gathers
- * the light, and a pin of reflection on top. Drops low on the pane catch the
- * warm street light; drops up against the sky catch cooler light.
- */
-function dropSprite(r: number, dpr: number, warm: boolean) {
-  const pad = 2;
-  const size = Math.ceil((r + pad) * 2 * dpr);
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const g = canvas.getContext("2d")!;
-  g.scale(dpr, dpr);
-  const c = r + pad;
-
-  g.beginPath();
-  g.arc(c, c, r, 0, Math.PI * 2);
-  g.save();
-  g.clip();
-
-  const light = warm ? "255,206,150" : "176,204,255";
-
-  const body = g.createRadialGradient(c, c - r * 0.3, r * 0.1, c, c, r);
-  body.addColorStop(0, "rgba(150,170,215,0.08)");
-  body.addColorStop(0.75, "rgba(20,28,52,0.28)");
-  body.addColorStop(1, "rgba(4,8,20,0.6)");
-  g.fillStyle = body;
-  g.fillRect(0, 0, c * 2, c * 2);
-
-  const pool = g.createRadialGradient(c, c + r * 0.55, 0, c, c + r * 0.55, r * 0.75);
-  pool.addColorStop(0, `rgba(${light},0.55)`);
-  pool.addColorStop(1, `rgba(${light},0)`);
-  g.fillStyle = pool;
-  g.fillRect(0, 0, c * 2, c * 2);
-  g.restore();
-
-  g.strokeStyle = `rgba(${light},0.7)`;
-  g.lineWidth = Math.max(0.5, r * 0.22);
-  g.lineCap = "round";
-  g.beginPath();
-  g.arc(c, c, r * 0.86, Math.PI * 0.18, Math.PI * 0.82);
-  g.stroke();
-
-  g.fillStyle = "rgba(255,255,255,0.85)";
-  g.beginPath();
-  g.arc(c - r * 0.32, c - r * 0.38, Math.max(0.5, r * 0.2), 0, Math.PI * 2);
-  g.fill();
-
-  return { canvas, r, pad };
-}
-
-type Sprite = ReturnType<typeof dropSprite>;
-
-interface Bead {
-  x: number;
-  y: number;
-  r: number;
-}
-interface Trail extends Bead {
-  life: number;
-  max: number;
-}
-interface Runner extends Bead {
-  speed: number;
-  travelled: number;
-  gap: number;
-}
-interface Streak {
-  x: number;
-  y: number;
-  len: number;
-  speed: number;
-}
-
-/** Far, mid and near rain: fainter, shorter and slower the further away. */
-const STREAK_LAYERS = [
-  { share: 0.5, alpha: 0.12, width: 0.8, len: [10, 16], speed: [650, 850] },
-  { share: 0.32, alpha: 0.18, width: 1, len: [14, 22], speed: [900, 1150] },
-  { share: 0.18, alpha: 0.26, width: 1.3, len: [20, 32], speed: [1250, 1500] },
-];
-const WIND = 0.1;
-
 const RainScene = () => {
   const backRef = useRef<HTMLCanvasElement>(null);
-  const frontRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
     const back = backRef.current;
-    const front = frontRef.current;
-    if (!back || !front) return;
+    if (!back) return;
 
-    let stop = () => {};
     let flicker: ReturnType<typeof setInterval> | undefined;
 
     const setup = () => {
-      stop();
       clearInterval(flicker);
 
-      // Back: half resolution is plenty under a blur.
+      // Half resolution is plenty under a blur.
       const b = fitCanvas(back, 0.5);
       const city = buildCity(b.w, b.h);
       let beaconOn = true;
@@ -339,184 +242,11 @@ const RainScene = () => {
           drawCity(b.ctx, b.w, b.h, city, beaconOn);
         }, 2600);
       }
-
-      // Front.
-      const dpr = cappedDpr(1.5);
-      const { ctx, w, h } = fitCanvas(front, dpr);
-      const sprites = (warm: boolean): Sprite[] =>
-        Array.from({ length: 9 }, (_, i) => dropSprite(i + 1, dpr, warm));
-      const warmSprites = sprites(true);
-      const coolSprites = sprites(false);
-      const spriteFor = (bead: Bead) => {
-        const set = bead.y > h * 0.55 ? warmSprites : coolSprites;
-        return set[Math.min(set.length - 1, Math.max(0, Math.round(bead.r) - 1))];
-      };
-      const drawBead = (bead: Bead, alpha = 1, stretch = 1, into = ctx) => {
-        const s = spriteFor(bead);
-        const k = bead.r / s.r;
-        const size = (s.r + s.pad) * 2 * k;
-        into.globalAlpha = alpha;
-        into.drawImage(s.canvas, bead.x - size / 2, bead.y - (size * stretch) / 2, size, size * stretch);
-      };
-
-      // The resting beads: hundreds of them, and most frames none changes, so
-      // they live on a layer of their own rather than being drawn one by one
-      // every frame. A bead that lands is added to it as it lands; one that a
-      // runner swallows has the layer redrawn, at most ten times a second.
-      // (It sits under the runner that took it, so the wait never shows.)
-      const beadLayer = document.createElement("canvas");
-      beadLayer.width = front.width;
-      beadLayer.height = front.height;
-      const beadCtx = beadLayer.getContext("2d")!;
-      beadCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      let beadsGone = true;
-      let redrawnAt = -Infinity;
-      const addBead = (bead: Bead) => {
-        beads.push(bead);
-        drawBead(bead, 1, 1, beadCtx);
-      };
-      const drawBeads = (now: number) => {
-        if (beadsGone && now - redrawnAt >= 0.1) {
-          beadCtx.clearRect(0, 0, w, h);
-          for (const bead of beads) drawBead(bead, 1, 1, beadCtx);
-          beadsGone = false;
-          redrawnAt = now;
-        }
-        ctx.globalAlpha = 1;
-        ctx.drawImage(beadLayer, 0, 0, w, h);
-      };
-
-      const area = w * h;
-      const beadTarget = Math.min(520, Math.max(120, Math.round(area / 3200)));
-      const newBead = (): Bead => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        r: Math.random() < 0.08 ? lerp(3.4, 5.2, Math.random()) : 1 + Math.random() ** 1.8 * 3,
-      });
-      const beads: Bead[] = Array.from({ length: beadTarget }, newBead);
-      const trails: Trail[] = [];
-      const runners: Runner[] = [];
-
-      const streakCount = Math.min(260, Math.max(80, Math.round(area / 7000)));
-      const streaks: Streak[][] = STREAK_LAYERS.map((layer) =>
-        Array.from({ length: Math.round(streakCount * layer.share) }, () => ({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          len: lerp(layer.len[0], layer.len[1], Math.random()),
-          speed: lerp(layer.speed[0], layer.speed[1], Math.random()),
-        })),
-      );
-
-      const drawGlass = (now = 0) => {
-        for (const t of trails) drawBead(t, Math.min(1, t.life / t.max) * 0.9);
-        drawBeads(now);
-        for (const run of runners) drawBead(run, 1, run.speed > 0 ? 1.18 : 1.05);
-        ctx.globalAlpha = 1;
-      };
-
-      if (reduced) {
-        ctx.clearRect(0, 0, w, h);
-        drawGlass();
-        return;
-      }
-
-      let beadClock = 0;
-      let runnerClock = 0.4;
-
-      stop = animate((t, dt) => {
-        ctx.clearRect(0, 0, w, h);
-
-        // Rain outside the window.
-        STREAK_LAYERS.forEach((layer, li) => {
-          ctx.strokeStyle = `rgba(190,210,255,${layer.alpha})`;
-          ctx.lineWidth = layer.width;
-          ctx.beginPath();
-          for (const s of streaks[li]) {
-            s.y += s.speed * dt;
-            s.x += s.speed * WIND * dt;
-            if (s.y > h) {
-              s.y = -s.len - Math.random() * 60;
-              s.x = Math.random() * (w + 60) - 60;
-            }
-            ctx.moveTo(s.x, s.y);
-            ctx.lineTo(s.x + s.len * WIND, s.y + s.len);
-          }
-          ctx.stroke();
-        });
-
-        // New drops landing on the glass.
-        beadClock += dt * 26;
-        while (beadClock >= 1) {
-          beadClock -= 1;
-          if (beads.length < beadTarget) addBead(newBead());
-        }
-
-        // Every so often a drop gets heavy enough to run.
-        runnerClock -= dt;
-        if (runnerClock <= 0 && runners.length < 7) {
-          runnerClock = lerp(0.5, 1.8, Math.random());
-          runners.push({
-            x: Math.random() * w,
-            y: lerp(-0.05, 0.55, Math.random()) * h,
-            r: lerp(3, 5.5, Math.random()),
-            speed: 0,
-            travelled: 0,
-            gap: lerp(6, 14, Math.random()),
-          });
-        }
-
-        for (let i = runners.length - 1; i >= 0; i--) {
-          const run = runners[i];
-          // Stop-start: drops on glass catch, then let go.
-          if (Math.random() < dt * 1.6) {
-            run.speed = Math.random() < 0.28 ? 0 : (40 + Math.random() * 180) * (run.r / 5);
-          }
-          const dy = run.speed * dt;
-          run.y += dy;
-          if (dy > 0) run.x += (Math.random() - 0.5) * 0.5;
-          run.travelled += dy;
-
-          if (run.travelled > run.gap) {
-            run.travelled = 0;
-            const max = lerp(6, 12, Math.random());
-            trails.push({
-              x: run.x + (Math.random() - 0.5) * run.r * 0.5,
-              y: run.y - run.r * 0.7,
-              r: lerp(0.5, 1.3, Math.random()) * (run.r / 5),
-              life: max,
-              max,
-            });
-            run.r = Math.max(2.4, run.r - 0.04);
-          }
-
-          for (let j = beads.length - 1; j >= 0; j--) {
-            const bead = beads[j];
-            const dx = bead.x - run.x;
-            const by = bead.y - run.y;
-            const reach = run.r + bead.r * 0.8;
-            if (dx * dx + by * by < reach * reach) {
-              run.r = Math.min(7.5, Math.sqrt(run.r * run.r + bead.r * bead.r * 0.5));
-              beads.splice(j, 1);
-              beadsGone = true;
-            }
-          }
-
-          if (run.y - run.r > h) runners.splice(i, 1);
-        }
-
-        for (let i = trails.length - 1; i >= 0; i--) {
-          trails[i].life -= dt;
-          if (trails[i].life <= 0) trails.splice(i, 1);
-        }
-
-        drawGlass(t);
-      });
     };
 
     setup();
     const stopResize = onResize(setup);
     return () => {
-      stop();
       clearInterval(flicker);
       stopResize();
     };
@@ -528,7 +258,7 @@ const RainScene = () => {
         ref={backRef}
         className="absolute inset-0 h-full w-full scale-[1.06] blur-[5px] saturate-[1.1]"
       />
-      <canvas ref={frontRef} className="absolute inset-0 h-full w-full" />
+      <GlassRain look={NIGHT_GLASS} />
       {/* Condensation gathering at the bottom of the pane. */}
       <div className="absolute inset-0 bg-[linear-gradient(to_top,rgb(170_190_225/0.08),transparent_35%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgb(3_5_12/0.7)_100%)]" />
