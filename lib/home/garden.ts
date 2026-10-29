@@ -39,16 +39,27 @@ export interface PlantDef {
   id: PlantId;
   name: string;
   baseCost: number;
-  /** Drops per second, per plant owned. */
+  /** Each copy costs this much more than the last. */
+  growth: number;
+  /** Drops per second, per plant owned, before its milestones. */
   rate: number;
   unlockLevel: number;
 }
 
+/**
+ * Each plant costs about eight times the last and makes about five times as
+ * much, so a new plant's first copies pay back slower than the old one's did.
+ * What makes up for it is the cost growth: the cheap plants grow dearer more
+ * slowly, so they reach their milestones sooner and keep up for longer, and
+ * the best buy moves between old and new plants instead of always being the
+ * newest.
+ */
 export const PLANTS: PlantDef[] = [
   {
     id: "moss",
     name: "Moss",
     baseCost: 15,
+    growth: 1.08,
     rate: 0.2,
     unlockLevel: 1,
   },
@@ -56,35 +67,40 @@ export const PLANTS: PlantDef[] = [
     id: "fern",
     name: "Fern",
     baseCost: 120,
-    rate: 1.5,
+    growth: 1.085,
+    rate: 1,
     unlockLevel: 1,
   },
   {
     id: "mint",
     name: "Mint",
     baseCost: 900,
-    rate: 9,
+    growth: 1.09,
+    rate: 3.5,
     unlockLevel: 2,
   },
   {
     id: "monstera",
     name: "Monstera",
     baseCost: 6500,
-    rate: 55,
+    growth: 1.095,
+    rate: 11,
     unlockLevel: 3,
   },
   {
     id: "bonsai",
     name: "Bonsai",
     baseCost: 48_000,
-    rate: 340,
+    growth: 1.1,
+    rate: 50,
     unlockLevel: 5,
   },
   {
     id: "moonflower",
     name: "Moonflower",
     baseCost: 400_000,
-    rate: 2200,
+    growth: 1.105,
+    rate: 250,
     unlockLevel: 8,
   },
   // The late three are spaced further apart, so each is a real goal.
@@ -92,21 +108,24 @@ export const PLANTS: PlantDef[] = [
     id: "lotus",
     name: "Lotus",
     baseCost: 3_500_000,
-    rate: 14_000,
+    growth: 1.11,
+    rate: 1400,
     unlockLevel: 12,
   },
   {
     id: "willow",
     name: "Weeping willow",
     baseCost: 32_000_000,
-    rate: 90_000,
+    growth: 1.115,
+    rate: 8000,
     unlockLevel: 17,
   },
   {
     id: "cloudbloom",
     name: "Cloudbloom",
     baseCost: 300_000_000,
-    rate: 580_000,
+    growth: 1.12,
+    rate: 47_000,
     unlockLevel: 23,
   },
   // Long goals, spaced out along the slow climb to level 100.
@@ -114,49 +133,86 @@ export const PLANTS: PlantDef[] = [
     id: "rainlily",
     name: "Rain lily",
     baseCost: 2_800_000_000,
-    rate: 3_600_000,
+    growth: 1.13,
+    rate: 270_000,
     unlockLevel: 30,
   },
   {
     id: "cedar",
     name: "Cedar",
     baseCost: 26_000_000_000,
-    rate: 22_000_000,
+    growth: 1.135,
+    rate: 1_600_000,
     unlockLevel: 38,
   },
   {
     id: "stormorchid",
     name: "Storm orchid",
     baseCost: 240_000_000_000,
-    rate: 135_000_000,
+    growth: 1.14,
+    rate: 9_000_000,
     unlockLevel: 47,
   },
   {
     id: "worldtree",
     name: "World tree",
     baseCost: 2_200_000_000_000,
-    rate: 820_000_000,
+    growth: 1.15,
+    rate: 52_000_000,
     unlockLevel: 57,
   },
 ];
 
-/** Each copy of a plant costs this much more than the last. */
-const PLANT_GROWTH = 1.15;
-
-/** Copies per milestone: each one makes every copy of that plant better. */
-export const PLANT_MILESTONE = 10;
-
 /**
- * How much better every copy is for owning `have`: ×3 at 10, ×5 at 20, ×7 at
- * 30, and so on, so the old plants stay worth topping up. Old growth makes
- * each step ×3 instead (`step`).
+ * Milestones: at 10, then every 25 copies to 300, every 50 to 500, and every
+ * 100 after. Each one multiplies every copy of that plant, ×3 at a round
+ * hundred and ×2 otherwise, so a plant's output climbs in a straight line
+ * between them and leaps at each.
  */
-export const plantBoost = (have: number, step = 2) =>
-  1 + step * Math.floor(have / PLANT_MILESTONE);
+export const nextMilestone = (have: number) =>
+  have < 10
+    ? 10
+    : have < 300
+      ? (Math.floor(have / 25) + 1) * 25
+      : have < 500
+        ? (Math.floor(have / 50) + 1) * 50
+        : (Math.floor(have / 100) + 1) * 100;
+
+/** Milestones a plant has reached with `have` copies. */
+export function milestonesAt(have: number) {
+  let reached = 0;
+  for (let at = nextMilestone(0); at <= have; at = nextMilestone(at))
+    reached++;
+  return reached;
+}
+
+/** What makes milestones better: Old growth makes every leap bigger, and
+ *  each one reached adds `perMilestone` (Trellis) to its plant on top. */
+export interface MilestoneBonus {
+  leap: number;
+  perMilestone: number;
+}
+const NO_BONUS: MilestoneBonus = { leap: 1, perMilestone: 0 };
+
+/** The leap the milestone at `at` copies makes. */
+export const milestoneLeap = (at: number, bonus = NO_BONUS) =>
+  (at % 100 === 0 ? 3 : 2) * bonus.leap;
+
+/** How much better every copy is for owning `have`: every leap reached,
+ *  times Trellis's share for each. */
+export function plantBoost(have: number, bonus = NO_BONUS) {
+  let boost = 1;
+  let reached = 0;
+  for (let at = nextMilestone(0); at <= have; at = nextMilestone(at)) {
+    boost *= milestoneLeap(at, bonus);
+    reached++;
+  }
+  return boost * (1 + bonus.perMilestone * reached);
+}
 
 /** Drops per second from each copy, before the greenhouse and skills. */
-export const plantRate = (def: PlantDef, have: number, step = 2) =>
-  def.rate * plantBoost(have, step);
+export const plantRate = (def: PlantDef, have: number, bonus = NO_BONUS) =>
+  def.rate * plantBoost(have, bonus);
 
 // -------------------------------------------------------------- upgrades
 

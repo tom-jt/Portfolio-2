@@ -65,6 +65,24 @@ const minutesFor = (mode: TimerMode, s: TimerSettings) => s[mode] * 60_000;
 export const notificationsSupported = () =>
   typeof window !== "undefined" && "Notification" in window;
 
+/**
+ * Shows a notification, if they're allowed. Through the service worker where
+ * there is one: phones (Chrome on Android, and iPhones with /home installed)
+ * only show them that way and refuse `new Notification`. A tag replaces the
+ * last notification with the same one rather than stacking them up.
+ */
+export async function showNotification(title: string, body: string, tag: string) {
+  if (!notificationsSupported() || Notification.permission !== "granted") return;
+  const options: NotificationOptions = { body, tag, icon: "/home/icons/icon-192.png" };
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    if (registration) return await registration.showNotification(title, options);
+  } catch {}
+  try {
+    new Notification(title, options).onclick = () => window.focus();
+  } catch {}
+}
+
 const initial: TimerState = {
   mode: "focus",
   status: "idle",

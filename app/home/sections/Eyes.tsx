@@ -100,7 +100,7 @@ const Eyes = ({
       />
       {notificationsSupported() && (
         <Switch
-          label="notify me in other tabs"
+          label="notify me when away"
           hint={
             blocked
               ? "notifications are blocked in your browser settings"

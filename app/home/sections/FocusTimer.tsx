@@ -154,7 +154,7 @@ const Settings = ({
       />
       {notificationsSupported() && (
         <Switch
-          label="Notify me in other tabs"
+          label="Notify me when away"
           hint={
             blocked
               ? "Notifications are blocked in your browser settings."

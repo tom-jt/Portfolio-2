@@ -256,9 +256,9 @@ const AboutCard = () => {
           translateZ={60}
           className="text-zinc-500 text-sm dark:text-zinc-300"
         >
-          Soft grass in dusk rain,
+          Lush grass in soft rain,
           <br />
-          Beneath silken breeze, your eyes
+          Under silken breeze, your eyes
           <br />
           Glimmer with moonlight.
         </CardItem>

@@ -1,6 +1,6 @@
 /*
  * The service worker for /home as an installed app: what makes it open
- * offline. It sits at the root only so it may claim /home (a worker's scope
+ * offline, and shows the timer's and eye breaks' notifications. It sits at the root only so it may claim /home (a worker's scope
  * can't be wider than its folder); it's registered for /home alone and
  * leaves the rest of the site be.
  *
@@ -66,6 +66,18 @@ async function cacheFirst(event, refresh) {
   }
   return fresh;
 }
+
+// A tap on a timer or eye-break notification brings /home forward, opening
+// it again if it was closed.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const open = windows.find((w) => new URL(w.url).pathname.startsWith("/home"));
+      return open ? open.focus() : self.clients.openWindow("/home");
+    }),
+  );
+});
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;

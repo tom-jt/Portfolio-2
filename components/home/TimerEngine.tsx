@@ -7,7 +7,7 @@ import { useNow } from "@/lib/home/store";
 import { setTitlePart } from "@/lib/home/title";
 import {
   MODE_LABEL,
-  notificationsSupported,
+  showNotification,
   timeLeft,
   timerStore,
   useTimer,
@@ -34,16 +34,8 @@ const TimerEngine = () => {
         : "break's over.";
     setAnnouncement(message);
     if (c.finished !== "focus") pushToast({ kind: "info", title: "break's over" });
-    if (
-      settings.notify &&
-      notificationsSupported() &&
-      Notification.permission === "granted" &&
-      document.hidden
-    ) {
-      new Notification(c.finished === "focus" ? "focus session done" : "break's over", {
-        body: message,
-        icon: "/images/logos/LogoSimpleDarkTrans.png",
-      });
+    if (settings.notify && document.hidden) {
+      showNotification(c.finished === "focus" ? "focus session done" : "break's over", message, "timer");
     }
   }, []);
 

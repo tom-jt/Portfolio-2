@@ -16,7 +16,7 @@ import {
   useEyes,
 } from "@/lib/home/eyes";
 import { useNow } from "@/lib/home/store";
-import { notificationsSupported } from "@/lib/home/timer";
+import { showNotification } from "@/lib/home/timer";
 import { setTitlePart } from "@/lib/home/title";
 import { cn } from "@/lib/utils";
 import { textButton } from "./ui";
@@ -32,11 +32,8 @@ function useEyeEngine() {
     const announce = () => {
       const s = eyeStore.get();
       if (s.sound) playEyeChime();
-      if (s.notify && notificationsSupported() && Notification.permission === "granted" && document.hidden) {
-        new Notification("rest your eyes", {
-          body: `look at something far away for ${REST_SECONDS} seconds`,
-          icon: "/images/logos/LogoSimpleDarkTrans.png",
-        });
+      if (s.notify && document.hidden) {
+        showNotification("rest your eyes", `look at something far away for ${REST_SECONDS} seconds`, "eyes");
       }
     };
 
