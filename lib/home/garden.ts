@@ -1283,26 +1283,30 @@ export const SEASON_MINIMUM = 1_000_000;
 /** How much more each season's harvest is worth than the first's. */
 const seasonFactor = (s: GardenState) => 1 + 0.25 * s.seasons;
 
+/** Seeds a harvest pays per squared order of magnitude, before the factor. */
+const SEED_SCALE = 0.4;
+
 /**
- * Seeds a harvest pays: 2 × the fourth root of the season's drops in
- * millions, × 1.25 for every season already ended.
+ * Seeds a harvest pays: 0.4 × (1 + the season's orders of magnitude past a
+ * million)², × 1.25 for every season already ended, and at least one.
  *
- * The fourth root is what stops one long season paying out the tree: ten
- * times the drops is under twice the seeds. Later seasons pay far more,
- * because each runs on everything learnt before it, so its drops and its
- * factor both grow; and tiny seasons can't be farmed, since a million drops
- * is worth a few seeds at most. Fifteen seasons or so fill the tree.
+ * Seeds follow how many digits the season's drops have, not the drops
+ * themselves, so ever bigger totals (Bone meal, the late plants, the seed
+ * bank) can't snowball into a runaway harvest: a season ten times bigger is
+ * one more digit, a few seeds more. Later seasons still pay far more, since
+ * each runs on everything learnt before it, so its digits and its factor
+ * both grow. Fifteen seasons or so fill the tree.
  */
 export function seedsFor(s: GardenState) {
   if (s.seasonLifetime < SEASON_MINIMUM) return 0;
-  const base = 2 * (s.seasonLifetime / 1_000_000) ** 0.25 * seasonFactor(s);
-  return Math.floor(base);
+  const digits = 1 + Math.log10(s.seasonLifetime / SEASON_MINIMUM);
+  return Math.max(1, Math.floor(SEED_SCALE * digits ** 2 * seasonFactor(s)));
 }
 
 /** Drops this season needs to pay `seeds`. */
 export function dropsForSeeds(seeds: number, s: GardenState) {
-  const base = Math.max(1, seeds) / (2 * seasonFactor(s));
-  return Math.max(SEASON_MINIMUM, 1_000_000 * base ** 4);
+  const digits = Math.sqrt(Math.max(1, seeds) / (SEED_SCALE * seasonFactor(s)));
+  return Math.max(SEASON_MINIMUM, SEASON_MINIMUM * 10 ** (digits - 1));
 }
 
 /** The season tab opens once a first harvest is possible, and stays. */
