@@ -110,7 +110,8 @@ const GameModal = ({ game, onClose }: { game: ArcadeGame | null; onClose: () => 
             )}
           >
             <header className={cn("flex items-center justify-between gap-3 px-2 pb-3", filled && "hidden")}>
-              <div className="flex min-w-0 items-baseline gap-3">
+              {/* Side by side, or on a phone the description on a line of its own. */}
+              <div className="flex min-w-0 flex-col md:flex-row md:items-baseline md:gap-3">
                 <h2 id="game-title" className="font-pixel truncate text-lg">
                   {game.title}
                 </h2>

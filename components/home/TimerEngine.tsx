@@ -6,6 +6,7 @@ import { formatClock } from "@/lib/home/format";
 import { useNow } from "@/lib/home/store";
 import { setTitlePart } from "@/lib/home/title";
 import {
+  away,
   MODE_LABEL,
   showNotification,
   timeLeft,
@@ -34,7 +35,7 @@ const TimerEngine = () => {
         : "break's over.";
     setAnnouncement(message);
     if (c.finished !== "focus") pushToast({ kind: "info", title: "break's over" });
-    if (settings.notify && document.hidden) {
+    if (settings.notify && away()) {
       showNotification(c.finished === "focus" ? "focus session done" : "break's over", message, "timer");
     }
   }, []);

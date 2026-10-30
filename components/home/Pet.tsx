@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   getPet,
   PET_FPS,
@@ -26,7 +26,10 @@ const SPEED = 30;
 const between = (a: number, b: number) => a + (b - a) * Math.random();
 
 /**
- * The pet, walking along the top of the chips its parent lays out. It idles,
+ * The pet, walking along the top of the chips its parent lays out. With
+ * `grounded`, it drops `drop` rem to the bottom of the screen and walks
+ * there instead, the same stretch along; when that ends it hops back up. It
+ * idles,
  * then wanders to somewhere else along them; clicking it makes it happy. It
  * sleeps when the page loads, and once the page has been hidden, unfocused
  * or closed for five minutes, waking a minute after the visitor is here, or
@@ -36,7 +39,7 @@ const between = (a: number, b: number) => a + (b - a) * Math.random();
  * a transform, both written straight to the element twelve times a second,
  * so it never re-renders React.
  */
-const Pet = ({ id }: { id: PetId }) => {
+const Pet = ({ id, grounded = false, drop = 5.25 }: { id: PetId; grounded?: boolean; drop?: number }) => {
   const lane = useRef<HTMLDivElement>(null);
   const sprite = useRef<HTMLButtonElement>(null);
   const reduced = useReducedMotion();
@@ -182,8 +185,25 @@ const Pet = ({ id }: { id: PetId }) => {
   }, [id, reduced]);
 
   return (
-    // The lane spans the chips; the pet's feet rest on their top edge.
-    <div ref={lane} className="pointer-events-none absolute inset-x-0 bottom-full" style={{ height: SIZE, marginBottom: -FEET }}>
+    // The lane spans the chips; the pet's feet rest on their top edge, and
+    // it's drawn over them. Off them, it falls, landing with a little
+    // bounce; back, it hops up in an arc.
+    <motion.div
+      ref={lane}
+      initial={false}
+      animate={{
+        y: grounded
+          ? ["0rem", `${drop}rem`, `${drop - 0.45}rem`, `${drop}rem`]
+          : [`${drop}rem`, "-1.75rem", "0rem"],
+      }}
+      transition={
+        grounded
+          ? { duration: 0.75, times: [0, 0.6, 0.8, 1], ease: ["easeIn", "easeOut", "easeIn"] }
+          : { duration: 0.6, times: [0, 0.55, 1], ease: ["easeOut", "easeIn"] }
+      }
+      className="pointer-events-none absolute inset-x-0 bottom-full z-10"
+      style={{ height: SIZE, marginBottom: -FEET }}
+    >
       <button
         ref={sprite}
         type="button"
@@ -200,7 +220,7 @@ const Pet = ({ id }: { id: PetId }) => {
           imageRendering: "pixelated",
         }}
       />
-    </div>
+    </motion.div>
   );
 };
 

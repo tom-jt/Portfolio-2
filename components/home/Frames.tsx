@@ -98,7 +98,7 @@ const STYLES: Record<Exclude<FrameId, "plain">, FrameStyle> = {
   enamel: { surface: "#f4f6f8", edge: "#2f5fa8", width: 7 },
   maple: { surface: "linear-gradient(135deg, #b5532a, #d9822f 50%, #b5532a)", edge: DARK },
   borealis: { surface: "linear-gradient(135deg, #2a7a74, #3f2a74)", edge: "#8ff5cf" },
-  coral: { surface: "repeating-linear-gradient(60deg, #e04f78 0 6px, #ff8fb0 6px 8px)", edge: "#ffc15e" },
+  coral: { surface: "repeating-linear-gradient(60deg, #e75174 0 6px, #ff8faa 6px 8px)", edge: "#ffc65e" },
   frost: {
     surface: `${scatter(19, ["#ffffff"], 18, [0.5, 1.4], [100, 80])}, linear-gradient(135deg, #eef7ff, #9cc4e8)`,
     edge: "#ffffff",

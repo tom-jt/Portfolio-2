@@ -634,20 +634,20 @@ html[data-home-scene="p-space"] [data-site="home"] {
 }
 
 html[data-home-scene="p-sunset"] [data-site="home"] {
-  --background: #2a0a2c;
-  --muted-foreground: #e8b8d2;
-  --primary: #ff6f9a;
-  --primary-foreground: #2a0612;
-  --ring: #ff6f9a;
-  --accent-text: #ff6f9a;
-  --glass: rgb(44 10 40 / 78%);
-  --glass-strong: rgb(38 9 35 / 93%);
-  --glass-edge: rgb(255 200 225 / 14%);
-  --glass-highlight: rgb(255 230 242 / 8%);
-  --glow: #ff6f9a; /* the sky */
-  --glow-2: #ffc15e; /* the sun */
-  --glow-3: #b77cff; /* the violet above */
-  --nav-fg-hover: #ff6f9a;
+  --background: #2d0a2d;
+  --muted-foreground: #e8b8d0;
+  --primary: #ff6f93;
+  --primary-foreground: #2a0610;
+  --ring: #ff6f93;
+  --accent-text: #ff6f93;
+  --glass: rgb(45 10 39 / 78%);
+  --glass-strong: rgb(39 9 34 / 93%);
+  --glass-edge: rgb(255 200 222 / 14%);
+  --glass-highlight: rgb(255 230 241 / 8%);
+  --glow: #ff6f93; /* the sky */
+  --glow-2: #ffc65e; /* the sun */
+  --glow-3: #c07cff; /* the violet above */
+  --nav-fg-hover: #ff6f93;
 }
 
 html[data-home-scene="p-alps"] [data-site="home"] {
@@ -1012,20 +1012,20 @@ html[data-home-theme="canopy"] [data-site="home"],
   --nav-fg: #cfe0d2;
 }
 
-/* Made for the tropical sunset: a magenta sky and its gold sun. */
+/* Made for the tropical sunset: a magenta sky, its gold sun, and the red sea. */
 html[data-home-theme="tropic"] [data-site="home"],
 [data-home-swatch="tropic"] {
-  --foreground: #fff0f5;
-  --muted-foreground: #e8b8d2;
-  --primary-foreground: #2a0612;
-  --glass: rgb(44 10 40 / 78%);
-  --glass-strong: rgb(38 9 35 / 93%);
-  --glass-edge: rgb(255 200 225 / 14%);
-  --glass-highlight: rgb(255 230 242 / 8%);
-  --glow: #ff6f9a;
-  --glow-2: #ffc15e;
-  --glow-3: #b77cff;
-  --nav-fg: #f2cfe0;
+  --foreground: #fff0f4;
+  --muted-foreground: #e8b8d0;
+  --primary-foreground: #2a0610;
+  --glass: rgb(45 10 39 / 78%);
+  --glass-strong: rgb(39 9 34 / 93%);
+  --glass-edge: rgb(255 200 222 / 14%);
+  --glass-highlight: rgb(255 230 241 / 8%);
+  --glow: #ff6f93;
+  --glow-2: #ffc65e;
+  --glow-3: #c07cff;
+  --nav-fg: #f2cfde;
 }
 
 /* Made for the alpine hill: its sky, the meadow, and sun on the rock. */

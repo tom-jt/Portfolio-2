@@ -7,12 +7,15 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Eye,
   Gamepad2,
   Headphones,
   ListTodo,
+  Maximize2,
+  Minimize2,
   Music2,
   Pause,
   Play,
@@ -35,6 +38,7 @@ import { getPet } from "@/lib/home/pets";
 import {
   activeAmbience,
   closePanels,
+  setPrefs,
   togglePanel,
   usePrefs,
   type PanelId,
@@ -68,6 +72,11 @@ import Tasks from "./Tasks";
  * the right edge (garden at the top, under its level chip), while sound and
  * the arcade line up along the bottom, leftwards. Phones get a tab bar and
  * one sheet at a time instead.
+ *
+ * In immersive mode the controls and the greeting fade away, leaving the
+ * scene, and the pet drops to the bottom of the screen. The controls are
+ * still there, and still work: each fades back in while what it opened is
+ * open.
  */
 
 const LABEL: Record<PanelId, string> = {
@@ -155,6 +164,32 @@ const Card = ({
   >
     {children}
   </motion.div>
+);
+
+/**
+ * A control that fades away in immersive mode, staying where it was and
+ * still working: it shows again while what it opened is open (anything in
+ * it marked aria-expanded), or while it has the keyboard's focus.
+ */
+const Fade = ({
+  hide,
+  className,
+  children,
+}: {
+  hide: boolean;
+  className?: string;
+  children: ReactNode;
+}) => (
+  <div
+    className={cn(
+      "transition-opacity duration-500",
+      hide &&
+        "opacity-0 has-[:focus-visible]:opacity-100 has-[[aria-expanded=true]]:opacity-100",
+      className,
+    )}
+  >
+    {children}
+  </div>
 );
 
 // Inside a card the panel shrinks to fit and scrolls.
@@ -386,9 +421,15 @@ const TABS: { id: PanelId; icon: ComponentType<{ className?: string }> }[] = [
 const TabBar = ({
   active,
   onPick,
+  immersive,
+  children,
 }: {
   active: PanelId | null;
   onPick: (id: PanelId) => void;
+  /** Glass and tabs faded out, but for the open one. */
+  immersive: boolean;
+  /** The pet, which walks along the top. */
+  children?: ReactNode;
 }) => {
   const { clock } = useClock();
   const eyes = useEyeStatus();
@@ -398,13 +439,21 @@ const TabBar = ({
     id === "timer" ? clock : id === "eyes" ? eyes : id;
 
   return (
+    // Above the quick links button, so the pet walks in front of it.
     <nav
       aria-label="tools"
-      className={cn(
-        chipGlass,
-        "fixed inset-x-3 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 grid h-16 grid-cols-6 items-center rounded-[1.6rem] px-1 md:hidden",
-      )}
+      className="text-foreground fixed inset-x-3 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-[41] grid h-16 grid-cols-6 items-center rounded-[1.6rem] px-1 md:hidden"
     >
+      {/* The bar's glass, on its own, so it can fade while a tab stays. */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          chipGlass,
+          "pointer-events-none absolute inset-0 rounded-[1.6rem] transition-opacity duration-500",
+          immersive && "opacity-0",
+        )}
+      />
+      {children}
       {TABS.map(({ id, icon: Icon }) => (
         <button
           key={id}
@@ -413,8 +462,9 @@ const TabBar = ({
           aria-pressed={active === id}
           onClick={() => onPick(id)}
           className={cn(
-            "focus-visible:ring-ring relative mx-0.5 flex h-13 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[1.1rem] transition focus-visible:ring-2 focus-visible:outline-none",
+            "focus-visible:ring-ring relative mx-0.5 flex h-13 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[1.1rem] transition duration-500 focus-visible:ring-2 focus-visible:outline-none",
             active === id ? "bg-white/14" : "hover:bg-white/6",
+            immersive && active !== id && "opacity-0 focus-visible:opacity-100",
           )}
         >
           <Icon className="text-glow size-5" />
@@ -451,7 +501,7 @@ const PANELS: Record<PanelId, typeof Tasks> = {
 
 const Room = () => {
   const wide = useWide();
-  const { openPanels, pet } = usePrefs();
+  const { openPanels, pet, immersive } = usePrefs();
   // Only whether the pet is unlocked: the room holds every card, so it
   // mustn't re-render each time the garden ticks.
   const showPet = useGardenValue((s) =>
@@ -497,19 +547,53 @@ const Room = () => {
       <TimerEngine />
       <EyeBreak />
 
-      <Greeting className="pointer-events-none absolute top-[4.25rem] left-6 md:top-8 md:left-10" />
+      <Greeting
+        className={cn(
+          "pointer-events-none absolute top-[4.25rem] left-6 transition-opacity duration-500 md:top-8 md:left-10",
+          immersive && "opacity-0",
+        )}
+      />
 
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 md:top-7 md:right-8 md:gap-2.5">
-        <HudChip open={chipOpen("garden")} onClick={() => toggle("garden")} />
-        <SceneSwitcher />
-        <SiteSwitcher
-          to="cs"
-          className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center"
-        />
-        <SiteSwitcher
-          to="law"
-          className="text-nav-fg hover:text-nav-fg-hover size-10 justify-center"
-        />
+        <Fade hide={immersive}>
+          <HudChip open={chipOpen("garden")} onClick={() => toggle("garden")} />
+        </Fade>
+        <Fade hide={immersive}>
+          <SceneSwitcher />
+        </Fade>
+        <button
+          type="button"
+          aria-pressed={immersive}
+          aria-label="immersive mode"
+          title={immersive ? "show the controls" : "immersive mode: hide the controls"}
+          onClick={() => setPrefs({ immersive: !immersive })}
+          className="text-nav-fg hover:text-nav-fg-hover focus-visible:ring-ring grid size-10 cursor-pointer place-items-center rounded-full transition focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {immersive ? <Minimize2 className="size-5" /> : <Maximize2 className="size-5" />}
+        </button>
+        <Fade hide={immersive} className="flex items-center gap-1.5 md:gap-2.5">
+          {/* Phones: one mark for both portfolios, opening the CS one. */}
+          <SiteSwitcher
+            to="cs"
+            className="size-10 justify-center md:hidden"
+            icon={
+              <Image
+                src="/images/logos/LogoSimpleDarkTrans.png"
+                alt=""
+                width={24}
+                height={24}
+              />
+            }
+          />
+          <SiteSwitcher
+            to="cs"
+            className="text-nav-fg hover:text-nav-fg-hover hidden size-10 justify-center md:flex"
+          />
+          <SiteSwitcher
+            to="law"
+            className="text-nav-fg hover:text-nav-fg-hover hidden size-10 justify-center md:flex"
+          />
+        </Fade>
       </div>
 
       {/* The tasks card, and the links card beside it, at the bottom left. */}
@@ -596,29 +680,41 @@ const Room = () => {
         </AnimatePresence>
       </div>
 
-      <TasksChip open={chipOpen("tasks")} onClick={() => toggle("tasks")} />
+      <Fade hide={immersive}>
+        <TasksChip open={chipOpen("tasks")} onClick={() => toggle("tasks")} />
+      </Fade>
       {/* Beside the tasks, stopping short of the chips on the right. */}
-      <QuickLinksBar className="absolute bottom-8 left-[22.25rem] z-20 hidden max-w-[max(5rem,calc(100vw-51rem))] md:flex" />
+      <Fade hide={immersive}>
+        <QuickLinksBar className="absolute bottom-8 left-[22.25rem] z-20 hidden max-w-[max(5rem,calc(100vw-51rem))] md:flex" />
+      </Fade>
       <LinkKeys />
       <div className="absolute right-8 bottom-8 hidden items-center gap-2.5 md:flex">
         {/* The pet lives on top of these chips. */}
-        {wide && showPet && <Pet id={showPet} />}
-        <button
-          type="button"
-          aria-label={LABEL.arcade}
-          aria-expanded={chipOpen("arcade")}
-          onClick={() => toggle("arcade")}
-          className={cn(
-            chipButton,
-            "grid size-13 place-items-center rounded-[1.1rem]",
-            chipOpen("arcade") && "border-glow/55",
-          )}
-        >
-          <Gamepad2 className="text-glow size-5" />
-        </button>
-        <SoundChip open={chipOpen("sound")} onClick={() => toggle("sound")} />
-        <EyesChip open={chipOpen("eyes")} onClick={() => toggle("eyes")} />
-        <TimerChip open={chipOpen("timer")} onOpen={() => toggle("timer")} />
+        {wide && showPet && <Pet id={showPet} grounded={immersive} />}
+        <Fade hide={immersive}>
+          <button
+            type="button"
+            aria-label={LABEL.arcade}
+            aria-expanded={chipOpen("arcade")}
+            onClick={() => toggle("arcade")}
+            className={cn(
+              chipButton,
+              "grid size-13 place-items-center rounded-[1.1rem]",
+              chipOpen("arcade") && "border-glow/55",
+            )}
+          >
+            <Gamepad2 className="text-glow size-5" />
+          </button>
+        </Fade>
+        <Fade hide={immersive}>
+          <SoundChip open={chipOpen("sound")} onClick={() => toggle("sound")} />
+        </Fade>
+        <Fade hide={immersive}>
+          <EyesChip open={chipOpen("eyes")} onClick={() => toggle("eyes")} />
+        </Fade>
+        <Fade hide={immersive}>
+          <TimerChip open={chipOpen("timer")} onOpen={() => toggle("timer")} />
+        </Fade>
       </div>
 
       <AnimatePresence>
@@ -679,8 +775,13 @@ const Room = () => {
       </AnimatePresence>
 
       {/* Phones: just above the tab bar, at the right, in thumb's reach. */}
-      <QuickLinksMenu className={cn("fixed right-4 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 md:hidden", sheet && "hidden")} />
-      <TabBar active={sheet} onPick={toggle} />
+      <Fade hide={immersive}>
+        <QuickLinksMenu className={cn("fixed right-4 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 md:hidden", sheet && "hidden")} />
+      </Fade>
+      <TabBar active={sheet} onPick={toggle} immersive={immersive}>
+        {/* Phones: the pet walks along the top of the tab bar. */}
+        {!wide && showPet && <Pet id={showPet} grounded={immersive} />}
+      </TabBar>
     </div>
   );
 };

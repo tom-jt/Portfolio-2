@@ -16,7 +16,7 @@ import {
   useEyes,
 } from "@/lib/home/eyes";
 import { useNow } from "@/lib/home/store";
-import { showNotification } from "@/lib/home/timer";
+import { away, showNotification } from "@/lib/home/timer";
 import { setTitlePart } from "@/lib/home/title";
 import { cn } from "@/lib/utils";
 import { textButton } from "./ui";
@@ -32,7 +32,7 @@ function useEyeEngine() {
     const announce = () => {
       const s = eyeStore.get();
       if (s.sound) playEyeChime();
-      if (s.notify && document.hidden) {
+      if (s.notify && away()) {
         showNotification("rest your eyes", `look at something far away for ${REST_SECONDS} seconds`, "eyes");
       }
     };

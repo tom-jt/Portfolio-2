@@ -227,13 +227,13 @@ const Frond = ({ side, delay }: { side: "left" | "right"; delay: number }) => (
     style={{ animation: `home-sway 4.5s ease-in-out ${delay}s infinite alternate` }}
   >
     <svg viewBox="0 0 60 40" className={`block w-20 ${side === "right" ? "-scale-x-100" : ""}`} aria-hidden="true">
-      <path d="M0 0 Q26 6 52 30" stroke="#1d2a24" strokeWidth="1.6" fill="none" />
+      <path d="M0 0 Q26 6 52 30" stroke="#0c0209" strokeWidth="1.6" fill="none" />
       {Array.from({ length: 9 }, (_, i) => {
         const t = (i + 1) / 10;
         const x = 52 * t;
         const y = 6 * t + 24 * t * t;
         return (
-          <g key={i} fill="#21362b">
+          <g key={i} fill="#160412">
             <path d={`M${x} ${y} q${-3 + i} ${8 - i * 0.3} ${-1 + i * 0.6} ${13 - i * 0.6} q2 -6 1 -13Z`} />
             <path d={`M${x} ${y} q${4 + i * 0.3} ${-4} ${8 - i * 0.2} ${-3 + i * 0.4} q-5 1 -8 3Z`} />
           </g>
@@ -756,16 +756,17 @@ const DECOR: Record<DecorId, () => ReactNode> = {
       </svg>
     </>
   ),
-  // The tropical sunset: palm fronds hanging in, and blossom drifting down.
+  // The tropical sunset: palm fronds hanging in, silhouetted as the photo's
+  // palms are, and blossom drifting down.
   fronds: () => (
     <>
-      <span className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(to_top,rgb(255_60_120/0.2),transparent)]" />
-      <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_55%_100%,rgb(255_190_90/0.22),transparent_60%)]" />
+      <span className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(to_top,rgb(255_60_110/0.2),transparent)]" />
+      <span className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_55%_100%,rgb(255_195_90/0.22),transparent_60%)]" />
       <Frond side="left" delay={0} />
       <Frond side="right" delay={-2} />
       {pieces(89, 6, [7, 9], [12, 18]).map((p, i) => (
         <Faller key={i} p={p}>
-          <Petal hue={i % 2 ? "#ff4f8a" : "#ffc15e"} />
+          <Petal hue={i % 2 ? "#ff4f81" : "#ffc65e"} />
         </Faller>
       ))}
     </>

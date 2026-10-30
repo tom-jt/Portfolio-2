@@ -243,14 +243,12 @@ const FocusTimer = ({
                   m.value === "focus" ? m.label : m.label.replace(" break", ""),
               }))}
               value={timer.mode}
-              onChange={(mode) => timer.status === "idle" && setMode(mode)}
-              className={cn(
-                "w-full max-w-xs",
-                timer.status !== "idle" && "opacity-60",
-              )}
+              // Switching mode mid-session starts the new one afresh.
+              onChange={(mode) => mode !== timer.mode && setMode(mode)}
+              className="w-full max-w-xs"
             />
             {timer.status !== "idle" && (
-              <p className="sr-only">Reset the timer to switch modes.</p>
+              <p className="sr-only">Switching modes resets the timer.</p>
             )}
 
             <div className="relative my-5 aspect-square w-full max-w-[15.5rem]">

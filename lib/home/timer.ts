@@ -69,11 +69,15 @@ export const notificationsSupported = () =>
  * Shows a notification, if they're allowed. Through the service worker where
  * there is one: phones (Chrome on Android, and iPhones with /home installed)
  * only show them that way and refuse `new Notification`. A tag replaces the
- * last notification with the same one rather than stacking them up.
+ * last notification with the same one rather than stacking them up, and
+ * `renotify` makes the new one pop up all the same: without it, a desktop
+ * that still holds the last one in its notification centre swaps it in
+ * silently, and nothing seems to happen.
  */
 export async function showNotification(title: string, body: string, tag: string) {
   if (!notificationsSupported() || Notification.permission !== "granted") return;
-  const options: NotificationOptions = { body, tag, icon: "/home/icons/icon-192.png" };
+  // `renotify` is missing from TypeScript's own types.
+  const options = { body, tag, renotify: true, icon: "/home/icons/icon-192.png" } as NotificationOptions;
   try {
     const registration = await navigator.serviceWorker?.getRegistration();
     if (registration) return await registration.showNotification(title, options);
@@ -82,6 +86,10 @@ export async function showNotification(title: string, body: string, tag: string)
     new Notification(title, options).onclick = () => window.focus();
   } catch {}
 }
+
+/** Whether the visitor is looking somewhere else: another tab, another
+ *  app's window in front, or the phone locked. */
+export const away = () => document.hidden || !document.hasFocus();
 
 const initial: TimerState = {
   mode: "focus",

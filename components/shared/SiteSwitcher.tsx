@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Scale, Code2, CloudRain } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,9 +15,11 @@ interface SiteSwitcherProps {
   className?: string;
   /** Show a text label beside the icon (used in the mobile menu). */
   withLabel?: boolean;
+  /** Drawn instead of the site's own icon. */
+  icon?: ReactNode;
 }
 
-const SiteSwitcher = ({ to, className, withLabel }: SiteSwitcherProps) => {
+const SiteSwitcher = ({ to, className, withLabel, icon }: SiteSwitcherProps) => {
   const { switchTo, busy } = useSiteCurtain();
   const router = useRouter();
 
@@ -41,7 +43,7 @@ const SiteSwitcher = ({ to, className, withLabel }: SiteSwitcherProps) => {
         className,
       )}
     >
-      <Icon size={20} />
+      {icon ?? <Icon size={20} />}
       {withLabel ? <span>{label}</span> : null}
     </button>
   );

@@ -116,7 +116,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: "tropic",
     name: "tropic",
-    hint: "magenta sky and a gold sun",
+    hint: "magenta sky, gold sun, and red sea",
     pairsWith: "p-sunset",
   },
   {
