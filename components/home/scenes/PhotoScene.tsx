@@ -1,7 +1,8 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
-import { lerp, seeded } from "./canvas";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useReducedMotion } from "motion/react";
+import { animate, cappedDpr, fitCanvas, lerp, onResize, seeded } from "./canvas";
 import GlassRain, { type GlassLook } from "./GlassRain";
 
 /**
@@ -614,21 +615,235 @@ const Fire = ({ x, y, size }: { x: number; y: number; size: number }) => (
   </span>
 );
 
-// The sea in the sunset, traced under the horizon, round the headland and
-// along the curve of the beach.
-const SUNSET_WATER: Pt[] = [
-  [0, 81],
-  [55, 81],
-  [56, 82.5],
-  [62, 83.5],
-  [82, 84],
-  [83, 85.5],
-  [80, 88],
-  [72, 91],
-  [64, 95],
-  [57, 100],
-  [0, 100],
+// The sea in the sunset: under the horizon, past the foot of the headland,
+// and round the curve of the beach (SUNSET_SHORE) to the bottom edge.
+const SUNSET_SHORE: Pt[] = [
+  [82.5, 84],
+  [81, 87.5],
+  [78, 89.5],
+  [74, 90.5],
+  [70, 91.5],
+  [66, 92.7],
+  [62, 94.2],
+  [59, 95.8],
+  [56.5, 97.5],
+  [54, 99.2],
+  [52.5, 100.5],
 ];
+const SUNSET_WATER: Pt[] = [[0, 82.6], [55.5, 82.6], [57, 83.6], [70, 83.8], ...SUNSET_SHORE, [0, 100.5]];
+// The sun's path across the water, widening as it nears.
+const SUNSET_PATH: Pt[] = [
+  [55.6, 83.4],
+  [57.6, 83.4],
+  [58.3, 97.6],
+  [55.2, 97.6],
+];
+// What of the photo the ripples move, in %: the whole sea, from the left
+// edge to the beach.
+const SHORE_BOX = [0, 82.4, 84, 100] as const;
+
+/**
+ * The sea in the sunset made to move: a copy of the photo's water, drawn in
+ * thin strips each slid a little to and fro, so the light on it wobbles as
+ * it does through moving water, more as it nears; and the waves washing up
+ * the beach, a thin sheet of water running up over the sand behind a line
+ * of foam and sliding back, a few at once and out of step.
+ *
+ * Only the water is redrawn, and the canvas fades in below the horizon, so
+ * it blends into the photo underneath. Nothing at all with reduced motion.
+ */
+const SunsetShore = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas || reduced) return;
+    let stop = () => {};
+    let gone = false;
+    const photo = new Image();
+    photo.src = photoSrc("sunset");
+
+    const setup = () => {
+      stop();
+      const { ctx, w, h } = fitCanvas(canvas, cappedDpr(1.5));
+      const [x0, y0, x1, y1] = SHORE_BOX;
+      const at = ([x, y]: Pt): Pt => [((x - x0) / (x1 - x0)) * w, ((y - y0) / (y1 - y0)) * h];
+      // The same part of the photo, in its own pixels.
+      const src = {
+        x: (photo.naturalWidth * x0) / 100,
+        y: (photo.naturalHeight * y0) / 100,
+        w: (photo.naturalWidth * (x1 - x0)) / 100,
+        h: (photo.naturalHeight * (y1 - y0)) / 100,
+      };
+      const water = new Path2D();
+      SUNSET_WATER.map(at).forEach(([x, y], i) => (i ? water.lineTo(x, y) : water.moveTo(x, y)));
+      water.closePath();
+
+      // The shore, smoothed into many points, each with the way up the
+      // beach from it.
+      const corners = SUNSET_SHORE.map(at);
+      const shore: { x: number; y: number; nx: number; ny: number; u: number }[] = [];
+      const steps = 8;
+      for (let i = 0; i < corners.length - 1; i++) {
+        for (let j = 0; j < steps; j++) {
+          const k = j / steps;
+          shore.push({ x: lerp(corners[i][0], corners[i + 1][0], k), y: lerp(corners[i][1], corners[i + 1][1], k), nx: 0, ny: 0, u: 0 });
+        }
+      }
+      shore.push({ x: corners.at(-1)![0], y: corners.at(-1)![1], nx: 0, ny: 0, u: 1 });
+      // Softened, so the line has no corners.
+      for (let pass = 0; pass < 3; pass++) {
+        for (let i = 1; i < shore.length - 1; i++) {
+          shore[i].x = (shore[i - 1].x + shore[i].x * 2 + shore[i + 1].x) / 4;
+          shore[i].y = (shore[i - 1].y + shore[i].y * 2 + shore[i + 1].y) / 4;
+        }
+      }
+      shore.forEach((p, i) => {
+        const a = shore[Math.max(0, i - 1)];
+        const b = shore[Math.min(shore.length - 1, i + 1)];
+        const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        // The tangent turned a quarter, towards the sand.
+        p.nx = (b.y - a.y) / len;
+        p.ny = -(b.x - a.x) / len;
+        p.u = i / (shore.length - 1);
+      });
+      /** How far up the beach a wave reaches, in px. */
+      const reach = (w / (x1 - x0)) * 1.1;
+
+      const strip = 2;
+      stop = animate((t) => {
+        ctx.clearRect(0, 0, w, h);
+
+        // The water, wobbling. Further off, the ripples are finer and the
+        // wobble less; near, broader and more.
+        ctx.save();
+        ctx.clip(water);
+        for (let y = 0; y < h; y += strip) {
+          const near = y / h;
+          const amp = 0.7 + near * near * 4.6;
+          const phase = Math.sqrt(near) * 46;
+          const dx = Math.sin(phase - t * 1.7) * amp + Math.sin(phase * 0.37 + t * 0.8) * amp * 0.6;
+          const dy = Math.sin(phase * 0.8 - t * 1.3) * amp * 0.3;
+          ctx.drawImage(photo, src.x, src.y + ((y + dy) / h) * src.h, src.w, (strip / h) * src.h, dx, y, w, strip);
+        }
+        ctx.restore();
+
+        // The waves washing in, three at once and out of step, so one is
+        // often running up as another slides back: each up the sand
+        // quickly, back more slowly, then a lull. A wave meets the beach a
+        // little unevenly along its length rather than sweeping down it, and
+        // fades out towards the ends.
+        const period = 8;
+        const rise = 0.2;
+        const back = 0.8;
+        const waves = [0, 0.36, 0.69].map((offset, n) =>
+          shore.map((p) => {
+            const lag = 0.05 * Math.sin(p.u * 5.3 + n * 2.1) + 0.03 * Math.sin(p.u * 12.1 + n);
+            const along = t / period + offset + lag + 10;
+            const f = along % 1;
+            const up =
+              f < rise
+                ? Math.sin((f / rise) * (Math.PI / 2))
+                : f < back
+                  ? Math.cos(((f - rise) / (back - rise)) * (Math.PI / 2))
+                  : 0;
+            // How spent it is: fresh and bright running up, dimming
+            // smoothly as it slides back.
+            const k = Math.min(1, Math.max(0, (f - rise) / (back - rise)));
+            const spent = k * k * (3 - 2 * k);
+            // Each wave a little different in how far it reaches.
+            const size = 0.55 + 0.45 * Math.abs(Math.sin(Math.floor(along) * 2.3 + n * 1.3));
+            const ends = Math.sin(Math.PI * p.u) ** 0.6;
+            const far = reach * up * size * ends;
+            return {
+              x: p.x + p.nx * far,
+              y: p.y + p.ny * far,
+              nx: p.nx,
+              ny: p.ny,
+              glint: up * ends * lerp(1, 0.45, spent),
+              // The water rushing up behind the edge: a long wake while it
+              // runs, a short one as it slides back.
+              trail: reach * lerp(2.4, 1.2, spent) * up * size * ends,
+            };
+          }),
+        );
+        // The sheet of water behind each edge, palest at the edge and
+        // fading back towards the sea: drawn as bands, each a little
+        // further back and fainter.
+        const bands = 6;
+        for (const wash of waves) {
+          for (let j = bands - 1; j >= 0; j--) {
+            const k = j / bands;
+            for (let i = 1; i < wash.length; i++) {
+              const a = wash[i - 1];
+              const b = wash[i];
+              const glint = Math.min(a.glint, b.glint);
+              if (glint < 0.02) continue;
+              ctx.strokeStyle = `rgba(255,150,175,${0.14 * glint * (1 - k) ** 1.6})`;
+              ctx.lineWidth = Math.max(a.trail, b.trail) / bands + 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x - a.nx * a.trail * k, a.y - a.ny * a.trail * k);
+              ctx.lineTo(b.x - b.nx * b.trail * k, b.y - b.ny * b.trail * k);
+              ctx.stroke();
+            }
+          }
+        }
+        // Their edges: a faint line of foam, brightest as the wave runs up,
+        // with a soft glint of wet sand round it.
+        ctx.lineCap = "butt";
+        for (const wash of waves) {
+          for (const [width, rgb, a] of [
+            [5, "255,140,165", 0.1],
+            [1.3, "255,205,220", 0.3],
+          ] as const) {
+            ctx.lineWidth = width;
+            for (let i = 1; i < wash.length; i++) {
+              const glint = Math.min(wash[i - 1].glint, wash[i].glint);
+              if (glint < 0.02) continue;
+              ctx.strokeStyle = `rgba(${rgb},${a * glint})`;
+              ctx.beginPath();
+              ctx.moveTo(wash[i - 1].x, wash[i - 1].y);
+              ctx.lineTo(wash[i].x, wash[i].y);
+              ctx.stroke();
+            }
+          }
+        }
+      });
+    };
+
+    photo
+      .decode()
+      .then(() => {
+        if (!gone) setup();
+      })
+      .catch(() => {});
+    const stopResize = onResize(() => photo.complete && setup());
+    return () => {
+      gone = true;
+      stop();
+      stopResize();
+    };
+  }, [reduced]);
+
+  const [x0, y0, x1, y1] = SHORE_BOX;
+  const fade = "linear-gradient(to bottom, transparent, #000 10%)";
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className="absolute"
+      style={{
+        left: `${x0}%`,
+        top: `${y0}%`,
+        width: `${x1 - x0}%`,
+        height: `${y1 - y0}%`,
+        maskImage: fade,
+        WebkitMaskImage: fade,
+      }}
+    />
+  );
+};
 
 // The aurora's curtains fade in and out along their whole length.
 const CURTAIN = "linear-gradient(to bottom, transparent, black 25%, black 70%, transparent)";
@@ -759,9 +974,15 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
       <CloudStreak x={60} y={41.5} width={30} height={4} color="rgb(255 130 195 / 0.18)" period={80} delay={-30} />
       {/* The first stars, high in the violet. */}
       <Twinkles seed={47} count={14} box={[2, 2, 55, 25]} color="#ffe6f4" size={[0.8, 1.6]} speed={[2.5, 5]} />
-      {/* Glitter on the water, thickest in the sun's path. */}
-      <Twinkles seed={53} count={30} box={[53, 82, 60, 99]} within={SUNSET_WATER} color="#fff0c8" size={[1.2, 2.6]} speed={[0.8, 2]} />
-      <Twinkles seed={59} count={30} box={[0, 81, 84, 100]} within={SUNSET_WATER} color="#ffc4dc" size={[1, 2]} speed={[1, 2.6]} />
+      {/* The water moving, and the waves washing up the beach. */}
+      <SunsetShore />
+      {/* Glitter on the water: thick and quick in the sun's path, scattered
+          beside it, catching on the ripples near the beach, and only here
+          and there out on the open sea. */}
+      <Twinkles seed={53} count={34} box={[55, 83.4, 58.4, 97.6]} within={SUNSET_PATH} color="#fff3cf" size={[1.4, 3]} speed={[0.6, 1.6]} />
+      <Twinkles seed={57} count={22} box={[50, 83, 64, 99]} within={SUNSET_WATER} color="#ffd2a8" size={[1, 2]} speed={[0.9, 2.2]} />
+      <Twinkles seed={59} count={16} box={[58, 84, 81, 92]} within={SUNSET_WATER} color="#ffc4dc" size={[0.8, 1.6]} speed={[1.2, 2.8]} />
+      <Twinkles seed={61} count={10} box={[2, 83, 50, 100]} within={SUNSET_WATER} color="#ffb6cf" size={[0.8, 1.4]} speed={[2, 4]} />
     </>
   ),
   tram: () => (
