@@ -59,9 +59,8 @@ import {
   PLANTS,
   rate,
   plantBoost,
-  boneMealed,
   plantRate,
-  nextMilestone,
+  nextLeap,
   dropsForSeeds,
   SEASON_MINIMUM,
   seasonsOpen,
@@ -161,12 +160,10 @@ const PlantsTab = ({
               ? Math.max(1, maxAffordable(p, have, garden.drops))
               : Number(amount);
           const cost = plantCost(p, have, count);
-          // The next milestone, and how much better it makes every copy.
-          const next = nextMilestone(have);
-          // Bone meal's leap shows at the hundreds it reaches.
-          const boned = boneMealed(p, bonus);
-          const leap =
-            plantBoost(next, bonus, boned) / plantBoost(have, bonus, boned);
+          // The next milestone, or Bone meal's next 25, and how much
+          // better it makes every copy.
+          const next = nextLeap(p, have, bonus);
+          const leap = plantBoost(p, next, bonus) / plantBoost(p, have, bonus);
           return (
             <li
               key={p.id}
@@ -465,7 +462,7 @@ const SeasonTab = ({ garden }: { garden: GardenState }) => {
           {harvest ? (
             <>
               ending it now harvests <SeedCount n={harvest} />, or {harvest + 1}{" "}
-              at {formatNumber(dropsForSeeds(harvest + 1, garden))} drops.
+              at {formatNumber(dropsForSeeds(harvest + 1))} drops.
               drops, plants, and upgrades start over; level, achievements,
               skills, and cosmetics stay.
             </>

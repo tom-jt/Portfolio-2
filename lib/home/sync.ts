@@ -9,6 +9,7 @@ import {
   deletedLinkStore,
   linkSnapshot,
   linkStore,
+  linkTabStore,
   mergeLinks,
   parseLinks,
   syncedLinks,
@@ -139,7 +140,7 @@ interface Shared extends TodoSnapshot {
 }
 
 const NO_TODOS: TodoSnapshot = { todos: [], deleted: {} };
-const NO_LINKS: LinkSnapshot = { links: [], deleted: {} };
+const NO_LINKS: LinkSnapshot = { links: [], tabs: [], deleted: {} };
 
 /** Each device's XP, keys in order, so equal tables serialise equally. */
 const sortedXp = (xp: Record<string, number>) =>
@@ -165,6 +166,7 @@ const serialise = (s: Shared) =>
     xp: s.xp,
     links: s.links.links,
     linksDeleted: s.links.deleted,
+    linkTabs: s.links.tabs,
   });
 
 function parse(text: string): Shared | null {
@@ -178,7 +180,7 @@ function parse(text: string): Shared | null {
     }
     const todos = (raw.todos as Todo[]).filter((t) => typeof t?.id === "string" && typeof t.text === "string");
     // Nor do notes from before the links were.
-    const links = mergeLinks(parseLinks(raw.links, raw.linksDeleted), NO_LINKS);
+    const links = mergeLinks(parseLinks(raw.links, raw.linksDeleted, raw.linkTabs), NO_LINKS);
     return { todos, deleted: raw.deleted ?? {}, xp: sortedXp(xp), links };
   } catch {
     return null;
@@ -455,6 +457,7 @@ async function connect(code: string) {
   const offDeleted = deletedStore.subscribe(schedule);
   const offLinks = linkStore.subscribe(schedule);
   const offDeletedLinks = deletedLinkStore.subscribe(schedule);
+  const offLinkTabs = linkTabStore.subscribe(schedule);
   // The garden changes every second as plants pay out; only XP is synced.
   let xpSeen = "";
   const offGarden = gardenStore.subscribe(() => {
@@ -490,6 +493,7 @@ async function connect(code: string) {
     offDeleted();
     offLinks();
     offDeletedLinks();
+    offLinkTabs();
     offGarden();
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("online", restart);

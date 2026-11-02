@@ -44,146 +44,171 @@ export interface PlantDef {
   /** Drops per second, per plant owned, before its milestones. */
   rate: number;
   unlockLevel: number;
+  /** Its milestones' leaps: at 25, 50 and 100 copies, then at every hundred
+   *  after, the three in turn. */
+  leaps: [number, number, number, [number, number, number]];
 }
 
 /**
- * Each plant costs about eight times the last and makes about five times as
- * much, so a new plant's first copies pay back slower than the old one's did.
- * What makes up for it is the cost growth: the cheap plants grow dearer more
- * slowly, so they reach their milestones sooner and keep up for longer, and
- * the best buy moves between old and new plants instead of always being the
- * newest.
+ * The first ten are AdVenture Capitalist's ten businesses, cost for cost:
+ * the same first price, the same growth in price, and the same income, as
+ * a rate (what a business pays per run, over how long a run takes).
+ *
+ * The cheap ones grow dearer fastest, bar the first, and the dear ones
+ * slowest, so the newest plant is a good buy for a long while but never
+ * the only one. Payback (price over income) is a few seconds for moss and
+ * days for the last few.
  */
 export const PLANTS: PlantDef[] = [
+  // Lemonade stand: 1 every 0.6 s.
   {
     id: "moss",
     name: "Moss",
-    baseCost: 15,
-    growth: 1.08,
-    rate: 0.2,
+    baseCost: 3.738,
+    growth: 1.07,
+    rate: 1 / 0.6,
     unlockLevel: 1,
+    leaps: [2, 2, 2, [8, 15, 4]],
   },
+  // Newspaper delivery: 60 every 3 s.
   {
     id: "fern",
     name: "Fern",
-    baseCost: 120,
-    growth: 1.085,
-    rate: 1,
+    baseCost: 60,
+    growth: 1.15,
+    rate: 20,
     unlockLevel: 1,
+    leaps: [4, 2, 10, [150, 20, 100]],
   },
+  // Car wash: 540 every 6 s.
   {
     id: "mint",
     name: "Mint",
-    baseCost: 900,
-    growth: 1.09,
-    rate: 3.5,
+    baseCost: 720,
+    growth: 1.14,
+    rate: 90,
     unlockLevel: 2,
+    leaps: [2, 3, 10, [15, 100, 80]],
   },
+  // Pizza delivery: 4,320 every 12 s.
   {
     id: "monstera",
     name: "Monstera",
-    baseCost: 6500,
-    growth: 1.095,
-    rate: 11,
+    baseCost: 8640,
+    growth: 1.13,
+    rate: 360,
     unlockLevel: 3,
+    leaps: [3, 3, 4, [100, 40, 15]],
   },
+  // Donut shop: 51,840 every 24 s.
   {
     id: "bonsai",
     name: "Bonsai",
-    baseCost: 48_000,
-    growth: 1.1,
-    rate: 50,
+    baseCost: 103_680,
+    growth: 1.12,
+    rate: 2160,
     unlockLevel: 5,
+    leaps: [2, 2, 8, [30, 15, 80]],
   },
+  // Shrimp boat: 622,080 every 96 s.
   {
     id: "moonflower",
     name: "Moonflower",
-    baseCost: 400_000,
-    growth: 1.105,
-    rate: 250,
+    baseCost: 1_244_160,
+    growth: 1.11,
+    rate: 6480,
     unlockLevel: 8,
+    leaps: [2, 3, 4, [15, 60, 15]],
   },
-  // The late three are spaced further apart, so each is a real goal.
+  // Hockey team: 7,464,960 every 384 s.
   {
     id: "lotus",
     name: "Lotus",
-    baseCost: 3_500_000,
-    growth: 1.11,
-    rate: 1400,
+    baseCost: 14_929_920,
+    growth: 1.1,
+    rate: 19_440,
     unlockLevel: 12,
+    leaps: [3, 2, 4, [40, 10, 15]],
   },
+  // Movie studio: 89,579,520 every 1,536 s.
   {
     id: "willow",
     name: "Weeping willow",
-    baseCost: 32_000_000,
-    growth: 1.115,
-    rate: 8000,
+    baseCost: 179_159_040,
+    growth: 1.09,
+    rate: 58_320,
     unlockLevel: 17,
+    leaps: [2, 2, 5, [6, 15, 30]],
   },
+  // Bank: 1,074,954,240 every 6,144 s.
   {
     id: "cloudbloom",
     name: "Cloudbloom",
-    baseCost: 300_000_000,
-    growth: 1.12,
-    rate: 47_000,
+    baseCost: 2_149_908_480,
+    growth: 1.08,
+    rate: 174_960,
     unlockLevel: 23,
+    leaps: [2, 2, 2, [15, 15, 5]],
   },
-  // Long goals, spaced out along the slow climb to level 100.
+  // Oil company: 29,668,737,024 every 36,864 s.
   {
     id: "rainlily",
     name: "Rain lily",
-    baseCost: 2_800_000_000,
-    growth: 1.13,
-    rate: 270_000,
+    baseCost: 25_798_901_760,
+    growth: 1.07,
+    rate: 804_816,
     unlockLevel: 30,
+    leaps: [2, 2, 3, [10, 4, 10]],
   },
+  // Past the oil company, the same steps on: each costs twelve times the
+  // last and makes three times as much, growing dearer as slowly as it does.
   {
     id: "cedar",
     name: "Cedar",
-    baseCost: 26_000_000_000,
-    growth: 1.135,
-    rate: 1_600_000,
+    baseCost: 309_586_821_120,
+    growth: 1.07,
+    rate: 2_414_448,
     unlockLevel: 38,
+    leaps: [2, 2, 3, [4, 15, 8]],
   },
   {
     id: "stormorchid",
     name: "Storm orchid",
-    baseCost: 240_000_000_000,
-    growth: 1.14,
-    rate: 9_000_000,
+    baseCost: 3_715_041_853_440,
+    growth: 1.07,
+    rate: 7_243_344,
     unlockLevel: 47,
+    leaps: [2, 2, 2, [15, 6, 5]],
   },
   {
     id: "worldtree",
     name: "World tree",
-    baseCost: 2_200_000_000_000,
-    growth: 1.15,
-    rate: 52_000_000,
+    baseCost: 44_580_502_241_280,
+    growth: 1.07,
+    rate: 21_730_032,
     unlockLevel: 57,
+    leaps: [2, 2, 4, [6, 6, 15]],
   },
 ];
 
 /**
- * Milestones: at 10, then every 25 copies to 300, every 50 to 500, and every
- * 100 after. Each one multiplies every copy of that plant, ×3 at a round
- * hundred and ×2 otherwise, so a plant's output climbs in a straight line
- * between them and leaps at each.
+ * Milestones: at 25, 50 and 100 copies, as in AdVenture Capitalist, then at
+ * every hundred. Each multiplies every copy of the plant by its leap.
+ *
+ * The leaps are each plant's own (The Math of Idle Games, part I: vary the
+ * multipliers from generator to generator and the best buy keeps moving
+ * around). Each repays about three tenths of what the copies since the
+ * last milestone cost more than the ones before, swinging a little either
+ * way, so a plant steadily falls behind its price, at the same pace for
+ * all: a plant whose price climbs fast leaps far (fern ×150), a slow one
+ * only a little (moss ×8), and none outruns the rest for good.
  */
 export const nextMilestone = (have: number) =>
-  have < 10
-    ? 10
-    : have < 300
-      ? (Math.floor(have / 25) + 1) * 25
-      : have < 500
-        ? (Math.floor(have / 50) + 1) * 50
-        : (Math.floor(have / 100) + 1) * 100;
+  have < 25 ? 25 : have < 50 ? 50 : (Math.floor(have / 100) + 1) * 100;
 
 /** Milestones a plant has reached with `have` copies. */
 export function milestonesAt(have: number) {
-  let reached = 0;
-  for (let at = nextMilestone(0); at <= have; at = nextMilestone(at))
-    reached++;
-  return reached;
+  return have < 25 ? 0 : have < 50 ? 1 : have < 100 ? 2 : 2 + Math.floor(have / 100);
 }
 
 /** What makes milestones better: Old growth makes every leap bigger, each
@@ -197,37 +222,48 @@ export interface MilestoneBonus {
 const NO_BONUS: MilestoneBonus = { leap: 1, perMilestone: 0, boneMeal: 0 };
 
 /**
- * Bone meal: +100× for every hundred copies, so ×101 at 100, ×201 at 200.
- * Added, not multiplied: ×100 a hundred would outgrow what the cheap plants'
- * next hundred cost (moss: 1.08^100, about 2,200×) and run away.
+ * Bone meal: +10× for every 25 copies, so ×41 at 100 and ×161 at 400.
+ * Added, not multiplied, so it can't outgrow what the copies cost and run
+ * away.
  */
-const BONE_MEAL_STEP = 100;
+const BONE_MEAL_STEP = 10;
+const BONE_MEAL_EVERY = 25;
 
 /** Whether Bone meal reaches this plant. */
 export const boneMealed = (def: PlantDef, bonus = NO_BONUS) =>
   PLANTS.indexOf(def) < bonus.boneMeal;
 
+/** The copies at which a plant next leaps: its next milestone, or with Bone
+ *  meal, its next 25 if that's sooner. */
+export const nextLeap = (def: PlantDef, have: number, bonus = NO_BONUS) =>
+  Math.min(
+    nextMilestone(have),
+    boneMealed(def, bonus) ? (Math.floor(have / BONE_MEAL_EVERY) + 1) * BONE_MEAL_EVERY : Infinity,
+  );
+
 /** The leap the milestone at `at` copies makes. */
-export const milestoneLeap = (at: number, bonus = NO_BONUS) =>
-  (at % 100 === 0 ? 3 : 2) * bonus.leap;
+export function milestoneLeap(def: PlantDef, at: number, bonus = NO_BONUS) {
+  const [at25, at50, at100, after] = def.leaps;
+  const leap = at === 25 ? at25 : at === 50 ? at50 : at === 100 ? at100 : after[(at / 100 - 2) % 3];
+  return leap * bonus.leap;
+}
 
 /** How much better every copy is for owning `have`: every leap reached,
- *  times Trellis's share for each, and Bone meal's if it reaches the plant
- *  (`boned`). */
-export function plantBoost(have: number, bonus = NO_BONUS, boned = false) {
+ *  times Trellis's share for each, and Bone meal's if it reaches the plant. */
+export function plantBoost(def: PlantDef, have: number, bonus = NO_BONUS) {
   let boost = 1;
   let reached = 0;
   for (let at = nextMilestone(0); at <= have; at = nextMilestone(at)) {
-    boost *= milestoneLeap(at, bonus);
+    boost *= milestoneLeap(def, at, bonus);
     reached++;
   }
-  const bone = boned ? 1 + BONE_MEAL_STEP * Math.floor(have / 100) : 1;
+  const bone = boneMealed(def, bonus) ? 1 + BONE_MEAL_STEP * Math.floor(have / BONE_MEAL_EVERY) : 1;
   return boost * (1 + bonus.perMilestone * reached) * bone;
 }
 
 /** Drops per second from each copy, before the greenhouse and skills. */
 export const plantRate = (def: PlantDef, have: number, bonus = NO_BONUS) =>
-  def.rate * plantBoost(have, bonus, boneMealed(def, bonus));
+  def.rate * plantBoost(def, have, bonus);
 
 // -------------------------------------------------------------- upgrades
 
@@ -281,8 +317,8 @@ const catchSecondsAt = (jar: number) => 0.15 + 0.01 * jar;
 /** Trellis: what each level adds to a plant for every milestone it has
  *  reached, on top of the leaps. Added, not multiplied, so it can never make
  *  a milestone outgrow the cost of reaching the next. */
-const TRELLIS_STEP = 0.05;
-/** Old growth: every milestone's leap is this much bigger, ×2.2 for ×2. */
+const TRELLIS_STEP = 0.1;
+/** Old growth: every milestone's leap is this much bigger. */
 const OLD_GROWTH_LEAP = 1.1;
 /** Seed bank: all drops, per seed ever harvested, per level. */
 const SEED_BANK_STEP = 0.001;
@@ -291,7 +327,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "jar",
     name: "Wider jar",
-    baseCost: 40,
+    baseCost: 1200,
     growth: 2.6,
     max: Infinity,
     unlockLevel: 1,
@@ -301,7 +337,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "soil",
     name: "Rich soil",
-    baseCost: 120,
+    baseCost: 3600,
     growth: 2.8,
     max: 8,
     unlockLevel: 1,
@@ -310,7 +346,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "rainmaker",
     name: "Rain dance",
-    baseCost: 80,
+    baseCost: 2400,
     growth: 2.6,
     max: 12,
     unlockLevel: 1,
@@ -319,7 +355,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "goldleaf",
     name: "Gold leaf",
-    baseCost: 250,
+    baseCost: 7500,
     growth: 2.9,
     max: 12,
     unlockLevel: 2,
@@ -328,7 +364,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "deepfocus",
     name: "Deep focus",
-    baseCost: 300,
+    baseCost: 9000,
     growth: 2.6,
     max: Infinity,
     unlockLevel: 2,
@@ -337,7 +373,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "nightshift",
     name: "Night shift",
-    baseCost: 1000,
+    baseCost: 30_000,
     growth: 3.2,
     max: 9,
     unlockLevel: 3,
@@ -347,7 +383,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "greenhouse",
     name: "Greenhouse",
-    baseCost: 2000,
+    baseCost: 60_000,
     growth: 4,
     max: Infinity,
     unlockLevel: 4,
@@ -356,7 +392,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "trellis",
     name: "Trellis",
-    baseCost: 5000,
+    baseCost: 150_000,
     growth: 3,
     max: Infinity,
     unlockLevel: 6,
@@ -365,7 +401,7 @@ export const UPGRADES: UpgradeDef[] = [
   {
     id: "seedbank",
     name: "Seed bank",
-    baseCost: 50_000,
+    baseCost: 1_500_000,
     growth: 3.5,
     max: Infinity,
     unlockLevel: 15,
@@ -601,7 +637,10 @@ export const LADYBUG_COOLDOWN_MS = 10 * 60_000;
 
 export const luckLeft = (s: GardenState, now = Date.now()) =>
   Math.max(0, s.luckUntil - now);
-const luck = (s: GardenState) => (luckLeft(s) > 0 ? 2 : 1);
+/** What ladybug luck multiplies plants by: ×2, and a half more for each
+ *  rank of Basking ladybugs. */
+const luckBoost = (s: GardenState) => 2 + 0.5 * skillRank(s, "basking");
+const luck = (s: GardenState) => (luckLeft(s) > 0 ? luckBoost(s) : 1);
 
 export const ladybugMayAppear = (s: GardenState, now = Date.now()) =>
   now - s.ladybugAt >= LADYBUG_COOLDOWN_MS;
@@ -621,10 +660,16 @@ export function catchLadybug() {
     {
       kind: "info",
       title: "ladybug luck",
-      detail: `the garden grows twice as fast for ${minutes} minutes`,
+      detail:
+        luckBoost(s) === 2
+          ? `the garden grows twice as fast for ${minutes} minutes`
+          : `the garden grows ${luckBoost(s)}× as fast for ${minutes} minutes`,
     },
   );
 }
+
+/** Second bloom: all plant output, per milestone reached across the garden. */
+const SECOND_BLOOM_STEP = 0.02;
 
 /** Plant milestones reached across the whole garden, for Second bloom. */
 const milestones = (s: GardenState) =>
@@ -635,8 +680,11 @@ export const plantMultiplier = (s: GardenState) =>
   (1 + 0.25 * upgradeLevel(s, "greenhouse")) *
   (1 + 0.1 * skillRank(s, "roots")) *
   (1 + 0.15 * skillRank(s, "morningsun")) *
-  (skillRank(s, "secondbloom") ? 1 + 0.01 * milestones(s) : 1) *
+  (skillRank(s, "secondbloom") ? 1 + SECOND_BLOOM_STEP * milestones(s) : 1) *
   (skillRank(s, "solstice") ? 1.5 : 1) *
+  (1 + 0.2 * skillRank(s, "rainroots")) *
+  (1 + 0.2 * skillRank(s, "sunbeams")) *
+  (skillRank(s, "highsummer") ? 2 : 1) *
   evergreen(s) *
   seedBank(s) *
   luck(s);
@@ -661,13 +709,15 @@ export const catchValue = (s: GardenState) => {
   const hands =
     (1 + 0.15 * skillRank(s, "hands")) * (1 + 0.1 * skillRank(s, "wetseason"));
   const rainbow = Date.now() < s.rainbowUntil ? 3 : 1;
+  const deluge = skillRank(s, "deluge") ? 2 : 1;
   // Rate already carries Evergreen and the seed bank; the flat part gets
   // them here.
   return (
     ((1 + 2 * jar) * evergreen(s) * seedBank(s) +
       rate(s) * catchSecondsAt(jar)) *
     hands *
-    rainbow
+    rainbow *
+    deluge
   );
 };
 
@@ -686,7 +736,9 @@ export const goldenChance = (s: GardenState) =>
   goldenChanceAt(upgradeLevel(s, "goldleaf")) + 0.01 * skillRank(s, "lucky");
 /** What diamonds and meteors are counted in: a golden drop's old worth. */
 const goldBase = (s: GardenState) =>
-  (catchValue(s) * 20 + 25) * (1 + 0.25 * skillRank(s, "lucky"));
+  (catchValue(s) * 20 + 25) *
+  (1 + 0.25 * skillRank(s, "lucky")) *
+  (1 + 0.3 * skillRank(s, "heavydrops"));
 /** A golden drop: a third of that, since golden hour brings them in runs. */
 export const goldenValue = (s: GardenState) => goldBase(s) / 3;
 
@@ -1280,33 +1332,28 @@ export function buyUpgrade(id: UpgradeId) {
 /** Drops a season must earn before it can be harvested. */
 export const SEASON_MINIMUM = 1_000_000;
 
-/** How much more each season's harvest is worth than the first's. */
-const seasonFactor = (s: GardenState) => 1 + 0.25 * s.seasons;
-
-/** Seeds a harvest pays per squared order of magnitude, before the factor. */
-const SEED_SCALE = 0.4;
-
 /**
- * Seeds a harvest pays: 0.4 × (1 + the season's orders of magnitude past a
- * million)², × 1.25 for every season already ended, and at least one.
+ * Seeds a harvest pays: 5.5 × (the season's drops in millions)^0.1, and at
+ * least one.
  *
- * Seeds follow how many digits the season's drops have, not the drops
- * themselves, so ever bigger totals (Bone meal, the late plants, the seed
- * bank) can't snowball into a runaway harvest: a season ten times bigger is
- * one more digit, a few seeds more. Later seasons still pay far more, since
- * each runs on everything learnt before it, so its digits and its factor
- * both grow. Fifteen seasons or so fill the tree.
+ * A fractional power, like AdVenture Capitalist's angels (The Math of Idle
+ * Games, part III), only a far smaller one, since the plants grow so fast:
+ * twice the seeds takes about a thousand times the drops, so ever bigger
+ * totals (Bone meal, the late plants, the seed bank) can't snowball into a
+ * runaway harvest, yet each season, running on everything learnt before
+ * it, still pays well over the last. Fourteen seasons or so fill the tree.
  */
+const SEED_SCALE = 5.5;
+const SEED_POWER = 0.1;
+
 export function seedsFor(s: GardenState) {
   if (s.seasonLifetime < SEASON_MINIMUM) return 0;
-  const digits = 1 + Math.log10(s.seasonLifetime / SEASON_MINIMUM);
-  return Math.max(1, Math.floor(SEED_SCALE * digits ** 2 * seasonFactor(s)));
+  return Math.max(1, Math.floor(SEED_SCALE * (s.seasonLifetime / SEASON_MINIMUM) ** SEED_POWER));
 }
 
 /** Drops this season needs to pay `seeds`. */
-export function dropsForSeeds(seeds: number, s: GardenState) {
-  const digits = Math.sqrt(Math.max(1, seeds) / (SEED_SCALE * seasonFactor(s)));
-  return Math.max(SEASON_MINIMUM, SEASON_MINIMUM * 10 ** (digits - 1));
+export function dropsForSeeds(seeds: number) {
+  return Math.max(SEASON_MINIMUM, SEASON_MINIMUM * (seeds / SEED_SCALE) ** (1 / SEED_POWER));
 }
 
 /** The season tab opens once a first harvest is possible, and stays. */

@@ -16,21 +16,28 @@ import {
   X,
 } from "lucide-react";
 import {
+  addTab,
   cleanKey,
   LINK_KEY_MAX,
   LINK_LABEL_MAX,
   LINK_SYNC_MAX,
+  LINK_TAB_NAME_MAX,
+  LINK_TABS_MAX,
   linkForKey,
   linkName,
   LINKS_MAX,
   linkSyncs,
-  linkStore,
   moveLink,
   removeLink,
+  removeTab,
+  renameTab,
   saveLink,
-  sortLinks,
+  showTab,
+  shownLinks,
+  tabName,
   useLinks,
   type LinkDraft,
+  type LinkTab,
   type QuickLink,
 } from "@/lib/home/links";
 import { setPrefs, togglePanel, usePrefs } from "@/lib/home/prefs";
@@ -48,8 +55,9 @@ const typingIn = (target: EventTarget | null) =>
  *  forgotten. */
 const KEY_WAIT_MS = 2500;
 
-/** Whether any link's key starts with this letter, so typing can begin with it. */
-const startsAKey = (letter: string) => linkStore.get().some((l) => l.key.startsWith(letter));
+/** Whether any link's key in the tab showing starts with this letter, so
+ *  typing can begin with it. */
+const startsAKey = (letter: string) => shownLinks().some((l) => l.key.startsWith(letter));
 
 /**
  * Typing a link's key and then Enter or Space anywhere on the page opens
@@ -225,13 +233,152 @@ function useDismiss(active: boolean, root: RefObject<HTMLElement | null>, close:
   }, [active, root, close, spare]);
 }
 
-/** The links as a list to arrange, edit and remove, with the form under it. */
+/**
+ * The tabs, to switch between, like the timer's modes. A tab's name is the
+ * visitor's own, so it keeps its case, like a link's.
+ */
+const TabSwitch = ({ tabs, shown, className }: { tabs: LinkTab[]; shown: string; className?: string }) => (
+  <div
+    role="radiogroup"
+    aria-label="link tabs"
+    className={cn("flex min-w-0 shrink-0 items-center gap-0.5 rounded-xl bg-black/15 p-0.5", className)}
+  >
+    {tabs.map((t) => (
+      <button
+        key={t.id}
+        type="button"
+        role="radio"
+        aria-checked={t.id === shown}
+        title={tabName(t)}
+        onClick={() => showTab(t.id)}
+        className={cn(
+          "focus-visible:ring-ring max-w-28 min-w-0 cursor-pointer truncate rounded-[0.6rem] px-2.5 py-1 text-xs font-medium normal-case transition focus-visible:ring-2 focus-visible:outline-none",
+          t.id === shown
+            ? "text-foreground bg-white/12 shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        {tabName(t)}
+      </button>
+    ))}
+  </div>
+);
+
+/** A tab's name, being changed: Enter or leaving keeps it, Escape doesn't. */
+const TabNameField = ({ tab, onDone }: { tab: LinkTab; onDone: () => void }) => {
+  const [name, setName] = useState(tab.name);
+  // Set once it's kept or let go, so the blur as it goes saves nothing more.
+  const done = useRef(false);
+  const finish = (keep: boolean) => {
+    if (done.current) return;
+    done.current = true;
+    if (keep) renameTab(tab.id, name);
+    onDone();
+  };
+  return (
+    <input
+      // Straight after the tab is made, or its pencil pressed.
+      autoFocus
+      value={name}
+      onChange={(e) => setName(e.target.value.slice(0, LINK_TAB_NAME_MAX))}
+      onFocus={(e) => e.target.select()}
+      onBlur={() => finish(true)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") finish(true);
+        if (e.key === "Escape") {
+          // Not the drawer's Escape, which would close it.
+          e.stopPropagation();
+          finish(false);
+        }
+      }}
+      aria-label="tab name"
+      autoComplete="off"
+      className={cn(FIELD, "h-8 flex-1")}
+    />
+  );
+};
+
+/**
+ * The tabs above the links being edited: switched between, named, added (as
+ * a copy of the one showing, named straight away) and removed (after asking,
+ * since its links go with it).
+ */
+const TabEditor = ({ tabs, shown }: { tabs: LinkTab[]; shown: string }) => {
+  const [naming, setNaming] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const tab = tabs.find((t) => t.id === shown)!;
+  const named = tabs.find((t) => t.id === naming);
+
+  if (removing === shown && tabs.length > 1) {
+    return (
+      <div className="flex h-9 items-center justify-between gap-3 px-1 text-xs">
+        <p className="text-muted-foreground min-w-0 truncate">
+          remove <span className="text-foreground normal-case">{tabName(tab)}</span> and its links?
+        </p>
+        <div className="flex shrink-0 gap-3">
+          <button type="button" onClick={() => setRemoving(null)} className={cn(textButton, "text-muted-foreground")}>
+            keep
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              removeTab(shown);
+              setRemoving(null);
+            }}
+            className={cn(textButton, "text-destructive")}
+          >
+            remove
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-9 items-center gap-1">
+      {named ? (
+        <TabNameField key={named.id} tab={named} onDone={() => setNaming(null)} />
+      ) : (
+        <>
+          <TabSwitch tabs={tabs} shown={shown} className="max-w-full shrink" />
+          <IconButton label="rename tab" className="size-7 border-0" onClick={() => setNaming(shown)}>
+            <Pencil className="size-3.5" />
+          </IconButton>
+          {tabs.length > 1 && (
+            <IconButton label="remove tab" className="size-7 border-0" onClick={() => setRemoving(shown)}>
+              <Trash2 className="size-3.5" />
+            </IconButton>
+          )}
+          {tabs.length < LINK_TABS_MAX && (
+            <button
+              type="button"
+              title="a new tab of links, starting as a copy of this one"
+              onClick={() => {
+                const id = addTab();
+                if (id) setNaming(id);
+              }}
+              className={cn(textButton, "text-muted-foreground ml-auto flex shrink-0 items-center gap-1 text-xs")}
+            >
+              <Plus className="size-3" /> new tab
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+/** The tab showing's links as a list to arrange, edit and remove, with the
+ *  tabs above and the form under it. */
 const LinkEditor = () => {
-  const links = sortLinks(useLinks());
-  const [editing, setEditing] = useState<QuickLink | null>(null);
+  const { tabs, shown, links } = useLinks();
+  const [picked, setEditing] = useState<QuickLink | null>(null);
+  // Switching tabs leaves a link being edited behind.
+  const editing = picked && links.some((l) => l.id === picked.id) ? picked : null;
 
   return (
     <>
+      <TabEditor tabs={tabs} shown={shown} />
       {links.length > 0 && (
         <ul className="flex flex-col gap-1">
           {links.map((l, i) => (
@@ -301,7 +448,7 @@ const POPOVER =
  * be switched to editing them. (Desktop has the bar by the tasks instead.)
  */
 export const QuickLinksMenu = ({ className }: { className?: string }) => {
-  const links = sortLinks(useLinks());
+  const { tabs, shown, links } = useLinks();
   const [show, setShow] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -333,10 +480,14 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
               "fixed inset-x-4 bottom-[calc(10rem+env(safe-area-inset-bottom))] z-50 max-h-[calc(100dvh-14rem)] origin-bottom",
             )}
           >
-            <div className="flex items-center justify-between gap-2 px-1">
-              <p className="text-muted-foreground text-xs font-medium">
-                quick links {links.length > 0 && `(${links.length}/${LINKS_MAX})`}
-              </p>
+            <div className="flex min-h-8 items-center justify-between gap-2 px-1">
+              {tabs.length > 1 && !editMode ? (
+                <TabSwitch tabs={tabs} shown={shown} className="-ml-1 shrink" />
+              ) : (
+                <p className="text-muted-foreground text-xs font-medium">
+                  quick links {links.length > 0 && `(${links.length}/${LINKS_MAX})`}
+                </p>
+              )}
               <button
                 type="button"
                 aria-pressed={editMode}
@@ -350,7 +501,13 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
             {editMode ? (
               <LinkEditor />
             ) : links.length ? (
-              <ul className="grid grid-cols-2 gap-1.5">
+              <motion.ul
+                key={shown}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.18 }}
+                className="grid grid-cols-2 gap-1.5"
+              >
                 {links.map((l) => (
                   <li key={l.id}>
                     <a
@@ -366,7 +523,7 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
                     </a>
                   </li>
                 ))}
-              </ul>
+              </motion.ul>
             ) : (
               <p className="text-muted-foreground px-1 text-sm">{EMPTY_HINT}</p>
             )}
@@ -384,7 +541,7 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
  * open, across visits too.
  */
 export const QuickLinksBar = ({ className }: { className?: string }) => {
-  const links = sortLinks(useLinks());
+  const { tabs, shown: tab, links } = useLinks();
   const { linksPinned: pinned, openPanels } = usePrefs();
   const editing = openPanels.includes("links");
   const [open, setOpen] = useState(false);
@@ -431,10 +588,23 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
             className={cn("flex min-w-0 items-center gap-1 transition-opacity duration-300", !shown && "opacity-0")}
           >
             <span aria-hidden="true" className="bg-glass-edge mx-0.5 h-6 w-px shrink-0" />
+            {tabs.length > 1 && (
+              <>
+                <TabSwitch tabs={tabs} shown={tab} />
+                <span aria-hidden="true" className="bg-glass-edge mx-0.5 h-6 w-px shrink-0" />
+              </>
+            )}
             {links.length ? (
               // Like a browser's tabs: they share the room, narrowing as more
-              // are added, the name giving way to the tile.
-              <ul className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+              // are added, the name giving way to the tile. A switch of tab
+              // fades the new set in.
+              <motion.ul
+                key={tab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.18 }}
+                className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
+              >
                 {links.map((l) => (
                   <li key={l.id} className="@container w-36 min-w-11 shrink">
                     <a
@@ -449,14 +619,14 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
                     </a>
                   </li>
                 ))}
-              </ul>
+              </motion.ul>
             ) : (
               <button
                 type="button"
                 onClick={() => !editing && togglePanel("links")}
                 className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer rounded-xl px-2 text-sm transition"
               >
-                add your first link
+                {tabs.length > 1 ? "add a link" : "add your first link"}
               </button>
             )}
             <span aria-hidden="true" className="bg-glass-edge mx-0.5 h-6 w-px shrink-0" />
@@ -489,7 +659,7 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
 
 /** The links card: where they're added and arranged, a card like the others. */
 export const QuickLinksPanel = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
-  const links = useLinks();
+  const { links } = useLinks();
   return (
     <Panel
       id="links"
@@ -502,7 +672,8 @@ export const QuickLinksPanel = ({ className, chrome }: { className?: string; chr
       <div className="flex min-h-0 flex-col gap-3">
         <p className="text-muted-foreground text-sm">
           up to {LINKS_MAX} links, in the bar beside your tasks. give one a key of up to {LINK_KEY_MAX} letters, then
-          type it and press enter or space anywhere on the page to open it. they sync with your tasks.
+          type it and press enter or space anywhere on the page to open it. keep up to {LINK_TABS_MAX} tabs of them,
+          say for work, home, and your phone, and switch between them in the bar. they sync with your tasks.
         </p>
         <LinkEditor />
       </div>
@@ -513,7 +684,7 @@ export const QuickLinksPanel = ({ className, chrome }: { className?: string; chr
 /** The keys, listened for page-wide, and what's been typed so far. Mounted once. */
 export const LinkKeys = () => {
   const { text: typed, presses } = useLinkKeys();
-  const links = useLinks();
+  const { links } = useLinks();
   const hinted = typed ? links.find((l) => l.key === typed) : undefined;
 
   return (

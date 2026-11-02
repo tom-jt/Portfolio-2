@@ -8,7 +8,7 @@
  * cheap so the first season's seeds buy something that shows straight away;
  * capstones are a few seasons out. The skills that stack run to many ranks,
  * the first few cheap and each after dearer than the last, so every harvest
- * buys something that shows, and filling the tree takes fifteen seasons or
+ * buys something that shows, and filling the tree takes nineteen seasons or
  * so.
  *
  * A skill needs about half of its parent's ranks: the first child of a
@@ -23,6 +23,11 @@
  * percentage upgrades with ones that change how the garden plays, and costs
  * far more, for the much bigger harvests of later seasons. A side stays out
  * of sight until its first skill can be bought.
+ *
+ * Past each side's capstone it forks once more, into two long skills that
+ * meet at a last capstone: the seasons after the capstones (about the
+ * thirteenth on) go on buying something, and the tree fills around the
+ * nineteenth.
  *
  * Kept free of garden state so garden.ts can read it without an import cycle.
  */
@@ -52,6 +57,9 @@ export type SkillId =
   | "meteors"
   | "cloudburst"
   | "torrent"
+  | "rainroots"
+  | "heavydrops"
+  | "deluge"
   // The sunny side.
   | "morningsun"
   | "longdays"
@@ -60,7 +68,10 @@ export type SkillId =
   | "warmsoil"
   | "secondbloom"
   | "rainbow"
-  | "solstice";
+  | "solstice"
+  | "sunbeams"
+  | "basking"
+  | "highsummer";
 
 export type BranchId = "roots" | "rain" | "hearth" | "rainy" | "sunny";
 
@@ -135,7 +146,7 @@ export const SKILLS: SkillDef[] = [
     costs: ramp(3, 1.6, PLANT_KINDS),
     needs: { headstart: 1 },
     effect: (r) =>
-      `${r === 1 ? "the first plant" : `the first ${r} plants`} on the list grow +100× for every 100 copies`,
+      `${r === 1 ? "the first plant" : `the first ${r} plants`} on the list grow +10× for every 25 copies`,
     at: [0, 2],
   },
   {
@@ -144,7 +155,7 @@ export const SKILLS: SkillDef[] = [
     name: "Old growth",
     costs: [12],
     needs: { bonemeal: 6, perennials: 1 },
-    effect: () => "every plant milestone leaps a tenth higher: ×2.2, not ×2",
+    effect: () => "every plant milestone leaps a tenth higher",
     at: [0.5, 3],
   },
 
@@ -314,10 +325,37 @@ SKILLS.push(
     id: "torrent",
     branch: "rainy",
     name: "Torrent",
-    costs: [180],
+    costs: [800],
     needs: { meteors: 1, cloudburst: 3 },
     effect: () => "every catch also catches the drop nearest to it",
     at: [0.5, 4],
+  },
+  {
+    id: "rainroots",
+    branch: "rainy",
+    name: "Rain-fed roots",
+    costs: ramp(100, 1.3, 10),
+    needs: { torrent: 1 },
+    effect: (r) => `+${20 * r}% plant output`,
+    at: [0, 5],
+  },
+  {
+    id: "heavydrops",
+    branch: "rainy",
+    name: "Heavy drops",
+    costs: ramp(120, 1.35, 8),
+    needs: { torrent: 1 },
+    effect: (r) => `golden drops, diamonds, and meteors worth ${30 * r}% more`,
+    at: [1, 5],
+  },
+  {
+    id: "deluge",
+    branch: "rainy",
+    name: "Deluge",
+    costs: [2000],
+    needs: { rainroots: 5, heavydrops: 4 },
+    effect: () => "every catch is worth twice as much",
+    at: [0.5, 6],
   },
 );
 
@@ -375,7 +413,7 @@ SKILLS.push(
     name: "Second bloom",
     costs: [60],
     needs: { goldenhour: 1, warmsoil: 3 },
-    effect: () => "every plant milestone reached adds +1% to all plant output",
+    effect: () => "every plant milestone reached adds +2% to all plant output",
     at: [0, 3],
   },
   // Sun and rain together make the rainbow.
@@ -393,10 +431,37 @@ SKILLS.push(
     id: "solstice",
     branch: "sunny",
     name: "Solstice",
-    costs: [180],
+    costs: [800],
     needs: { secondbloom: 1, rainbow: 1 },
     effect: () => "plant output ×1.5, and golden hour comes twice as often",
     at: [0.5, 4],
+  },
+  {
+    id: "sunbeams",
+    branch: "sunny",
+    name: "Sunbeams",
+    costs: ramp(100, 1.3, 10),
+    needs: { solstice: 1 },
+    effect: (r) => `+${20 * r}% plant output`,
+    at: [0, 5],
+  },
+  {
+    id: "basking",
+    branch: "sunny",
+    name: "Basking ladybugs",
+    costs: ramp(120, 1.35, 8),
+    needs: { solstice: 1 },
+    effect: (r) => `ladybug luck makes the garden grow ×${2 + 0.5 * r}, not ×2`,
+    at: [1, 5],
+  },
+  {
+    id: "highsummer",
+    branch: "sunny",
+    name: "High summer",
+    costs: [2000],
+    needs: { sunbeams: 5, basking: 4 },
+    effect: () => "plant output ×2",
+    at: [0.5, 6],
   },
 );
 
