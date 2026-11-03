@@ -138,6 +138,15 @@ export const shownLinks = () => current().links;
 
 export const showTab = (id: string) => shownTabStore.set(id);
 
+/** Shows the `n`th tab, counting from one, if there's more than one tab and
+ *  that many; returns whether it did. Pressing 1, 2, or 3 does this. */
+export function showTabAt(n: number) {
+  const { tabs } = current();
+  if (tabs.length < 2 || n < 1 || n > tabs.length) return false;
+  shownTabStore.set(tabs[n - 1].id);
+  return true;
+}
+
 /** A tab's name as shown. */
 export const tabName = (t: LinkTab) => t.name.trim() || "untitled";
 
@@ -241,6 +250,7 @@ export function saveLink(draft: LinkDraft, id?: string): string | null {
   if (!url) return "that doesn't look like a web address";
   const key = cleanKey(draft.key);
   const { shown, links } = current();
+  if (/^[1-3]/.test(key)) return `keys can't start with 1, 2, or 3: those switch tabs`;
   if (key && links.some((l) => l.key === key && l.id !== id)) return `"${key}" is already in use`;
   const label = draft.label.trim().slice(0, LINK_LABEL_MAX);
   const now = Date.now();

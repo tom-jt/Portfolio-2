@@ -234,37 +234,8 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
 
   drawSky(ctx, l, rand);
 
-  // The blinds, pulled half up: slats tilted open, a strip of sky between
-  // each, their lower edges catching the light.
-  const { slat, frame, bar, barH, mullion, cord } = sash(l);
-  const gap = Math.max(2, 3.2 * s);
-  const slats: number[] = [];
-  for (let y = win.y; y < l.blind - slat; y += slat + gap) {
-    slats.push(y);
-    ctx.fillStyle = "#cdb3b0";
-    ctx.fillRect(win.x, y, win.w, slat);
-    ctx.fillStyle = "#f6d6b8";
-    ctx.fillRect(win.x, y + slat - 1.5, win.w, 1.5);
-  }
-  ctx.fillStyle = "#e6c8b4";
-  ctx.fillRect(win.x - 2, l.blind - slat * 0.6, win.w + 4, slat * 1.2);
-  // The ladder strings, and the pull cord hanging down one side.
-  ctx.strokeStyle = "rgba(90,70,90,0.6)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (const u of [0.18, 0.5, 0.82]) {
-    ctx.moveTo(win.x + win.w * u, win.y);
-    ctx.lineTo(win.x + win.w * u, l.blind);
-  }
-  const tassel = bar - 12 * s - 6;
-  ctx.moveTo(cord, l.blind);
-  ctx.lineTo(cord, tassel);
-  ctx.stroke();
-  ctx.fillStyle = "#e6c8b4";
-  ctx.fillRect(cord - 2 * s, tassel, 4 * s, 9 * s);
-
-  // The frame, painted, in the shadow of the room, over the ends of the
-  // cords; a lit inner edge.
+  // The frame, painted, in the shadow of the room; a lit inner edge.
+  const { slat, frame, rail, bar, barH, mullion, cord } = sash(l);
   ctx.strokeStyle = "#4a3852";
   ctx.lineWidth = frame;
   ctx.strokeRect(win.x - frame / 2, win.y - frame / 2, win.w + frame, win.h + frame);
@@ -276,6 +247,37 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   ctx.fillRect(win.x, bar, win.w, barH);
   ctx.fillRect(mullion.x, l.blind, mullion.w, win.h * 0.6);
 
+  // The blinds, pulled half up, hung in front of the frame and as wide:
+  // slats tilted open, a strip of sky between each, their lower edges
+  // catching the light.
+  const gap = Math.max(2, 3.2 * s);
+  const bx = win.x - frame;
+  const bw = win.w + frame * 2;
+  const slats: number[] = [];
+  for (let y = win.y - frame; y < l.blind - slat; y += slat + gap) {
+    slats.push(y);
+    ctx.fillStyle = "#cdb3b0";
+    ctx.fillRect(bx, y, bw, slat);
+    ctx.fillStyle = "#f6d6b8";
+    ctx.fillRect(bx, y + slat - 1.5, bw, 1.5);
+  }
+  ctx.fillStyle = "#e6c8b4";
+  ctx.fillRect(bx - 2, rail.top, bw + 4, rail.bottom - rail.top);
+  // The ladder strings, and the pull cord hanging down one side.
+  ctx.strokeStyle = "rgba(90,70,90,0.6)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const u of [0.18, 0.5, 0.82]) {
+    ctx.moveTo(win.x + win.w * u, win.y - frame);
+    ctx.lineTo(win.x + win.w * u, l.blind);
+  }
+  const tassel = bar - 12 * s - 6;
+  ctx.moveTo(cord, l.blind);
+  ctx.lineTo(cord, tassel);
+  ctx.stroke();
+  ctx.fillStyle = "#e6c8b4";
+  ctx.fillRect(cord - 2 * s, tassel, 4 * s, 9 * s);
+
   // Sill: lit along the top, deep enough for a cat.
   const sillH = Math.max(10, 16 * s);
   ctx.fillStyle = "#6a4f62";
@@ -286,12 +288,12 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   drawPoster(ctx, l, w, h);
 
   // Stripes of light through the slats, falling down and to the left over
-  // the wall, fainter the further they reach.
+  // the wall, fainter the further they reach; and below the blinds, the
+  // same from the open window, two broad ones split by the sash's middle
+  // bar.
   const slope = 0.55;
   const reach = Math.min(win.x + win.w * 0.2, win.w * 1.1);
-  for (const y of slats) {
-    const y0 = y + slat;
-    const band = (slat + gap) * 0.55;
+  const stripe = (y0: number, band: number) => {
     const g = ctx.createLinearGradient(win.x, 0, win.x - reach, 0);
     g.addColorStop(0, "rgba(255,200,150,0.11)");
     g.addColorStop(1, "rgba(255,200,150,0)");
@@ -302,7 +304,10 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
     ctx.lineTo(win.x - frame - reach, y0 + reach * slope + band);
     ctx.lineTo(win.x - frame, y0 + band);
     ctx.fill();
-  }
+  };
+  for (const y of slats) stripe(y + slat, (slat + gap) * 0.55);
+  stripe(rail.bottom, bar - rail.bottom);
+  stripe(bar + barH, win.y + win.h - bar - barH);
 
   // Desk: a warm top edge, its front falling away into shadow.
   const top = ctx.createLinearGradient(0, l.desk, 0, h);
@@ -501,9 +506,6 @@ function drawBooks(ctx: CanvasRenderingContext2D, l: Layout) {
     ctx.fillStyle = "rgba(20,10,20,0.25)";
     ctx.fillRect(bx, top + bh - 1.5, bw, 1.5);
   }
-  // A ribbon marker hanging out of the top one.
-  ctx.fillStyle = "#e8c48a";
-  ctx.fillRect(x + 20 * s, top + 4 * s, 3 * s, 16 * s);
 }
 
 function drawMug(ctx: CanvasRenderingContext2D, l: Layout) {

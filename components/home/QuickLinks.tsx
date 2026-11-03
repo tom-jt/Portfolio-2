@@ -33,6 +33,7 @@ import {
   renameTab,
   saveLink,
   showTab,
+  showTabAt,
   shownLinks,
   tabName,
   useLinks,
@@ -61,7 +62,8 @@ const startsAKey = (letter: string) => shownLinks().some((l) => l.key.startsWith
 
 /**
  * Typing a link's key and then Enter or Space anywhere on the page opens
- * it, unless the typing is going into a text box. A first letter no key
+ * it, unless the typing is going into a text box. With more than one tab,
+ * 1, 2, or 3 on its own switches to that tab instead. A first letter no key
  * starts with is ignored, so ordinary key presses don't start anything;
  * after that, up to three letters are kept, and shown, matching or not, so
  * a slip can be backspaced. Returns them, and a count that moves on each
@@ -90,6 +92,7 @@ function useLinkKeys() {
         openLink(link.url);
         return;
       }
+      if (!buffer && /^[1-9]$/.test(e.key) && showTabAt(Number(e.key))) return;
       if (e.key === "Backspace" && buffer) {
         buffer = buffer.slice(0, -1);
       } else if (/^[a-z0-9]$/i.test(e.key)) {
@@ -234,8 +237,9 @@ function useDismiss(active: boolean, root: RefObject<HTMLElement | null>, close:
 }
 
 /**
- * The tabs, to switch between, like the timer's modes. A tab's name is the
- * visitor's own, so it keeps its case, like a link's.
+ * The tabs, to switch between, like the timer's modes, each with the number
+ * that switches to it (on screens big enough to have a keyboard). A tab's
+ * name is the visitor's own, so it keeps its case, like a link's.
  */
 const TabSwitch = ({ tabs, shown, className }: { tabs: LinkTab[]; shown: string; className?: string }) => (
   <div
@@ -243,22 +247,31 @@ const TabSwitch = ({ tabs, shown, className }: { tabs: LinkTab[]; shown: string;
     aria-label="link tabs"
     className={cn("flex min-w-0 shrink-0 items-center gap-0.5 rounded-xl bg-black/15 p-0.5", className)}
   >
-    {tabs.map((t) => (
+    {tabs.map((t, i) => (
       <button
         key={t.id}
         type="button"
         role="radio"
         aria-checked={t.id === shown}
-        title={tabName(t)}
+        title={`${tabName(t)} (press ${i + 1})`}
         onClick={() => showTab(t.id)}
         className={cn(
-          "focus-visible:ring-ring max-w-28 min-w-0 cursor-pointer truncate rounded-[0.6rem] px-2.5 py-1 text-xs font-medium normal-case transition focus-visible:ring-2 focus-visible:outline-none",
+          "focus-visible:ring-ring flex max-w-32 min-w-0 cursor-pointer items-center gap-1.5 rounded-[0.6rem] px-2.5 py-1 text-xs font-medium normal-case transition focus-visible:ring-2 focus-visible:outline-none",
           t.id === shown
             ? "text-foreground bg-white/12 shadow-[inset_0_1px_0_rgb(255_255_255/0.08)]"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
-        {tabName(t)}
+        <kbd
+          aria-hidden="true"
+          className={cn(
+            "hidden h-4 min-w-4 shrink-0 place-items-center rounded bg-white/8 px-1 font-mono text-[0.6rem] md:grid",
+            t.id === shown && "bg-glow/20 text-glow",
+          )}
+        >
+          {i + 1}
+        </kbd>
+        <span className="truncate">{tabName(t)}</span>
       </button>
     ))}
   </div>
@@ -554,10 +567,17 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
     // Laid out open all the time, so nothing inside reflows as it opens: the
     // glass behind grows from a square to the full row, and the row is
     // uncovered with it. Only what's uncovered takes clicks.
-    <div ref={root} className={cn("pointer-events-none flex items-end", className)}>
+    // Marked as in use while opened by hand or being edited, not merely
+    // pinned, so immersive mode still hides a pinned bar.
+    <div
+      ref={root}
+      data-in-use={(open && !pinned) || editing}
+      className={cn("pointer-events-none flex items-end", className)}
+    >
       <div className="relative h-13 max-w-full">
         <span
           aria-hidden="true"
+          data-mark
           className={cn(
             chipGlass,
             "absolute inset-y-0 left-0 rounded-[1.1rem] transition-[width,border-color] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
@@ -673,7 +693,8 @@ export const QuickLinksPanel = ({ className, chrome }: { className?: string; chr
         <p className="text-muted-foreground text-sm">
           up to {LINKS_MAX} links, in the bar beside your tasks. give one a key of up to {LINK_KEY_MAX} letters, then
           type it and press enter or space anywhere on the page to open it. keep up to {LINK_TABS_MAX} tabs of them,
-          say for work, home, and your phone, and switch between them in the bar. they sync with your tasks.
+          say for work, home, and your phone, and switch between them in the bar, or by pressing 1, 2, or 3. they sync
+          with your tasks.
         </p>
         <LinkEditor />
       </div>

@@ -568,8 +568,6 @@ function drawOver(ctx: CanvasRenderingContext2D, w: number, h: number, L: Layout
   ctx.beginPath();
   ctx.ellipse(lx, ly - 1.5 * k, 12 * k, 3 * k, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#a07c42";
-  ctx.fillRect(lx - 2 * k, ly - 58 * k, 4 * k, 58 * k);
   const shade = ctx.createLinearGradient(0, ly - 98 * k, 0, ly - 58 * k);
   shade.addColorStop(0, "#f6c27a");
   shade.addColorStop(1, "#dc8c40");
@@ -584,6 +582,9 @@ function drawOver(ctx: CanvasRenderingContext2D, w: number, h: number, L: Layout
   ctx.beginPath();
   ctx.ellipse(lx, ly - 58 * k, 33 * k, 4 * k, 0, 0, Math.PI * 2);
   ctx.fill();
+  // The stem, over the shade's lit underside, rising up into it.
+  ctx.fillStyle = "#a07c42";
+  ctx.fillRect(lx - 2 * k, ly - 61 * k, 4 * k, 61 * k);
 
   drawSeat(ctx, w, h, L);
 
