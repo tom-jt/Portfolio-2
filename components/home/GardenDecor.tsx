@@ -1071,7 +1071,8 @@ const DECOR: Record<DecorId, () => ReactNode> = {
     <>
       <span className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(190_160_230/0.1),rgb(255_190_140/0.12))]" />
       {/* Shafts from the top right, fanning out so between them they light
-          the whole sill, each striped by the slats. */}
+          the whole sill, each striped by the slats along its length, as the
+          light falls. They start inside the frame and fade in from there. */}
       {[
         { angle: 24, width: "18%", delay: 0 },
         { angle: 42, width: "22%", delay: -5 },
@@ -1079,14 +1080,14 @@ const DECOR: Record<DecorId, () => ReactNode> = {
       ].map((b) => (
         <span
           key={b.angle}
-          className="absolute -top-[6%] right-[2%] h-[230%] origin-top mix-blend-screen"
+          className="absolute top-[3%] right-[9%] h-[230%] origin-top mix-blend-screen"
           style={{ width: b.width, transform: `translateX(50%) rotate(${b.angle}deg)` }}
         >
           <span
             className="absolute inset-0"
             style={{
-              background: "repeating-linear-gradient(to bottom, rgb(255 226 170 / 0.17) 0 11px, rgb(255 226 170 / 0.11) 11px 14px)",
-              maskImage: "linear-gradient(to right, transparent, black 22%, black 78%, transparent), linear-gradient(to bottom, black 40%, transparent 70%)",
+              background: "repeating-linear-gradient(to right, rgb(255 226 170 / 0.17) 0 9px, rgb(255 226 170 / 0.08) 9px 12px)",
+              maskImage: "linear-gradient(to right, transparent, black 22%, black 78%, transparent), linear-gradient(to bottom, transparent, black 10%, black 40%, transparent 70%)",
               maskComposite: "intersect",
               WebkitMaskComposite: "source-in",
               animation: `home-sway-beam ${14 + b.angle / 6}s ease-in-out ${b.delay}s infinite alternate`,

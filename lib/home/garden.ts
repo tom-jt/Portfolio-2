@@ -1312,18 +1312,41 @@ export function buyPlant(id: PlantId, count: number) {
   }));
 }
 
-export function buyUpgrade(id: UpgradeId) {
+/** What the next `count` levels of an upgrade cost, from `level`, stopping
+ *  at its top level. */
+export function upgradeCostFor(def: UpgradeDef, level: number, count = 1) {
+  let cost = 0;
+  for (let l = level; l < Math.min(level + count, def.max); l++) cost += upgradeCost(def, l);
+  return cost;
+}
+
+/** How many levels of an upgrade the drops can buy, for the "Max" option. */
+export function upgradesAffordable(def: UpgradeDef, level: number, drops: number) {
+  let count = 0;
+  let cost = 0;
+  // Each level costs at least 1.4× the last, so this ends soon enough.
+  while (level + count < def.max) {
+    cost += upgradeCost(def, level + count);
+    if (cost > drops) break;
+    count++;
+  }
+  return count;
+}
+
+/** Buys `count` levels of an upgrade, or as many as it has left. */
+export function buyUpgrade(id: UpgradeId, count = 1) {
   const def = UPGRADES.find((u) => u.id === id);
   const s = gardenStore.get();
   if (!def || levelFromXp(totalXp(s)) < def.unlockLevel) return;
   const level = upgradeLevel(s, id);
-  if (level >= def.max) return;
-  const cost = upgradeCost(def, level);
+  const levels = Math.min(count, def.max - level);
+  if (levels < 1) return;
+  const cost = upgradeCostFor(def, level, levels);
   if (cost > s.drops) return;
   commit((g) => ({
     ...g,
     drops: g.drops - cost,
-    upgrades: { ...g.upgrades, [id]: level + 1 },
+    upgrades: { ...g.upgrades, [id]: level + levels },
   }));
 }
 

@@ -66,8 +66,9 @@ import {
   seasonsOpen,
   seedsFor,
   skillStatus,
-  upgradeCost,
+  upgradeCostFor,
   upgradeLevel,
+  upgradesAffordable,
   UPGRADES,
   useGarden,
   type GardenState,
@@ -85,6 +86,9 @@ import { useHydrated, useNow } from "@/lib/home/store";
 import { cn } from "@/lib/utils";
 
 type Amount = "1" | "10" | "max";
+
+/** Where the window's shelf takes over from its sill: the weeping willow. */
+const SHELF_FROM = PLANTS.findIndex((p) => p.id === "willow");
 
 /** A multiplier for the shop row: ×2, ×2.2, ×2.15. */
 const formatLeap = (x: number) => `×${Number(x.toFixed(2))}`;
@@ -124,6 +128,30 @@ const LockedTag = ({ level }: { level: number }) => (
   </span>
 );
 
+/** How many to buy at a time: one, ten, or as many as the drops allow. */
+const AmountPicker = ({
+  value,
+  onChange,
+}: {
+  value: Amount;
+  onChange: (value: Amount) => void;
+}) => (
+  <div className="mb-2 flex items-center justify-between gap-3">
+    <Eyebrow>Buy</Eyebrow>
+    <Segmented
+      label="How many to buy"
+      options={[
+        { value: "1", label: "×1" },
+        { value: "10", label: "×10" },
+        { value: "max", label: "Max" },
+      ]}
+      value={value}
+      onChange={onChange}
+      className="w-40"
+    />
+  </div>
+);
+
 const PlantsTab = ({
   garden,
   level,
@@ -137,20 +165,7 @@ const PlantsTab = ({
 
   return (
     <>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <Eyebrow>Buy</Eyebrow>
-        <Segmented
-          label="How many to buy"
-          options={[
-            { value: "1", label: "×1" },
-            { value: "10", label: "×10" },
-            { value: "max", label: "Max" },
-          ]}
-          value={amount}
-          onChange={setAmount}
-          className="w-40"
-        />
-      </div>
+      <AmountPicker value={amount} onChange={setAmount} />
       <ul className="flex flex-col gap-1">
         {PLANTS.map((p) => {
           const have = garden.plants[p.id] ?? 0;
@@ -224,57 +239,68 @@ const UpgradesTab = ({
 }: {
   garden: GardenState;
   level: number;
-}) => (
-  <ul className="flex flex-col gap-1">
-    {UPGRADES.map((u) => {
-      const lvl = upgradeLevel(garden, u.id);
-      const locked = level < u.unlockLevel;
-      const maxed = lvl >= u.max;
-      const cost = upgradeCost(u, lvl);
-      return (
-        <li
-          key={u.id}
-          className={cn(
-            "flex items-center gap-3 rounded-2xl px-2 py-2",
-            locked && "opacity-60",
-          )}
-        >
-          <div className="min-w-0 flex-1">
-            <p className="flex items-baseline gap-2">
-              <span className="text-sm font-medium">{u.name}</span>
-              <span className="font-pixel text-muted-foreground text-xs">
-                {Number.isFinite(u.max) ? `${lvl}/${u.max}` : lvl}
-              </span>
-            </p>
-            {!locked && (
-              <p className="font-pixel text-glow/90 text-xs">
-                {maxed
-                  ? u.effect(lvl)
-                  : lvl === 0
-                    ? u.effect(1)
-                    : `${u.effect(lvl)} → ${u.effect(lvl + 1)}`}
-              </p>
-            )}
-          </div>
-          {locked ? (
-            <LockedTag level={u.unlockLevel} />
-          ) : maxed ? (
-            <span className="text-glow font-pixel shrink-0 px-3 text-xs">
-              Maxed
-            </span>
-          ) : (
-            <BuyButton
-              cost={cost}
-              affordable={cost <= garden.drops}
-              label={`Upgrade ${u.name}`}
-              onClick={() => buyUpgrade(u.id)}
-            />
-          )}
-        </li>
-      );
-    })}
-  </ul>
-);
+}) => {
+  const [amount, setAmount] = useState<Amount>("1");
+  return (
+    <>
+      <AmountPicker value={amount} onChange={setAmount} />
+      <ul className="flex flex-col gap-1">
+        {UPGRADES.map((u) => {
+          const lvl = upgradeLevel(garden, u.id);
+          const locked = level < u.unlockLevel;
+          const maxed = lvl >= u.max;
+          // Never past the top level; Max is at least the next one.
+          const count = Math.min(
+            u.max - lvl,
+            amount === "max" ? Math.max(1, upgradesAffordable(u, lvl, garden.drops)) : Number(amount),
+          );
+          const cost = upgradeCostFor(u, lvl, count);
+          return (
+            <li
+              key={u.id}
+              className={cn(
+                "flex items-center gap-3 rounded-2xl px-2 py-2",
+                locked && "opacity-60",
+              )}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="flex items-baseline gap-2">
+                  <span className="text-sm font-medium">{u.name}</span>
+                  <span className="font-pixel text-muted-foreground text-xs">
+                    {Number.isFinite(u.max) ? `${lvl}/${u.max}` : lvl}
+                  </span>
+                </p>
+                {!locked && (
+                  <p className="font-pixel text-glow/90 text-xs">
+                    {maxed
+                      ? u.effect(lvl)
+                      : lvl === 0
+                        ? u.effect(count)
+                        : `${u.effect(lvl)} → ${u.effect(lvl + count)}`}
+                  </p>
+                )}
+              </div>
+              {locked ? (
+                <LockedTag level={u.unlockLevel} />
+              ) : maxed ? (
+                <span className="text-glow font-pixel shrink-0 px-3 text-xs">
+                  Maxed
+                </span>
+              ) : (
+                <BuyButton
+                  cost={cost}
+                  affordable={cost <= garden.drops}
+                  label={count > 1 ? `Upgrade ${u.name} ${count} levels` : `Upgrade ${u.name}`}
+                  onClick={() => buyUpgrade(u.id, count)}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+};
 
 // ---------------------------------------------------------------- season
 
@@ -992,7 +1018,24 @@ const Garden = ({
   const { level, into, span } = levelProgress(totalXp(garden));
   const next = nextRewards(level);
   const perSecond = rate(garden);
-  const sill = PLANTS.filter((p) => (garden.plants[p.id] ?? 0) > 0);
+  // The plants grown, along the sill, and from the weeping willow on, on a
+  // shelf above it.
+  const grown = PLANTS.filter((p) => (garden.plants[p.id] ?? 0) > 0);
+  const sill = grown.filter((p) => PLANTS.indexOf(p) < SHELF_FROM);
+  const shelf = grown.filter((p) => PLANTS.indexOf(p) >= SHELF_FROM);
+  const potted = (p: (typeof PLANTS)[number]) => {
+    const have = garden.plants[p.id] ?? 0;
+    return (
+      <div key={p.id} className="relative flex flex-col items-center" title={`${p.name} ×${have}`}>
+        <PlantSprite id={p.id} stage={stageFor(have)} size={40} pot={pot} gold={goldLeaf} />
+        {have > 1 && (
+          <span className="font-pixel bg-glass-strong absolute -top-1 -right-1 rounded-full px-1 text-[0.6rem] leading-4">
+            {have}
+          </span>
+        )}
+      </div>
+    );
+  };
   // The last tab open, unless that's a season tab that isn't there.
   const tab =
     prefs.gardenTab === "season" && !seasonsOpen(garden)
@@ -1118,30 +1161,21 @@ const Garden = ({
         <div className="absolute inset-x-0 top-0 bottom-3.5">
           <CatchGame label="Rain on the garden window. Click or tap the drops to catch them, or press Space to catch the lowest one." />
         </div>
+        {/* The later plants on a shelf above the sill, so a full garden
+            still fits the window. */}
+        {shelf.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-[3.75rem] flex justify-center px-3">
+            <div className="relative flex items-end gap-1 px-2 pb-1.5">
+              {shelf.map(potted)}
+              <span className="absolute inset-x-0 bottom-0 h-1.5 rounded-[2px] bg-[linear-gradient(to_bottom,#5a4034,#33241e)] shadow-[0_-1px_0_rgb(255_255_255/0.12),0_3px_5px_rgb(0_0_0/0.35)]" />
+              {/* Its brackets. */}
+              <span className="absolute top-full left-[14%] h-2 w-1 rounded-b-sm bg-[#33241e]" />
+              <span className="absolute top-full right-[14%] h-2 w-1 rounded-b-sm bg-[#33241e]" />
+            </div>
+          </div>
+        )}
         <div className="pointer-events-none absolute inset-x-0 bottom-3.5 flex items-end justify-center gap-1 px-3">
-          {sill.map((p) => {
-            const have = garden.plants[p.id] ?? 0;
-            return (
-              <div
-                key={p.id}
-                className="relative flex flex-col items-center"
-                title={`${p.name} ×${have}`}
-              >
-                <PlantSprite
-                  id={p.id}
-                  stage={stageFor(have)}
-                  size={40}
-                  pot={pot}
-                  gold={goldLeaf}
-                />
-                {have > 1 && (
-                  <span className="font-pixel bg-glass-strong absolute -top-1 -right-1 rounded-full px-1 text-[0.6rem] leading-4">
-                    {have}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {sill.map(potted)}
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3.5 bg-[linear-gradient(to_bottom,#4a352c,#2a1d19)] shadow-[0_-1px_0_rgb(255_255_255/0.12)]" />
         {hydrated && garden.stats.caught === 0 && (

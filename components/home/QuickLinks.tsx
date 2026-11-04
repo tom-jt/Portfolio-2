@@ -8,6 +8,7 @@ import {
   CloudOff,
   CornerDownLeft,
   Link2,
+  Space,
   Pencil,
   Pin,
   PinOff,
@@ -55,6 +56,8 @@ const typingIn = (target: EventTarget | null) =>
 /** How long typed letters wait for their Enter or Space before they're
  *  forgotten. */
 const KEY_WAIT_MS = 2500;
+/** How long the hint shows which tab a number key switched to. */
+const TAB_HINT_MS = 1400;
 
 /** Whether any link's key in the tab showing starts with this letter, so
  *  typing can begin with it. */
@@ -66,11 +69,12 @@ const startsAKey = (letter: string) => shownLinks().some((l) => l.key.startsWith
  * 1, 2, or 3 on its own switches to that tab instead. A first letter no key
  * starts with is ignored, so ordinary key presses don't start anything;
  * after that, up to three letters are kept, and shown, matching or not, so
- * a slip can be backspaced. Returns them, and a count that moves on each
- * key press, to restart the hint's countdown.
+ * a slip can be backspaced. Returns them, whether a tab was just switched
+ * to (to show which), and a count that moves on each key press, to restart
+ * the hint's countdown.
  */
 function useLinkKeys() {
-  const [typed, setTyped] = useState({ text: "", presses: 0 });
+  const [typed, setTyped] = useState({ text: "", switched: false, presses: 0 });
 
   useEffect(() => {
     let buffer = "";
@@ -78,7 +82,7 @@ function useLinkKeys() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const reset = () => {
       buffer = "";
-      setTyped({ text: "", presses });
+      setTyped({ text: "", switched: false, presses });
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing || typingIn(e.target)) return;
@@ -92,7 +96,13 @@ function useLinkKeys() {
         openLink(link.url);
         return;
       }
-      if (!buffer && /^[1-9]$/.test(e.key) && showTabAt(Number(e.key))) return;
+      if (!buffer && /^[1-9]$/.test(e.key) && showTabAt(Number(e.key))) {
+        clearTimeout(timer);
+        presses += 1;
+        setTyped({ text: "", switched: true, presses });
+        timer = setTimeout(reset, TAB_HINT_MS);
+        return;
+      }
       if (e.key === "Backspace" && buffer) {
         buffer = buffer.slice(0, -1);
       } else if (/^[a-z0-9]$/i.test(e.key)) {
@@ -105,7 +115,7 @@ function useLinkKeys() {
       } else return;
       clearTimeout(timer);
       presses += 1;
-      setTyped({ text: buffer, presses });
+      setTyped({ text: buffer, switched: false, presses });
       timer = setTimeout(reset, KEY_WAIT_MS);
     };
     window.addEventListener("keydown", onKey);
@@ -704,13 +714,17 @@ export const QuickLinksPanel = ({ className, chrome }: { className?: string; chr
 
 /** The keys, listened for page-wide, and what's been typed so far. Mounted once. */
 export const LinkKeys = () => {
-  const { text: typed, presses } = useLinkKeys();
-  const { links } = useLinks();
+  const { text: typed, switched, presses } = useLinkKeys();
+  const { tabs, shown, links } = useLinks();
   const hinted = typed ? links.find((l) => l.key === typed) : undefined;
+  // With more than one tab, which one the keys are typed into: its number
+  // and its name.
+  const at = tabs.findIndex((t) => t.id === shown);
+  const tab = tabs.length > 1 ? tabs[at] : undefined;
 
   return (
     <AnimatePresence>
-      {typed && (
+      {(typed || (switched && tab)) && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -719,21 +733,37 @@ export const LinkKeys = () => {
           aria-live="polite"
           className="bg-glass-strong border-glass-edge pointer-events-none fixed bottom-28 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 overflow-hidden rounded-full border px-3.5 py-2 text-sm shadow-lg md:top-24 md:bottom-auto"
         >
-          <span className="font-mono normal-case">{typed}</span>
-          {hinted ? (
-            <>
-              <CornerDownLeft className="text-glow size-3.5" />
-              <span className="text-muted-foreground normal-case">{linkName(hinted)}</span>
-            </>
-          ) : (
-            <span className="text-muted-foreground">…</span>
+          {tab && (
+            <span className="flex items-center gap-1.5">
+              <kbd className="bg-glow/20 text-glow grid h-5 min-w-5 place-items-center rounded px-1 font-mono text-[0.7rem]">
+                {at + 1}
+              </kbd>
+              <span className={cn("normal-case", typed && "text-muted-foreground")}>{tabName(tab)}</span>
+            </span>
           )}
-          {/* Runs down until the letters are forgotten, from each key press. */}
+          {tab && typed && <span aria-hidden="true" className="bg-glass-edge h-4 w-px" />}
+          {typed && <span className="font-mono normal-case">{typed}</span>}
+          {typed &&
+            (hinted ? (
+              <>
+                {/* Either opens it. */}
+                <span className="text-glow flex items-center gap-1" aria-label="enter or space">
+                  <CornerDownLeft className="size-3.5" />
+                  <span className="text-muted-foreground text-xs">/</span>
+                  <Space className="size-4" />
+                </span>
+                <span className="text-muted-foreground normal-case">{linkName(hinted)}</span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">…</span>
+            ))}
+          {/* Runs down until the letters, or the tab's name, are forgotten,
+              from each key press. */}
           <span
             key={presses}
             aria-hidden="true"
             className="bg-glow/60 absolute inset-x-0 bottom-0 h-0.5 origin-left"
-            style={{ animation: `home-countdown ${KEY_WAIT_MS}ms linear forwards` }}
+            style={{ animation: `home-countdown ${typed ? KEY_WAIT_MS : TAB_HINT_MS}ms linear forwards` }}
           />
         </motion.div>
       )}
