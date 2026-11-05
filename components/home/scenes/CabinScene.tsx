@@ -205,7 +205,7 @@ function drawFireplace(ctx: CanvasRenderingContext2D, l: Layout, rand: () => num
       ctx.fillRect(bx + 1, by - brick + 1, brick * 2 - 2, brick - 2);
     }
   }
-  const embers = ctx.createRadialGradient(box.x + box.w / 2, box.y + box.h * 0.9, 0, box.x + box.w / 2, box.y + box.h * 0.9, box.w * 0.55);
+  const embers = ctx.createRadialGradient(box.x + box.w / 2, box.y + box.h * GRATE, 0, box.x + box.w / 2, box.y + box.h * GRATE, box.w * 0.55);
   embers.addColorStop(0, "rgba(255,150,60,0.5)");
   embers.addColorStop(1, "rgba(255,90,30,0)");
   ctx.fillStyle = embers;
@@ -653,6 +653,10 @@ function drawLog(g: CanvasRenderingContext2D, len: number, r: number, end: 1 | -
   g.stroke();
 }
 
+/** How far down the firebox the grate's rail runs, as a share of its
+ *  height: low, so its bars stand on the hearth. */
+const GRATE = 0.94;
+
 /** The fire's logs on their grate between two andirons, made once at the
  *  firebox's size and drawn over the flames, so the flames rise from among
  *  the logs rather than in front of them. */
@@ -663,15 +667,14 @@ function logsSprite(box: Layout["box"], dpr: number, rand: () => number) {
   const g = c.getContext("2d")!;
   g.scale(dpr, dpr);
   const { w, h } = box;
-  const gy = h * 0.9;
+  const gy = h * GRATE;
   const r = h * 0.085;
-  // Two logs on the grate, one further back and propped up on the other's
-  // far end so the two read apart, and a third laid on top across them.
-  // Back to front.
+  // Two logs crossed in an X behind the rail, their lower ends on the
+  // firebox floor, sawn ends towards the room, and the flames rising from
+  // where they cross. Back to front.
   const logs: [x: number, y: number, len: number, r: number, angle: number, end: 1 | -1][] = [
-    [0.57, gy - r * 1.7, 0.54, r * 0.9, 0.1, 1],
-    [0.43, gy - r * 0.95, 0.6, r, -0.05, -1],
-    [0.53, gy - r * 2.75, 0.48, r * 0.82, -0.15, 1],
+    [0.5, h - r * 2.05, 0.58, r * 0.78, -0.34, -1],
+    [0.5, h - r * 2.05, 0.58, r * 0.82, 0.34, 1],
   ];
   for (const [x, y, len, lr, angle, end] of logs) {
     g.save();
@@ -684,7 +687,7 @@ function logsSprite(box: Layout["box"], dpr: number, rand: () => number) {
   // the fire, and the bars below it.
   g.fillStyle = "#181210";
   g.fillRect(w * 0.16, gy - h * 0.012, w * 0.68, h * 0.03);
-  for (let x = w * 0.2; x < w * 0.82; x += w * 0.08) g.fillRect(x, gy, w * 0.012, h * 0.07);
+  for (let x = w * 0.2; x < w * 0.82; x += w * 0.08) g.fillRect(x, gy, w * 0.012, h - gy);
   g.fillStyle = "rgba(255,150,80,0.35)";
   g.fillRect(w * 0.16, gy - h * 0.012, w * 0.68, 1.2);
   // The andirons standing in front: an iron post each side, a ball on top,
@@ -753,19 +756,20 @@ const CabinScene = () => {
       const fy = box.y + box.h * 0.7;
       glow.style.background = `radial-gradient(circle at ${fx}px ${fy}px, rgb(255 150 60 / 0.36), rgb(255 120 40 / 0.12) ${Math.round(l.fire.w * 0.9)}px, transparent ${Math.round(l.fire.w * 2.2)}px)`;
 
-      // Tongues of flame rising from among the logs, the middle ones tallest.
+      // Tongues of flame rising from where the logs cross, the middle ones
+      // tallest.
       // The tallest stay well under the lintel, and the gradient has faded
       // them out before their tips, so they die away into the dark.
-      const base = box.y + box.h * 0.9 - box.h * 0.085 * 1.6;
-      const tall = box.h * 0.6;
+      const base = box.y + box.h - box.h * 0.085 * 1.6;
+      const tall = box.h * 0.72;
       const tongues = Array.from({ length: 10 }, (_, i) => {
         const u = (i + 0.5) / 10;
         return {
-          x: box.x + box.w * lerp(0.3, 0.7, u + lerp(-0.03, 0.03, rand())),
+          x: box.x + box.w * lerp(0.37, 0.63, u + lerp(-0.03, 0.03, rand())),
           w: box.w * lerp(0.07, 0.11, rand()),
           h: tall * lerp(0.55, 0.95, 1 - Math.abs(u - 0.5) * 2) * lerp(0.85, 1.05, rand()),
           phase: rand() * Math.PI * 2,
-          rate: lerp(5, 9, rand()),
+          rate: lerp(2.5, 4.5, rand()),
         };
       });
       // One gradient for all the flames, made once: gold at the base, red and
@@ -830,7 +834,7 @@ const CabinScene = () => {
             const lick = 0.75 + Math.sin(t * tg.rate + tg.phase) * 0.15 + Math.sin(t * tg.rate * 1.9 + tg.phase * 2) * 0.1;
             const th = tg.h * lick * scale;
             const tw = tg.w * scale;
-            const sway = Math.sin(t * 3 + tg.phase) * tw * 0.6;
+            const sway = Math.sin(t * 1.5 + tg.phase) * tw * 0.6;
             // A teardrop: full at the base, drawn out to a wavering tip.
             ctx.moveTo(tg.x - tw, base);
             ctx.bezierCurveTo(tg.x - tw * 1.3, base - th * 0.35, tg.x - tw * 0.2 + sway * 0.5, base - th * 0.6, tg.x + sway, base - th);
@@ -846,7 +850,7 @@ const CabinScene = () => {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
         ctx.globalAlpha = bright * 0.55;
-        ctx.drawImage(bed, fx - bed.width / 2, box.y + box.h * 0.9 - bed.height / 2);
+        ctx.drawImage(bed, fx - bed.width / 2, box.y + box.h * GRATE - bed.height / 2);
 
         // Sparks floating up off the logs, fading out in the throat.
         for (const sp of sparks) {

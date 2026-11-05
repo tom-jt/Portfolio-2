@@ -188,7 +188,7 @@ const Fade = ({
 }) => (
   <div
     className={cn(
-      "transition-opacity duration-500",
+      "transition-opacity duration-[170ms]",
       hide &&
         (inUse
           ? "opacity-0 hover:opacity-100 has-[:focus-visible]:opacity-100 has-[[data-in-use=true]]:opacity-100"
@@ -269,7 +269,7 @@ const TimerChip = ({
     <div
       className={cn(
         chipGlass,
-        "group flex h-13 items-center gap-1 rounded-[1.1rem] p-1.5 transition-[background-color,border-color,box-shadow] duration-500",
+        "group flex h-13 items-center gap-1 rounded-[1.1rem] p-1.5 transition-[background-color,border-color,box-shadow] duration-[170ms]",
         open && "border-glow/55",
         minimal &&
           "hover:bg-glass hover:border-glass-edge has-[:focus-visible]:bg-glass border-transparent bg-transparent shadow-none",
@@ -282,7 +282,7 @@ const TimerChip = ({
         onClick={onOpen}
         className="focus-visible:ring-ring flex h-full cursor-pointer flex-col items-start justify-center rounded-xl px-3 leading-tight transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
       >
-        <span className={cn("text-muted-foreground text-[0.7rem] transition-opacity duration-500", fade)}>
+        <span className={cn("text-muted-foreground text-[0.7rem] transition-opacity duration-[170ms]", fade)}>
           {timer.status === "paused" ? "paused" : MODE_LABEL[timer.mode]}
         </span>
         <span className={cn("font-pixel text-xl tabular-nums", minimal && ON_SCENE)}>{clock}</span>
@@ -292,7 +292,7 @@ const TimerChip = ({
         aria-label={running ? "pause" : "start"}
         onClick={() => startOrPause(running)}
         className={cn(
-          "bg-glow text-primary-foreground focus-visible:ring-ring grid size-10 cursor-pointer place-items-center rounded-xl transition duration-500 hover:brightness-110 focus-visible:ring-2 focus-visible:outline-none",
+          "bg-glow text-primary-foreground focus-visible:ring-ring grid size-10 cursor-pointer place-items-center rounded-xl transition duration-[170ms] hover:brightness-110 focus-visible:ring-2 focus-visible:outline-none",
           fade,
         )}
       >
@@ -476,7 +476,7 @@ const TabBar = ({
         aria-hidden="true"
         className={cn(
           chipGlass,
-          "pointer-events-none absolute inset-0 rounded-[1.6rem] transition-opacity duration-500",
+          "pointer-events-none absolute inset-0 rounded-[1.6rem] transition-opacity duration-[170ms]",
           immersive && "opacity-0",
         )}
       />
@@ -492,12 +492,12 @@ const TabBar = ({
             aria-pressed={active === id}
             onClick={() => onPick(id)}
             className={cn(
-              "focus-visible:ring-ring relative mx-0.5 flex h-13 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[1.1rem] transition duration-500 focus-visible:ring-2 focus-visible:outline-none",
+              "focus-visible:ring-ring relative mx-0.5 flex h-13 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[1.1rem] transition duration-[170ms] focus-visible:ring-2 focus-visible:outline-none",
               active === id ? "bg-white/14" : "hover:bg-white/6",
               immersive && active !== id && !minimal && "opacity-0 hover:opacity-100 focus-visible:opacity-100",
             )}
           >
-            <Icon className={cn("text-glow size-5 transition-opacity duration-500", minimal && "opacity-0")} />
+            <Icon className={cn("text-glow size-5 transition-opacity duration-[170ms]", minimal && "opacity-0")} />
             <span
               className={cn(
                 "text-[0.62rem]",
@@ -582,7 +582,7 @@ const Room = () => {
 
       <Greeting
         className={cn(
-          "pointer-events-none absolute top-[4.25rem] left-6 transition-opacity duration-500 md:top-8 md:left-10",
+          "pointer-events-none absolute top-[4.25rem] left-6 transition-opacity duration-[170ms] md:top-8 md:left-10",
           immersive && "opacity-0",
         )}
       />
