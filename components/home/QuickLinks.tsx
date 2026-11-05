@@ -587,7 +587,6 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
       <div className="relative h-13 max-w-full">
         <span
           aria-hidden="true"
-          data-mark
           className={cn(
             chipGlass,
             "absolute inset-y-0 left-0 rounded-[1.1rem] transition-[width,border-color] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]",

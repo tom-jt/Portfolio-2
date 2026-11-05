@@ -396,7 +396,8 @@ export const UPGRADES: UpgradeDef[] = [
     growth: 3,
     max: Infinity,
     unlockLevel: 6,
-    effect: (l) => `plant milestone add +${TRELLIS_STEP * l}× more`,
+    // Rounded, so 0.1 × 3 shows as 0.3, not 0.30000000000000004.
+    effect: (l) => `plant milestones add +${Number((TRELLIS_STEP * l).toFixed(2))}× more`,
   },
   {
     id: "seedbank",

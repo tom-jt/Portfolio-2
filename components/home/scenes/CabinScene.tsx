@@ -433,6 +433,24 @@ function frostSprite(win: Layout["win"], rand: () => number) {
   return c;
 }
 
+/** The armchair's outline: its back and wings, its arms, and the seat's
+ *  front, as one shape. What's behind it, the window included, is hidden. */
+function chairShape(floor: number, chair: { x: number; s: number }) {
+  const { x, s } = chair;
+  const y = floor + 60 * s;
+  const shape = new Path2D();
+  shape.moveTo(x - 70 * s, y - 40 * s);
+  shape.lineTo(x - 78 * s, y - 190 * s);
+  shape.quadraticCurveTo(x - 76 * s, y - 228 * s, x - 30 * s, y - 232 * s);
+  shape.lineTo(x + 40 * s, y - 232 * s);
+  shape.quadraticCurveTo(x + 84 * s, y - 228 * s, x + 82 * s, y - 190 * s);
+  shape.lineTo(x + 76 * s, y - 40 * s);
+  shape.closePath();
+  for (const side of [-1, 1]) shape.roundRect(x + (side < 0 ? -108 : 70) * s, y - 112 * s, 38 * s, 98 * s, 14 * s);
+  shape.rect(x - 96 * s, y - 20 * s, 192 * s, 18 * s);
+  return shape;
+}
+
 /** A wingback armchair turned to the fire, its near side catching the light. */
 function drawChair(ctx: CanvasRenderingContext2D, floor: number, chair: { x: number; s: number }) {
   const { x, s } = chair;
@@ -446,22 +464,9 @@ function drawChair(ctx: CanvasRenderingContext2D, floor: number, chair: { x: num
   wool.addColorStop(0.35, "#5a1c16");
   wool.addColorStop(1, "#2a0d0a");
   ctx.fillStyle = wool;
-  // The back and its wings.
-  ctx.beginPath();
-  ctx.moveTo(x - 70 * s, y - 40 * s);
-  ctx.lineTo(x - 78 * s, y - 190 * s);
-  ctx.quadraticCurveTo(x - 76 * s, y - 228 * s, x - 30 * s, y - 232 * s);
-  ctx.lineTo(x + 40 * s, y - 232 * s);
-  ctx.quadraticCurveTo(x + 84 * s, y - 228 * s, x + 82 * s, y - 190 * s);
-  ctx.lineTo(x + 76 * s, y - 40 * s);
-  ctx.closePath();
-  ctx.fill();
-  // The arms, rolled over at the top.
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.roundRect(x + (side < 0 ? -108 : 70) * s, y - 112 * s, 38 * s, 98 * s, 14 * s);
-    ctx.fill();
-  }
+  // The back and its wings, and the arms, rolled over at the top; then the
+  // seat's front, darker.
+  ctx.fill(chairShape(floor, chair));
   ctx.fillStyle = "#2a0d0a";
   ctx.fillRect(x - 96 * s, y - 20 * s, 192 * s, 18 * s);
   ctx.fillStyle = "#24140b";
@@ -530,23 +535,39 @@ function drawBack(ctx: CanvasRenderingContext2D, w: number, h: number, l: Layout
   drawFloor(ctx, w, h, l);
   drawRug(ctx, h, l);
   drawFireplace(ctx, l, rand);
-  if (l.chair) drawChair(ctx, l.floor, l.chair);
-  if (l.mug) drawMug(ctx, l.mug);
 
   // The fire is the only light: everything falls into shadow away from it,
   // the top corners darkest.
   const fx = l.fire.x;
   const fy = l.box.y + l.box.h * 0.6;
   const reach = Math.max(w, h) * 0.8;
-  const dark = ctx.createRadialGradient(fx, fy, l.fire.w * 0.25, fx, fy, reach);
-  dark.addColorStop(0, "rgba(12,6,3,0)");
-  dark.addColorStop(0.3, "rgba(12,6,3,0.5)");
-  dark.addColorStop(1, "rgba(12,6,3,0.9)");
-  ctx.fillStyle = dark;
-  ctx.fillRect(0, 0, w, h);
+  const shadow = (g: CanvasRenderingContext2D) => {
+    const dark = g.createRadialGradient(fx, fy, l.fire.w * 0.25, fx, fy, reach);
+    dark.addColorStop(0, "rgba(12,6,3,0)");
+    dark.addColorStop(0.3, "rgba(12,6,3,0.5)");
+    dark.addColorStop(1, "rgba(12,6,3,0.9)");
+    g.fillStyle = dark;
+    g.fillRect(0, 0, w, h);
+  };
+  shadow(ctx);
   // The night outside has its own light, the moon on the snow, so the window
   // goes in after the shadow; its frame is drawn as dark as the wall round it.
   drawWindow(ctx, l, rand);
+  // The chair and the stool in front of it, in the same shadow: drawn on a
+  // layer of their own, shaded there, then laid over.
+  const layer = document.createElement("canvas");
+  layer.width = ctx.canvas.width;
+  layer.height = ctx.canvas.height;
+  const g = layer.getContext("2d")!;
+  g.setTransform(ctx.getTransform());
+  if (l.chair) drawChair(g, l.floor, l.chair);
+  if (l.mug) drawMug(g, l.mug);
+  g.globalCompositeOperation = "source-atop";
+  shadow(g);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(layer, 0, 0);
+  ctx.restore();
   // Shade the floor's near edge, under the cards.
   const near = ctx.createLinearGradient(0, h * 0.86, 0, h);
   near.addColorStop(0, "rgba(10,5,3,0)");
@@ -644,15 +665,13 @@ function logsSprite(box: Layout["box"], dpr: number, rand: () => number) {
   const { w, h } = box;
   const gy = h * 0.9;
   const r = h * 0.085;
-  // The grate's bars, under the logs.
-  g.fillStyle = "#181210";
-  g.fillRect(w * 0.16, gy, w * 0.68, h * 0.025);
-  for (let x = w * 0.2; x < w * 0.82; x += w * 0.08) g.fillRect(x, gy, w * 0.012, h * 0.07);
-  // Two logs side by side on the grate, a third laid on top across them.
+  // Two logs on the grate, one further back and propped up on the other's
+  // far end so the two read apart, and a third laid on top across them.
+  // Back to front.
   const logs: [x: number, y: number, len: number, r: number, angle: number, end: 1 | -1][] = [
-    [0.43, gy - r, 0.62, r, -0.04, -1],
-    [0.58, gy - r * 0.95, 0.58, r * 0.95, 0.05, 1],
-    [0.5, gy - r * 2.5, 0.5, r * 0.85, -0.1, 1],
+    [0.57, gy - r * 1.7, 0.54, r * 0.9, 0.1, 1],
+    [0.43, gy - r * 0.95, 0.6, r, -0.05, -1],
+    [0.53, gy - r * 2.75, 0.48, r * 0.82, -0.15, 1],
   ];
   for (const [x, y, len, lr, angle, end] of logs) {
     g.save();
@@ -661,6 +680,13 @@ function logsSprite(box: Layout["box"], dpr: number, rand: () => number) {
     drawLog(g, w * len, lr, end, rand);
     g.restore();
   }
+  // The grate's front rail, in front of the logs' feet, its top catching
+  // the fire, and the bars below it.
+  g.fillStyle = "#181210";
+  g.fillRect(w * 0.16, gy - h * 0.012, w * 0.68, h * 0.03);
+  for (let x = w * 0.2; x < w * 0.82; x += w * 0.08) g.fillRect(x, gy, w * 0.012, h * 0.07);
+  g.fillStyle = "rgba(255,150,80,0.35)";
+  g.fillRect(w * 0.16, gy - h * 0.012, w * 0.68, 1.2);
   // The andirons standing in front: an iron post each side, a ball on top,
   // their inner edges catching the fire.
   for (const x of [0.13, 0.87]) {
@@ -775,6 +801,10 @@ const CabinScene = () => {
       panes.rect(win.x + win.w / 2 + f * 0.3, win.y, win.w / 2 - f * 0.3, win.h * 0.48 - f * 0.3);
       panes.rect(win.x, win.y + win.h * 0.48 + f * 0.3, win.w / 2 - f * 0.3, win.h * 0.52 - f * 0.3);
       panes.rect(win.x + win.w / 2 + f * 0.3, win.y + win.h * 0.48 + f * 0.3, win.w / 2 - f * 0.3, win.h * 0.52 - f * 0.3);
+      // Everything but the chair, which stands in front of the window.
+      const unblocked = new Path2D();
+      unblocked.rect(0, 0, w, h);
+      if (l.chair) unblocked.addPath(chairShape(l.floor, l.chair));
 
       const steam = l.mug ? Array.from({ length: 10 }, () => ({ age: rand() * 3.5, seed: rand() * 10 })) : [];
       const steamPuff = puff(16, "255,245,235", 0.5);
@@ -836,6 +866,7 @@ const CabinScene = () => {
         // Snow outside, behind the frost on the glass.
         ctx.save();
         ctx.clip(panes);
+        ctx.clip(unblocked, "evenodd");
         ctx.fillStyle = "rgba(235,242,255,0.85)";
         ctx.beginPath();
         for (const fl of flakes) {

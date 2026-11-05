@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -114,65 +113,12 @@ function useClock() {
   return {
     timer,
     running,
-    /** Running or paused: started, and not yet over or reset. */
-    on: timer.status !== "idle",
     clock: formatClock(running && now ? timeLeft(timer, now) : timeLeft(timer)),
   };
 }
 
 /** Lifts text standing on the scene with nothing behind it. */
 const ON_SCENE = "[text-shadow:0_1px_10px_rgb(0_0_0/0.65)]";
-
-/**
- * Immersive mode's trace of the controls it hides: a soft glow in the
- * theme's colour, rising from the very bottom of the screen under each
- * (anything marked data-mark), so they can still be found.
- */
-const Marks = ({ show }: { show: boolean }) => {
-  const [marks, setMarks] = useState<{ left: number; width: number }[]>([]);
-  useEffect(() => {
-    if (!show) return;
-    const els = [...document.querySelectorAll<HTMLElement>("[data-mark]")];
-    const measure = () =>
-      setMarks(
-        els
-          .map((el) => el.getBoundingClientRect())
-          .filter((r) => r.width > 0)
-          .map((r) => ({ left: r.left, width: r.width })),
-      );
-    // Observing measures straight away, and again as any of them resizes.
-    const observer = new ResizeObserver(measure);
-    els.forEach((el) => observer.observe(el));
-    window.addEventListener("resize", measure);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [show]);
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-[42] transition-opacity duration-500",
-        !show && "opacity-0",
-      )}
-    >
-      {marks.map((m, i) => (
-        <span
-          key={i}
-          className="absolute bottom-0 h-3.5"
-          style={{
-            left: m.left,
-            width: m.width,
-            // Straight up from the screen's edge, fading as it rises.
-            background:
-              "linear-gradient(to top, color-mix(in oklab, var(--glow) 40%, transparent), transparent)",
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const startOrPause = (running: boolean) => {
   if (running) return pause();
@@ -225,9 +171,9 @@ const Card = ({
 
 /**
  * A control that fades away in immersive mode, staying where it was and
- * still working: it shows again while what it opened is open (anything in
- * it marked aria-expanded, or with `inUse`, data-in-use), or while it has
- * the keyboard's focus.
+ * still working: it shows again under the pointer, while what it opened is
+ * open (anything in it marked aria-expanded, or with `inUse`, data-in-use),
+ * or while it has the keyboard's focus.
  */
 const Fade = ({
   hide,
@@ -245,8 +191,8 @@ const Fade = ({
       "transition-opacity duration-500",
       hide &&
         (inUse
-          ? "opacity-0 has-[:focus-visible]:opacity-100 has-[[data-in-use=true]]:opacity-100"
-          : "opacity-0 has-[:focus-visible]:opacity-100 has-[[aria-expanded=true]]:opacity-100"),
+          ? "opacity-0 hover:opacity-100 has-[:focus-visible]:opacity-100 has-[[data-in-use=true]]:opacity-100"
+          : "opacity-0 hover:opacity-100 has-[:focus-visible]:opacity-100 has-[[aria-expanded=true]]:opacity-100"),
       className,
     )}
   >
@@ -272,7 +218,6 @@ const TasksChip = ({
   return (
     <button
       type="button"
-      data-mark
       aria-expanded={open}
       onClick={onClick}
       className={cn(
@@ -322,7 +267,6 @@ const TimerChip = ({
 
   return (
     <div
-      data-mark
       className={cn(
         chipGlass,
         "group flex h-13 items-center gap-1 rounded-[1.1rem] p-1.5 transition-[background-color,border-color,box-shadow] duration-500",
@@ -412,7 +356,6 @@ const SoundChip = ({
   const spotifyPlaying = useSpotifyPlaying();
   return (
     <div
-      data-mark
       className={cn(
         chipGlass,
         "flex h-13 items-center gap-0.5 rounded-[1.1rem] p-1.5",
@@ -462,7 +405,6 @@ const EyesChip = ({
   return (
     <button
       type="button"
-      data-mark
       aria-expanded={open}
       aria-label={`${LABEL.eyes}, ${status === "off" ? "off" : status === "now" ? "break due" : `next in ${status}`}`}
       onClick={onClick}
@@ -516,7 +458,7 @@ const TabBar = ({
   /** The pet, which walks along the top. */
   children?: ReactNode;
 }) => {
-  const { clock, on } = useClock();
+  const { clock, running } = useClock();
   const eyes = useEyeStatus();
   const open = useTodos().filter((t) => !t.done).length;
   const hydrated = useHydrated();
@@ -540,20 +482,19 @@ const TabBar = ({
       />
       {children}
       {TABS.map(({ id, icon: Icon }) => {
-        // Immersive, the timer keeps its time showing while it's on.
-        const minimal = immersive && id === "timer" && on && active !== id;
+        // Immersive, the timer keeps its time showing while it runs.
+        const minimal = immersive && id === "timer" && running && active !== id;
         return (
           <button
             key={id}
             type="button"
-            data-mark
             aria-label={LABEL[id]}
             aria-pressed={active === id}
             onClick={() => onPick(id)}
             className={cn(
               "focus-visible:ring-ring relative mx-0.5 flex h-13 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[1.1rem] transition duration-500 focus-visible:ring-2 focus-visible:outline-none",
               active === id ? "bg-white/14" : "hover:bg-white/6",
-              immersive && active !== id && !minimal && "opacity-0 focus-visible:opacity-100",
+              immersive && active !== id && !minimal && "opacity-0 hover:opacity-100 focus-visible:opacity-100",
             )}
           >
             <Icon className={cn("text-glow size-5 transition-opacity duration-500", minimal && "opacity-0")} />
@@ -593,7 +534,7 @@ const PANELS: Record<PanelId, typeof Tasks> = {
 const Room = () => {
   const wide = useWide();
   const { openPanels, pet, immersive } = usePrefs();
-  const timerOn = useClock().on;
+  const timerOn = useClock().running;
   // Only whether the pet is unlocked: the room holds every card, so it
   // mustn't re-render each time the garden ticks.
   const showPet = useGardenValue((s) =>
@@ -787,7 +728,6 @@ const Room = () => {
         <Fade hide={immersive}>
           <button
             type="button"
-            data-mark
             aria-label={LABEL.arcade}
             aria-expanded={chipOpen("arcade")}
             onClick={() => toggle("arcade")}
@@ -806,7 +746,7 @@ const Room = () => {
         <Fade hide={immersive}>
           <EyesChip open={chipOpen("eyes")} onClick={() => toggle("eyes")} />
         </Fade>
-        {/* Immersive, the time left stays while the timer's on. */}
+        {/* Immersive, the time left stays while the timer runs. */}
         <Fade hide={immersive && !timerOn}>
           <TimerChip
             open={chipOpen("timer")}
@@ -877,7 +817,6 @@ const Room = () => {
       <Fade hide={immersive}>
         <QuickLinksMenu className={cn("fixed right-4 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 md:hidden", sheet && "hidden")} />
       </Fade>
-      <Marks show={immersive} />
       <TabBar active={sheet} onPick={toggle} immersive={immersive}>
         {/* Phones: the pet walks along the top of the tab bar. */}
         {!wide && showPet && <Pet id={showPet} grounded={immersive} />}
