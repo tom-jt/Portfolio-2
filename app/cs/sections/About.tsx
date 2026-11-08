@@ -9,6 +9,7 @@ import {
 import {
   AndroidPlainIcon,
   CsharpOriginalIcon,
+  GoOriginalIcon,
   JavaOriginalIcon,
   KotlinPlainIcon,
   MongodbOriginalIcon,
@@ -97,6 +98,11 @@ const techLogos = [
     title: "Kotlin",
     href: "https://kotlinlang.org/",
   },
+  {
+    node: <GoOriginalIcon size={60} />,
+    title: "Go",
+    href: "https://go.dev",
+  },
 ];
 
 const cardShell =
@@ -159,11 +165,11 @@ const TerminalContainer = () => {
     <Terminal startOnView={true} className="min-w-1/3">
       <TypingAnimation>&gt; ~/about-me.info</TypingAnimation>
 
-      <AnimatedSpan className="text-muted-foreground">
+      <AnimatedSpan delay={1000} className="text-muted-foreground">
         Loading profile for 'Tom Liu'...
       </AnimatedSpan>
 
-      <AnimatedSpan>
+      <AnimatedSpan delay={1000}>
         Bachelor of Computer Science 💻 and Law ⚖️ student @ UNSW.
       </AnimatedSpan>
 
@@ -173,27 +179,27 @@ const TerminalContainer = () => {
 
       <TypingAnimation>&gt; ~/fun-facts.info</TypingAnimation>
 
-      <AnimatedSpan className="text-muted-foreground">
+      <AnimatedSpan delay={1000} className="text-muted-foreground">
         Loading fun facts for 'Tom Liu'...
       </AnimatedSpan>
 
-      <AnimatedSpan className="text-green-500">
+      <AnimatedSpan delay={500} className="text-green-500">
         ✔ Likes to both create and play video games.
       </AnimatedSpan>
 
-      <AnimatedSpan className="text-green-500">
+      <AnimatedSpan delay={500} className="text-green-500">
         ✔ Enjoys piano, gym, and figure skating.
       </AnimatedSpan>
 
-      <AnimatedSpan className="text-green-500">
+      <AnimatedSpan delay={500} className="text-green-500">
         ✔ Hopelessly addicted to boba and watermelon.
       </AnimatedSpan>
 
-      <AnimatedSpan className="text-muted-foreground">
+      <AnimatedSpan delay={1000} className="text-muted-foreground">
         Generating random fun fact...
       </AnimatedSpan>
 
-      <AnimatedSpan>
+      <AnimatedSpan delay={1000}>
         {"  "}- {funFact}
       </AnimatedSpan>
 
@@ -203,9 +209,11 @@ const TerminalContainer = () => {
 
       <TypingAnimation>&gt; cat ~/welcome-message.info & exit</TypingAnimation>
 
-      <AnimatedSpan className="text-blue-500">Nice to e-meet you!</AnimatedSpan>
+      <AnimatedSpan delay={500} className="text-blue-500">
+        Nice to e-meet you!
+      </AnimatedSpan>
 
-      <AnimatedSpan className="text-blue-500">
+      <AnimatedSpan delay={500} className="text-blue-500">
         I hope you enjoy my little website &lt;3
       </AnimatedSpan>
 
@@ -213,7 +221,7 @@ const TerminalContainer = () => {
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       </TypingAnimation>
 
-      <AnimatedSpan className="text-muted-foreground">
+      <AnimatedSpan delay={1000} className="text-muted-foreground">
         ℹ Introduction complete.
       </AnimatedSpan>
     </Terminal>
@@ -231,11 +239,10 @@ const AboutCard = () => {
           as="h3"
           translateZ={40}
           className="
-            text-xl font-bold text-zinc-600
-            dark:text-white
+            font-bold text-zinc-600 dark:text-white
           "
         >
-          Profession: Rock Bottom Frequenter
+          <div className="text-xl">Wisdom Chases Me</div> But I Am Faster
         </CardItem>
         <CardItem translateZ={100}>
           <Image
@@ -256,6 +263,8 @@ const AboutCard = () => {
           translateZ={60}
           className="text-zinc-500 text-sm dark:text-zinc-300"
         >
+          <b>What I daydream about</b>
+          <br />
           Lush grass in soft rain,
           <br />
           Under silken breeze, your eyes
@@ -347,7 +356,7 @@ const ContactTeaser = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-8">
-      <p className="c-eyebrow mb-0">Tools I reach for</p>
+      <p className="c-eyebrow mb-0">Things I use</p>
       <LogoLoop
         logos={techLogos}
         speed={100}
@@ -372,7 +381,7 @@ const Logos = () => {
         className="sm:hidden opacity-80"
       />
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        …to make the things below
+        … to make the stuff below
       </p>
     </div>
   );

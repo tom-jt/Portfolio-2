@@ -22,8 +22,8 @@ export const projects: Project[] = (projectsData.projects || []).map((p) => ({
   img: (p.img || "").startsWith("public/")
     ? (p.img || "").replace(/^public\//, "/")
     : p.img,
-  link: p.link ?? "#",
-  gamelink: p.gamelink ?? "#",
+  link: p.link ?? "",
+  gamelink: p.gamelink ?? "",
   content: p.content ?? "",
   type: p.type ?? ProjectType.PROJECT,
   featured: projectsData.featured.includes(p.id),
@@ -31,3 +31,10 @@ export const projects: Project[] = (projectsData.projects || []).map((p) => ({
 
 export const getFilteredProjects = (filterBy: (p: Project) => boolean) =>
   projects.filter(filterBy);
+
+/** The featured projects, in the order the `featured` list gives them. */
+export const getFeaturedProjects = (): Project[] =>
+  projectsData.featured.flatMap((id) => {
+    const i = projectsData.projects.findIndex((p) => p.id === id);
+    return i < 0 ? [] : [projects[i]];
+  });

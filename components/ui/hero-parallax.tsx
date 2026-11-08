@@ -86,7 +86,8 @@ export const HeroParallax = ({ products }: HeroParallaxProps) => {
             space-x-reverse space-x-20 pb-20
           "
         >
-          {firstRow.map((product) => (
+          {/* The row is laid out right to left, so reversed it reads in order. */}
+          {[...firstRow].reverse().map((product) => (
             <ProductCard
               product={product}
               translate={translateX}

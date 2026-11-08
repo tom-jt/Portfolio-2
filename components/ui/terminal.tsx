@@ -65,7 +65,7 @@ export const AnimatedSpan = ({
       ref={elementRef}
       initial={{ opacity: 0, y: -5 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: -5 }}
-      transition={{ duration: 0.3, delay: sequence ? 0 : delay / 1000 }}
+      transition={{ duration: 0.3, delay: delay / 1000 }}
       className={cn("grid text-base text-wrap font-normal tracking-tight", className)}
       onAnimationComplete={() => {
         if (!sequence) return;

@@ -47,7 +47,7 @@
       "id": "xchange",
       "title": "xChange",
       "subtitle": "UNSW exchange browser",
-      "img": "/images/projects/xChange.png",
+      "img": "/images/projects/xchange.png",
       "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "TypeScript"],
       "link": "https://github.com/tom-jt/xChange",
       "content": "A browser and search filter for UNSW's exchange program offerings.",
@@ -61,7 +61,7 @@
       "langs": ["Unity", "C#", "Mirror"],
       "link": "https://github.com/tom-jt/Diviners-Gambit",
       "gamelink": "https://gamejolt.com/games/diviners-gambit/978448",
-      "content": "Ever wanted to play rock-paper-scissors, but with over 70 different options? Based on a childhood game I used to play at school, this online multiplayer card game  features intricate mind-games and strategies, character abilities, customisable card presets and game modes, and just pure chaotic fun!",
+      "content": "Ever wanted to play rock-paper-scissors, but with over 70 different options? Based on a childhood game I used to play at school, this online multiplayer card game features intricate mind-games and strategies, character abilities, customisable card presets and game modes, and just pure chaotic fun!",
       "type": 1
     },
     {
@@ -71,7 +71,7 @@
       "img": "/images/projects/portfolio-2.png",
       "langs": ["HTML/CSS", "Tailwind", "Next.JS", "React", "Bootstrap"],
       "link": "https://github.com/tom-jt/Portfolio-2",
-      "content": "A collection of all the projects I've made.",
+      "content": "A collection of all the projects I've made (for Computer Science) and a timeline of my traumas (for Law).",
       "type": 0
     },
     {
@@ -112,8 +112,27 @@
       "subtitle": "Genetic variant analyser",
       "img": "/images/projects/splicechat.png",
       "langs": ["HTML/CSS", "Tailwind", "React", "Docker", "OpenAI", "Vite"],
-      "link": "about:blank",
       "content": "An LLM-powered assistant for evaluating candidate disease-causing splice-altering genetic variants. Completed in a team as my Bachelor of Computer Science degree's captone project at UNSW.",
+      "type": 0
+    },
+    {
+      "id": "the-diviners-gambit",
+      "title": "The Diviners' Gambit",
+      "subtitle": "Web-based multiplayer card game",
+      "img": "/images/projects/the-diviners-gambit.png",
+      "langs": ["HTML/CSS", "Tailwind", "React", "Next.JS"],
+      "gamelink": "https://diviners.vercel.app",
+      "content": "Imagine rock-paper-scissors but now with over 100 options, a single-player rogue-like campaign, and multiplayer four-player lobbies all free in your browser! A comprehensive remake of the Unity version of Diviners' Gambit.",
+      "type": 1
+    },
+    {
+      "id": "home",
+      "title": "Tom's Room",
+      "subtitle": "Study-timer, cosy animated scenery, rain garden",
+      "img": "/images/projects/home.png",
+      "langs": ["HTML/CSS", "Tailwind", "React", "Next.JS"],
+      "link": "https://tomliu.vercel.app/home",
+      "content": "I love procrastinating, so I made a study timer to force myself to lock in – would love for you to use it too! Study by some cosy animated scenery with gentle ambience, track your tasks with a todo list synced across desktop and mobile, and tend to the rain garden.",
       "type": 0
     }
   ],
@@ -121,12 +140,12 @@
     "linguae-legend",
     "con-grazia",
     "mission-improbable",
-    "tributary",
-    "xchange",
-    "diviners-gambit",
+    "the-diviners-gambit",
     "stranger-danger",
+    "xchange",
     "toohak",
-    "portfolio",
-    "splicechat"
+    "portfolio-2",
+    "splicechat",
+    "diviners-gambit"
   ]
 }

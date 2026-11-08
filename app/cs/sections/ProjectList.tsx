@@ -107,15 +107,14 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
               <motion.div layoutId={`image-${active.title}-${id}`}>
                 <Image
                   width={800}
-                  height={640}
+                  height={450}
                   src={active.img}
                   alt={active.title}
                   className="
                     object-cover object-top
-                    w-full h-80
+                    w-full aspect-video
                     dark:brightness-75
                     sm:rounded-tr-lg sm:rounded-tl-lg
-                    lg:h-80
                   "
                 />
               </motion.div>
@@ -145,44 +144,47 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                   </div>
 
                   <div className="flex p-3 gap-4">
-                    {active.type === ProjectType.GAME && (
+                    {active.type === ProjectType.GAME &&
+                      active.gamelink !== "" && (
+                        <motion.a
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          href={active.gamelink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Play ${active.title}`}
+                          className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
+                        >
+                          <GamepadIcon
+                            size={30}
+                            className="transition-all hover:text-zinc-400"
+                          />
+                        </motion.a>
+                      )}
+                    {active.link !== "" && (
                       <motion.a
                         layout
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        href={active.gamelink}
+                        href={active.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        aria-label={`Play ${active.title}`}
-                        className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
+                        aria-label={`View ${active.title} on GitHub`}
+                        className="text-sm font-bold rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
                       >
-                        <GamepadIcon
+                        <IconBrandGithub
                           size={30}
-                          className="transition-all hover:text-zinc-400"
-                        />
-                      </motion.a>
-                    )}
-                    <motion.a
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      href={active.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`View ${active.title} on GitHub`}
-                      className="text-sm font-bold rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
-                    >
-                      <IconBrandGithub
-                        size={30}
-                        className="
+                          className="
                           rounded-full
                           transition-all
                           hover:text-zinc-400
                         "
-                      />
-                    </motion.a>
+                        />
+                      </motion.a>
+                    )}
                   </div>
                 </div>
                 <div className="pt-4 px-4 relative">
@@ -249,12 +251,12 @@ const ProjectList = ({ filterBy }: ProjectListProps) => {
                 >
                   <Image
                     width={640}
-                    height={480}
+                    height={360}
                     src={card.img}
                     alt=""
                     className="
                       object-cover object-top
-                      h-60 w-full
+                      aspect-video w-full
                       rounded-xl
                       dark:brightness-75
                       transition-transform duration-300

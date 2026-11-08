@@ -1,5 +1,5 @@
 import { HeroParallax, Product } from "@/components/ui/hero-parallax";
-import { getFilteredProjects, ProjectType } from "@/data/cs/projects";
+import { getFeaturedProjects, ProjectType } from "@/data/cs/projects";
 
 type FeaturedProject = Product;
 
@@ -11,9 +11,7 @@ const Home = () => {
   );
 };
 
-const featuredProjects: FeaturedProject[] = getFilteredProjects(
-  (p) => p.featured === true,
-).map((p) => ({
+const featuredProjects: FeaturedProject[] = getFeaturedProjects().map((p) => ({
   title: p.title,
   subtitle: p.subtitle,
   link: p.type === ProjectType.GAME ? p.gamelink : p.link,
