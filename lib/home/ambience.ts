@@ -914,7 +914,7 @@ export function playAmbience(kind: AmbienceKind, v: number) {
   if (bed?.kind === kind) return;
 
   // Crossfade: the old bed fades out on its own bus while the new one fades
-  // in, once its recordings have arrived.
+  // in, from its first recording to arrive.
   bed?.stop();
   const bus = gain(c, 0);
   bus.connect(master);
@@ -924,29 +924,44 @@ export function playAmbience(kind: AmbienceKind, v: number) {
   const sources: AudioBufferSourceNode[] = [];
   const stoppers: (() => void)[] = [];
   let stopped = false;
+  let started = 0;
+  let failed = 0;
   setStatus("loading");
 
-  Promise.all(files.map((file) => load(c, file))).then(
-    (buffers) => {
-      if (stopped) return;
-      buffers.forEach((buffer, i) => {
-        const layer = recipe.layers[i];
-        if (layer.bursts) return void stoppers.push(bursts(c, buffer, layer, bus));
-        const src = c.createBufferSource();
-        src.buffer = buffer;
-        src.loop = true;
-        const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
-        route(src, bus, ...chain, gain(c, layer.gain));
-        src.start(0, (layer.offset ?? 0) % buffer.duration);
-        sources.push(src);
-      });
-      if (recipe.extra) stoppers.push(recipe.extra(c, bus));
-      bus.gain.setTargetAtTime(1, c.currentTime, FADE / 3);
-      setStatus("playing");
-    },
-    () => {
-      if (!stopped) setStatus("error");
-    },
+  // Each layer starts as soon as its own recording is in, so a long one
+  // (Majula's music) never holds up the rest: the bed fades in with the
+  // first, and any later one fades in over it. Only if every one fails is
+  // it an error. A bed of nothing but its extra (space's drone) starts now.
+  const begin = () => {
+    if (recipe.extra) stoppers.push(recipe.extra(c, bus));
+    bus.gain.setTargetAtTime(1, c.currentTime, FADE / 3);
+    setStatus("playing");
+  };
+  if (!recipe.layers.length) begin();
+  recipe.layers.forEach((layer) =>
+    load(c, layer.file).then(
+      (buffer) => {
+        if (stopped) return;
+        const late = started > 0;
+        const fade = gain(c, late ? 0 : 1);
+        fade.connect(bus);
+        if (late) fade.gain.setTargetAtTime(1, c.currentTime, FADE / 3);
+        if (layer.bursts) stoppers.push(bursts(c, buffer, layer, fade));
+        else {
+          const src = c.createBufferSource();
+          src.buffer = buffer;
+          src.loop = true;
+          const chain = layer.lowpass ? [filter(c, "lowpass", layer.lowpass, 0.5)] : [];
+          route(src, fade, ...chain, gain(c, layer.gain));
+          src.start(0, (layer.offset ?? 0) % buffer.duration);
+          sources.push(src);
+        }
+        if (!started++) begin();
+      },
+      () => {
+        if (!stopped && ++failed === recipe.layers.length) setStatus("error");
+      },
+    ),
   );
 
   bed = {
