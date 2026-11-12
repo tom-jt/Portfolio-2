@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowDown,
   ArrowUp,
   CloudOff,
   CornerDownLeft,
+  Globe,
   Link2,
   Space,
   Pencil,
@@ -42,11 +43,30 @@ import {
   type LinkTab,
   type QuickLink,
 } from "@/lib/home/links";
-import { setPrefs, togglePanel, usePrefs } from "@/lib/home/prefs";
+import { openLinkInApp, openSearch } from "@/lib/home/browser";
+import { prefsStore, setPrefs, togglePanel, usePrefs } from "@/lib/home/prefs";
 import { cn } from "@/lib/utils";
-import { chipButton, chipGlass, Eyebrow, IconButton, Panel, PrimaryButton, textButton, type PanelChrome } from "./ui";
+import { chipButton, chipGlass, Eyebrow, IconButton, Panel, PrimaryButton, Switch, textButton, type PanelChrome } from "./ui";
 
-const openLink = (url: string) => window.open(url, "_blank", "noopener,noreferrer");
+/** Opens a link where the visitor chose: the in-app browser (unless the
+ *  site won't show there), or a real tab. */
+const openLink = (url: string) =>
+  prefsStore.get().linksInApp ? openLinkInApp(url) : void window.open(url, "_blank", "noopener,noreferrer");
+
+/** A link's click, sent to the in-app browser when that's chosen. A middle
+ *  or modified click still opens a real tab, as it would anywhere. */
+const inApp = (url: string, then?: () => void) => (e: ReactMouseEvent) => {
+  then?.();
+  if (!prefsStore.get().linksInApp || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  openLinkInApp(url);
+};
+
+/** Whether a key press would press a control that has the keyboard, so
+ *  Enter and Space mean that, not the search shortcut. */
+const pressable = (target: EventTarget | null) =>
+  target instanceof Element &&
+  !!target.closest("button, a[href], summary, select, canvas, iframe, [role=button], [role=radio], [role=switch], [role=tab], [tabindex]:not([tabindex='-1'])");
 
 /** Whether a key press is someone typing into a field, not at the page. */
 const typingIn = (target: EventTarget | null) =>
@@ -66,7 +86,8 @@ const startsAKey = (letter: string) => shownLinks().some((l) => l.key.startsWith
 /**
  * Typing a link's key and then Enter or Space anywhere on the page opens
  * it, unless the typing is going into a text box. With more than one tab,
- * 1, 2, or 3 on its own switches to that tab instead. A first letter no key
+ * 1, 2, or 3 on its own switches to that tab instead. With nothing typed,
+ * Enter or Space opens the in-app browser's search. A first letter no key
  * starts with is ignored, so ordinary key presses don't start anything;
  * after that, up to three letters are kept, and shown, matching or not, so
  * a slip can be backspaced. Returns them, whether a tab was just switched
@@ -94,6 +115,11 @@ function useLinkKeys() {
         // Before the browser presses whatever has focus, or scrolls.
         e.preventDefault();
         openLink(link.url);
+        return;
+      }
+      if ((e.key === "Enter" || e.key === " ") && !buffer && !e.repeat && !pressable(e.target)) {
+        e.preventDefault();
+        openSearch();
         return;
       }
       if (!buffer && /^[1-9]$/.test(e.key) && showTabAt(Number(e.key))) {
@@ -511,15 +537,28 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
                   quick links {links.length > 0 && `(${links.length}/${LINKS_MAX})`}
                 </p>
               )}
-              <button
-                type="button"
-                aria-pressed={editMode}
-                onClick={() => setEditMode((m) => !m)}
-                className={cn(textButton, "text-muted-foreground flex items-center gap-1 text-xs")}
-              >
-                {editMode ? <X className="size-3" /> : <Pencil className="size-3" />}
-                {editMode ? "done" : "edit"}
-              </button>
+              <div className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    openSearch();
+                  }}
+                  className={cn(textButton, "text-muted-foreground flex items-center gap-1 text-xs")}
+                >
+                  <Globe className="size-3" />
+                  browser
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={editMode}
+                  onClick={() => setEditMode((m) => !m)}
+                  className={cn(textButton, "text-muted-foreground flex items-center gap-1 text-xs")}
+                >
+                  {editMode ? <X className="size-3" /> : <Pencil className="size-3" />}
+                  {editMode ? "done" : "edit"}
+                </button>
+              </div>
             </div>
             {editMode ? (
               <LinkEditor />
@@ -537,7 +576,7 @@ export const QuickLinksMenu = ({ className }: { className?: string }) => {
                       href={l.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={close}
+                      onClick={inApp(l.url, close)}
                       title={l.url}
                       className="focus-visible:ring-ring flex items-center gap-2 rounded-xl p-1.5 transition hover:bg-white/8 focus-visible:ring-2 focus-visible:outline-none"
                     >
@@ -641,6 +680,7 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                       title={l.url}
+                      onClick={inApp(l.url)}
                       className="focus-visible:ring-ring flex h-10 min-w-0 items-center gap-2 rounded-xl px-1 transition hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-none"
                     >
                       <LinkTile link={l} />
@@ -689,6 +729,7 @@ export const QuickLinksBar = ({ className }: { className?: string }) => {
 /** The links card: where they're added and arranged, a card like the others. */
 export const QuickLinksPanel = ({ className, chrome }: { className?: string; chrome?: PanelChrome }) => {
   const { links } = useLinks();
+  const { linksInApp } = usePrefs();
   return (
     <Panel
       id="links"
@@ -705,6 +746,12 @@ export const QuickLinksPanel = ({ className, chrome }: { className?: string; chr
           say for work, home, and your phone, and switch between them in the bar, or by pressing 1, 2, or 3. they sync
           with your tasks.
         </p>
+        <Switch
+          checked={linksInApp}
+          onChange={(on) => setPrefs({ linksInApp: on })}
+          label="open links in the in-app browser"
+          hint="sites that won't show inside another page still open in a real tab"
+        />
         <LinkEditor />
       </div>
     </Panel>

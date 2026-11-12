@@ -7,7 +7,7 @@
       "description": "rock-paper-scissors with 60+ options",
       "url": "https://diviners.vercel.app",
       "thumbnail": "public/images/projects/the-diviners-gambit.png",
-      "accent": "#7fc8dc",
+      "accent": "#F9B2D7",
       "aspect": "16/9",
       "status": "live"
     },
@@ -18,20 +18,31 @@
       "description": "save humanity, one boba at a time",
       "url": "https://milkteaway.vercel.app",
       "thumbnail": "public/images/projects/milktea-way.png",
-      "accent": "#f2b46d",
+      "accent": "#CFECF3",
       "aspect": "16/9",
       "status": "live"
     },
     {
       "id": "cartridge-03",
-      "title": "normal activities",
+      "title": "DONA (DEMO)",
       "tagline": "puzzle narrative",
       "description": "department of normal activities",
-      "url": "",
+      "url": "https://normact.vercel.app",
       "thumbnail": "",
-      "accent": "#e58fb4",
+      "accent": "#DAF9DE",
       "aspect": "16/9",
-      "status": "soon"
+      "status": "live"
+    },
+    {
+      "id": "cartridge-04",
+      "title": "larp souls (DEMO)",
+      "tagline": "text-based souls-like",
+      "description": "turn-based combat fused with realtime difficulty",
+      "url": "https://larp-souls.vercel.app",
+      "thumbnail": "",
+      "accent": "#F6FFDC",
+      "aspect": "16/9",
+      "status": "live"
     }
   ]
 }

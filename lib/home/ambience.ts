@@ -234,6 +234,8 @@ const RECIPES: Record<AmbienceKind, Recipe> = {
     layers: [
       { file: "majula", gain: 0.9 },
       { file: "campfire", gain: 0.7 },
+      // The sea down below the cliff: soft, far off, under the rest.
+      { file: "waves", gain: 0.22, lowpass: 800, offset: 40 },
     ],
   },
   snow: {

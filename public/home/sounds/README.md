@@ -39,4 +39,7 @@ as it plays. The greenhouse's drips are generated there too.
 `majula.mp3` is "Majula" from the *Dark Souls II* soundtrack (Motoi
 Sakuraba, © Bandai Namco / FromSoftware). It is **not** CC0: it's included
 with permission for non-commercial use only, trimmed of its silent ends and
-loudness-matched like the rest.
+loudness-matched like the rest. Its last notes are the same music as the
+opening phrase, so the file starts 2 s before that phrase ends (8.01 s into
+the track) and stops at the end: the player's 2 s loop crossfade then blends
+the matching notes, and the loop carries on with no repeat.

@@ -25,6 +25,7 @@ import {
 import EyeBreak from "@/components/home/EyeBreak";
 import HudChip from "@/components/home/HudChip";
 import Pet from "@/components/home/Pet";
+import { BrowserChip, BrowserWindows } from "@/components/home/Browser";
 import { LinkKeys, QuickLinksBar, QuickLinksMenu, QuickLinksPanel } from "@/components/home/QuickLinks";
 import SceneSwitcher from "@/components/home/SceneSwitcher";
 import TimerEngine from "@/components/home/TimerEngine";
@@ -722,9 +723,14 @@ const Room = () => {
         <QuickLinksBar className="absolute bottom-8 left-[22.25rem] z-20 hidden max-w-[max(5rem,calc(100vw-51rem))] md:flex" />
       </Fade>
       <LinkKeys />
+      {/* The in-app browser's windows, over the scene and the cards. */}
+      <BrowserWindows wide={wide} />
       <div className="absolute right-8 bottom-8 hidden items-center gap-2.5 md:flex">
         {/* The pet lives on top of these chips. */}
         {wide && showPet && <Pet id={showPet} grounded={immersive} />}
+        <Fade hide={immersive}>
+          <BrowserChip />
+        </Fade>
         <Fade hide={immersive}>
           <button
             type="button"

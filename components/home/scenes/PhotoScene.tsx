@@ -845,6 +845,159 @@ const SunsetShore = () => {
   );
 };
 
+// Majula's sea, in % of the photo: from under the far spires, round the
+// foot of the cliff, to the stones of the bonfire's ring.
+const MAJULA_WATER: Pt[] = [
+  [0, 32.2],
+  [40, 32.2],
+  [41.2, 36.7],
+  [43.1, 44.4],
+  [45, 48.9],
+  [50, 51.7],
+  [56.2, 53.1],
+  [56.2, 54.2],
+  [47.5, 56.1],
+  [38.7, 55.6],
+  [30, 53.3],
+  // Round the hooded figure, who stands still.
+  [29.4, 48.9],
+  [28.4, 43.9],
+  [26.9, 40.6],
+  [24.7, 40],
+  [23.2, 42.8],
+  [22.2, 47.8],
+  [21.2, 49.4],
+  [8.75, 49.4],
+  [6.25, 50.6],
+  [0, 50.2],
+];
+const MAJULA_BOX = [0, 31.5, 57, 57] as const;
+
+/**
+ * A still sea in a photo set gently moving: the photo's own water, drawn in
+ * thin strips each slid a pixel or so to and fro, so the light on it
+ * shimmers as it does on a slow swell, finer and less far off. Only inside
+ * `water`, fading in from its far edge. Nothing with reduced motion.
+ */
+const Shimmer = ({ photo: id, water, box, amp = 1.2 }: { photo: PhotoId; water: Pt[]; box: readonly [number, number, number, number]; amp?: number }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas || reduced) return;
+    let stop = () => {};
+    let gone = false;
+    const photo = new Image();
+    photo.src = photoSrc(id);
+
+    const setup = () => {
+      stop();
+      const { ctx, w, h } = fitCanvas(canvas, cappedDpr(1.5));
+      const [x0, y0, x1, y1] = box;
+      const at = ([x, y]: Pt): Pt => [((x - x0) / (x1 - x0)) * w, ((y - y0) / (y1 - y0)) * h];
+      const src = {
+        x: (photo.naturalWidth * x0) / 100,
+        y: (photo.naturalHeight * y0) / 100,
+        w: (photo.naturalWidth * (x1 - x0)) / 100,
+        h: (photo.naturalHeight * (y1 - y0)) / 100,
+      };
+      const clip = new Path2D();
+      water.map(at).forEach(([x, y], i) => (i ? clip.lineTo(x, y) : clip.moveTo(x, y)));
+      clip.closePath();
+
+      const strip = 2;
+      stop = animate((t) => {
+        ctx.clearRect(0, 0, w, h);
+        ctx.save();
+        ctx.clip(clip);
+        for (let y = 0; y < h; y += strip) {
+          const near = y / h;
+          const a = amp * (0.35 + near * 0.9);
+          const phase = Math.sqrt(near) * 40;
+          const dx = Math.sin(phase - t * 1.1) * a + Math.sin(phase * 0.41 + t * 0.6) * a * 0.5;
+          const dy = Math.sin(phase * 0.7 - t * 0.9) * a * 0.25;
+          ctx.drawImage(photo, src.x, src.y + ((y + dy) / h) * src.h, src.w, (strip / h) * src.h, dx, y, w, strip);
+        }
+        ctx.restore();
+      });
+    };
+
+    photo
+      .decode()
+      .then(() => {
+        if (!gone) setup();
+      })
+      .catch(() => {});
+    const stopResize = onResize(() => photo.complete && setup());
+    return () => {
+      gone = true;
+      stop();
+      stopResize();
+    };
+  }, [reduced, id, water, box, amp]);
+
+  const [x0, y0, x1, y1] = box;
+  const fade = "linear-gradient(to bottom, transparent, #000 12%)";
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className="absolute"
+      style={{ left: `${x0}%`, top: `${y0}%`, width: `${x1 - x0}%`, height: `${y1 - y0}%`, maskImage: fade, WebkitMaskImage: fade }}
+    />
+  );
+};
+
+/**
+ * Ash on the wind, carried left to right across the whole scene: specks
+ * each crossing at its own speed and height, bobbing as they go. `band` is
+ * the band of the photo they cross, in % from the top.
+ */
+const Ash = ({ seed, count, band, size, speed, color }: {
+  seed: number;
+  count: number;
+  band: [number, number];
+  size: [number, number];
+  speed: [number, number];
+  color: string;
+}) => (
+  <>
+    {points(seed, count, [0, band[0], 100, band[1]]).map((p, i) => {
+      const s = lerp(size[0], size[1], p.a);
+      const d = lerp(speed[0], speed[1], p.b);
+      return (
+        <span
+          key={i}
+          className="absolute left-0 h-0 w-full"
+          style={
+            {
+              top: `${p.y}%`,
+              "--trip": "106%",
+              animation: `home-cloud-cross ${d}s linear ${-p.x * d / 100}s infinite`,
+            } as CSSProperties
+          }
+        >
+          <span
+            className="absolute rounded-full"
+            style={
+              {
+                left: "-3%",
+                width: s,
+                height: s,
+                background: color,
+                opacity: lerp(0.65, 1, p.b),
+                "--bob": `${(p.a - 0.5) * 50}px`,
+                animation: `home-ash-bob ${lerp(2.5, 5, p.a)}s ease-in-out ${-p.b * 4}s infinite alternate`,
+              } as CSSProperties
+            }
+          />
+        </span>
+      );
+    })}
+  </>
+);
+
 // The aurora's curtains fade in and out along their whole length.
 const CURTAIN = "linear-gradient(to bottom, transparent, black 25%, black 70%, transparent)";
 
@@ -934,12 +1087,18 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   ),
   majula: () => (
     <>
+      {/* The sea below the cliff, on a slow swell. */}
+      <Shimmer photo="majula" water={MAJULA_WATER} box={MAJULA_BOX} />
       {/* The bonfire's light on the stones, breathing with the flames. */}
       <Glow x={43.5} y={74} size={34} color="rgb(255 160 70 / 0.45)" period={1.7} />
       <Glow x={43.5} y={76} size={14} color="rgb(255 210 130 / 0.55)" period={0.9} delay={-0.4} />
       <Fire x={43.5} y={78} size={9} />
       <Motes seed={97} count={26} box={[40, 58, 47, 76]} color="rgb(255 150 60 / 0.95)" rise={-260} />
       <Motes seed={101} count={10} box={[41, 62, 46, 74]} color="rgb(255 220 150 / 0.9)" rise={-180} />
+      {/* Grey ash blown left to right, as it always is in Majula: a far
+          drift of fine specks, and a few bigger, nearer flakes. */}
+      <Ash seed={109} count={50} band={[2, 92]} size={[2, 3.4]} speed={[14, 24]} color="rgb(226 220 212)" />
+      <Ash seed={113} count={14} band={[10, 96]} size={[3.5, 5]} speed={[8, 12]} color="rgb(150 144 137)" />
     </>
   ),
   moonlight: () => (

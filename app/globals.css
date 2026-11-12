@@ -1653,6 +1653,16 @@ html:has([data-site="home"]) {
   }
 }
 
+/* A speck of ash rising and dipping on the wind as it's carried along. */
+@keyframes home-ash-bob {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, var(--bob, 12px), 0);
+  }
+}
+
 /* Trees in a gusty wind: leaning away by --lean, easing back a little and
    leaning again before the gust drops. Skewed from the foot, so they bend
    rather than tilt. */

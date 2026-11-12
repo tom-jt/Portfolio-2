@@ -76,6 +76,8 @@ export interface HomePrefs {
   pet: PetId | null;
   /** The quick links row, kept open beside the tasks chip. */
   linksPinned: boolean;
+  /** Quick links open in the in-app browser, rather than a real tab. */
+  linksInApp: boolean;
   /** Immersive mode: the controls faded out, leaving the scene. */
   immersive: boolean;
 }
@@ -97,6 +99,7 @@ const initial: HomePrefs = {
   goldLeaf: false,
   pet: null,
   linksPinned: false,
+  linksInApp: false,
   immersive: false,
 };
 
@@ -114,6 +117,7 @@ export const prefsStore = createPersistentStore<HomePrefs>(
     if (!isFramePick(merged.frame)) merged.frame = init.frame;
     merged.goldLeaf = merged.goldLeaf === true;
     merged.linksPinned = merged.linksPinned === true;
+    merged.linksInApp = merged.linksInApp === true;
     merged.immersive = merged.immersive === true;
     if (!isPetId(merged.pet)) merged.pet = null;
     merged.ambienceVolume = Math.min(
