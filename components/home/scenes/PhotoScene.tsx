@@ -872,14 +872,41 @@ const MAJULA_WATER: Pt[] = [
   [0, 50.2],
 ];
 const MAJULA_BOX = [0, 31.5, 57, 57] as const;
+// The sword in the bonfire, standing in front of the water, kept still.
+const MAJULA_STILL: Pt[][] = [
+  [
+    [43.6, 48.3],
+    [46.6, 48.3],
+    [46.6, 58],
+    [43.6, 58],
+  ],
+];
 
 /**
  * A still sea in a photo set gently moving: the photo's own water, drawn in
  * thin strips each slid a pixel or so to and fro, so the light on it
  * shimmers as it does on a slow swell, finer and less far off. Only inside
- * `water`, fading in from its far edge. Nothing with reduced motion.
+ * `water`, less anything standing in front of it (`still`), fading in from
+ * its far edge; `speed` scales how fast it moves. Nothing with reduced
+ * motion.
  */
-const Shimmer = ({ photo: id, water, box, amp = 1.2 }: { photo: PhotoId; water: Pt[]; box: readonly [number, number, number, number]; amp?: number }) => {
+const NOTHING_STILL: Pt[][] = [];
+
+const Shimmer = ({
+  photo: id,
+  water,
+  still = NOTHING_STILL,
+  box,
+  amp = 1.2,
+  speed = 1,
+}: {
+  photo: PhotoId;
+  water: Pt[];
+  still?: Pt[][];
+  box: readonly [number, number, number, number];
+  amp?: number;
+  speed?: number;
+}) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
 
@@ -905,12 +932,21 @@ const Shimmer = ({ photo: id, water, box, amp = 1.2 }: { photo: PhotoId; water: 
       const clip = new Path2D();
       water.map(at).forEach(([x, y], i) => (i ? clip.lineTo(x, y) : clip.moveTo(x, y)));
       clip.closePath();
+      // Everything but what stands in front, cut out evenodd.
+      const open = new Path2D();
+      open.rect(0, 0, w, h);
+      for (const shape of still) {
+        shape.map(at).forEach(([x, y], i) => (i ? open.lineTo(x, y) : open.moveTo(x, y)));
+        open.closePath();
+      }
 
       const strip = 2;
-      stop = animate((t) => {
+      stop = animate((now) => {
+        const t = now * speed;
         ctx.clearRect(0, 0, w, h);
         ctx.save();
         ctx.clip(clip);
+        if (still.length) ctx.clip(open, "evenodd");
         for (let y = 0; y < h; y += strip) {
           const near = y / h;
           const a = amp * (0.35 + near * 0.9);
@@ -935,7 +971,7 @@ const Shimmer = ({ photo: id, water, box, amp = 1.2 }: { photo: PhotoId; water: 
       stop();
       stopResize();
     };
-  }, [reduced, id, water, box, amp]);
+  }, [reduced, id, water, still, box, amp, speed]);
 
   const [x0, y0, x1, y1] = box;
   const fade = "linear-gradient(to bottom, transparent, #000 12%)";
@@ -1101,7 +1137,7 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   majula: () => (
     <>
       {/* The sea below the cliff, on a slow swell. */}
-      <Shimmer photo="majula" water={MAJULA_WATER} box={MAJULA_BOX} amp={3.2} />
+      <Shimmer photo="majula" water={MAJULA_WATER} still={MAJULA_STILL} box={MAJULA_BOX} amp={3.2} speed={0.5} />
       {/* The bonfire's light on the stones, breathing with the flames. */}
       <Glow x={43.5} y={74} size={34} color="rgb(255 160 70 / 0.45)" period={1.7} />
       <Glow x={43.5} y={76} size={14} color="rgb(255 210 130 / 0.55)" period={0.9} delay={-0.4} />
