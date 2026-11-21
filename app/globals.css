@@ -1653,6 +1653,32 @@ html:has([data-site="home"]) {
   }
 }
 
+/* A speck of ash lifted and dropped unevenly by the gusts as it's carried
+   along: --sway sets how far, and its sign which way it goes first. */
+@keyframes home-ash-gust {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  14% {
+    transform: translate3d(0, calc(var(--sway, 40px) * -0.55), 0);
+  }
+  29% {
+    transform: translate3d(0, calc(var(--sway, 40px) * 0.2), 0);
+  }
+  46% {
+    transform: translate3d(0, calc(var(--sway, 40px) * -1), 0);
+  }
+  61% {
+    transform: translate3d(0, calc(var(--sway, 40px) * -0.35), 0);
+  }
+  78% {
+    transform: translate3d(0, calc(var(--sway, 40px) * 0.45), 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 /* A speck of ash rising and dipping on the wind as it's carried along. */
 @keyframes home-ash-bob {
   from {

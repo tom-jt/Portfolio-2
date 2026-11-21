@@ -951,7 +951,8 @@ const Shimmer = ({ photo: id, water, box, amp = 1.2 }: { photo: PhotoId; water: 
 
 /**
  * Ash on the wind, carried left to right across the whole scene: specks
- * each crossing at its own speed and height, bobbing as they go. `band` is
+ * each crossing at its own speed and height, rising and falling unevenly
+ * as the gusts take them. `band` is
  * the band of the photo they cross, in % from the top.
  */
 const Ash = ({ seed, count, band, size, speed, color }: {
@@ -978,20 +979,32 @@ const Ash = ({ seed, count, band, size, speed, color }: {
             } as CSSProperties
           }
         >
+          {/* Lifted and dropped by the gusts, unevenly, and fluttering on
+              top of that at its own pace, so no two specks move alike. */}
           <span
-            className="absolute rounded-full"
+            className="absolute"
             style={
               {
                 left: "-3%",
-                width: s,
-                height: s,
-                background: color,
-                opacity: lerp(0.65, 1, p.b),
-                "--bob": `${(p.a - 0.5) * 50}px`,
-                animation: `home-ash-bob ${lerp(2.5, 5, p.a)}s ease-in-out ${-p.b * 4}s infinite alternate`,
+                "--sway": `${(p.a < 0.5 ? -1 : 1) * lerp(25, 80, p.b)}px`,
+                animation: `home-ash-gust ${lerp(5, 11, (p.a * 7.3) % 1)}s ease-in-out ${-p.b * 11}s infinite`,
               } as CSSProperties
             }
-          />
+          >
+            <span
+              className="absolute block rounded-full"
+              style={
+                {
+                  width: s,
+                  height: s,
+                  background: color,
+                  opacity: lerp(0.65, 1, p.b),
+                  "--bob": `${(p.b - 0.5) * 24}px`,
+                  animation: `home-ash-bob ${lerp(1.3, 3, (p.b * 5.1) % 1)}s ease-in-out ${-p.a * 3}s infinite alternate`,
+                } as CSSProperties
+              }
+            />
+          </span>
         </span>
       );
     })}
@@ -1088,7 +1101,7 @@ const OVERLAY: Record<PhotoId, () => ReactNode> = {
   majula: () => (
     <>
       {/* The sea below the cliff, on a slow swell. */}
-      <Shimmer photo="majula" water={MAJULA_WATER} box={MAJULA_BOX} />
+      <Shimmer photo="majula" water={MAJULA_WATER} box={MAJULA_BOX} amp={3.2} />
       {/* The bonfire's light on the stones, breathing with the flames. */}
       <Glow x={43.5} y={74} size={34} color="rgb(255 160 70 / 0.45)" period={1.7} />
       <Glow x={43.5} y={76} size={14} color="rgb(255 210 130 / 0.55)" period={0.9} delay={-0.4} />

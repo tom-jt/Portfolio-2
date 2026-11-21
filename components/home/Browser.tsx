@@ -16,6 +16,7 @@ import {
 import {
   addressFocused,
   addressFor,
+  browserStore,
   BROWSER_WINDOWS_MAX,
   closeTab,
   closeWindow,
@@ -53,6 +54,28 @@ function tabName(t: BrowserTab) {
 /** The smallest a window can be dragged to. */
 const MIN_W = 420;
 const MIN_H = 300;
+
+type Corner = "nw" | "ne" | "sw" | "se";
+const CORNERS: Corner[] = ["nw", "ne", "sw", "se"];
+type Box = Pick<BrowserWindow, "x" | "y" | "w" | "h">;
+
+/** A window's box with `corner` dragged by dx, dy: the opposite corner
+ *  stays put, it never shrinks below the smallest size, and never grows
+ *  past the screen. */
+function resize(start: Box, corner: Corner, dx: number, dy: number, vw: number, vh: number): Box {
+  const box = { ...start };
+  if (corner[1] === "e") box.w = Math.max(MIN_W, Math.min(vw - start.x, start.w + dx));
+  else {
+    box.x = Math.min(start.x + start.w - MIN_W, Math.max(0, start.x + dx));
+    box.w = start.w + start.x - box.x;
+  }
+  if (corner[0] === "s") box.h = Math.max(MIN_H, Math.min(vh - start.y, start.h + dy));
+  else {
+    box.y = Math.min(start.y + start.h - MIN_H, Math.max(0, start.y + dy));
+    box.h = start.h + start.y - box.y;
+  }
+  return box;
+}
 
 /** The address bar: what's showing, or what's being typed. */
 const AddressBar = ({ win, tab }: { win: BrowserWindow; tab: BrowserTab }) => {
@@ -157,7 +180,7 @@ const Page = ({ tab, shown, reload, dragging }: { tab: BrowserTab; shown: boolea
 
 /**
  * One browser window. On desktop it floats: dragged by its tab strip,
- * resized from its corner, brought to the front when touched. On phones it
+ * resized from any corner, brought to the front when touched. On phones it
  * fills the screen above the tab bar.
  */
 const Window = ({ win, z, wide, count }: { win: BrowserWindow; z: number; wide: boolean; count: number }) => {
@@ -167,7 +190,7 @@ const Window = ({ win, z, wide, count }: { win: BrowserWindow; z: number; wide: 
   const [live, setLive] = useState<Pick<BrowserWindow, "x" | "y" | "w" | "h"> | null>(null);
   const box = live ?? win;
 
-  const drag = (e: ReactPointerEvent, kind: "move" | "size") => {
+  const drag = (e: ReactPointerEvent, kind: "move" | Corner) => {
     if (e.button !== 0) return;
     if (kind === "move" && (e.target as Element).closest("button, input, a")) return;
     e.preventDefault();
@@ -188,7 +211,7 @@ const Window = ({ win, z, wide, count }: { win: BrowserWindow; z: number; wide: 
               x: Math.min(vw - 120, Math.max(120 - start.w, start.x + dx)),
               y: Math.min(Math.max(0, vh - start.h), Math.max(0, start.y + dy)),
             }
-          : { ...start, w: Math.max(MIN_W, Math.min(vw - start.x, start.w + dx)), h: Math.max(MIN_H, Math.min(vh - start.y, start.h + dy)) };
+          : resize(start, kind, dx, dy, vw, vh);
       setLive(last);
     };
     const up = () => {
@@ -316,20 +339,42 @@ const Window = ({ win, z, wide, count }: { win: BrowserWindow; z: number; wide: 
         {live && <div className="absolute inset-0" />}
       </div>
 
-      {wide && (
-        <div
-          aria-hidden="true"
-          onPointerDown={(e) => drag(e, "size")}
-          className="absolute right-0 bottom-0 size-4 cursor-nwse-resize"
-        />
-      )}
+      {wide &&
+        CORNERS.map((c) => (
+          <div
+            key={c}
+            aria-hidden="true"
+            onPointerDown={(e) => drag(e, c)}
+            className={cn(
+              "absolute size-5",
+              c[0] === "n" ? "top-0" : "bottom-0",
+              c[1] === "w" ? "left-0" : "right-0",
+              c === "nw" || c === "se" ? "cursor-nwse-resize" : "cursor-nesw-resize",
+            )}
+          />
+        ))}
     </section>
   );
 };
 
-/** Every browser window open, in stacking order. Mounted once. */
+/** Every browser window open, in stacking order. Mounted once. Escape
+ *  minimises the one in front, from inside it or with nothing focused (in
+ *  the address bar, the first Escape just lets go of it). */
 export const BrowserWindows = ({ wide }: { wide: boolean }) => {
   const { windows } = useBrowser();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const target = e.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+      const inside = target instanceof Element && target.closest('section[aria-label="browser"]');
+      if (!inside && target !== document.body) return;
+      const front = browserStore.get().windows.findLast((w) => !w.minimised);
+      if (front) minimiseWindow(front.id);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // Phones show one window at a time: the one in front.
   const shown = wide ? windows : windows.slice(-1);
   return (
@@ -353,7 +398,7 @@ export const BrowserChip = ({ className }: { className?: string }) => {
       type="button"
       aria-label="browser"
       aria-expanded={showing}
-      title="browser (space or enter to search)"
+      title="browser (enter to search)"
       onClick={() => {
         if (!windows.length) return void openWindow();
         windows.forEach((w) => minimiseWindow(w.id, showing));

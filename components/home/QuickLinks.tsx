@@ -63,7 +63,7 @@ const inApp = (url: string, then?: () => void) => (e: ReactMouseEvent) => {
 };
 
 /** Whether a key press would press a control that has the keyboard, so
- *  Enter and Space mean that, not the search shortcut. */
+ *  Enter means that, not the search shortcut. */
 const pressable = (target: EventTarget | null) =>
   target instanceof Element &&
   !!target.closest("button, a[href], summary, select, canvas, iframe, [role=button], [role=radio], [role=switch], [role=tab], [tabindex]:not([tabindex='-1'])");
@@ -87,7 +87,7 @@ const startsAKey = (letter: string) => shownLinks().some((l) => l.key.startsWith
  * Typing a link's key and then Enter or Space anywhere on the page opens
  * it, unless the typing is going into a text box. With more than one tab,
  * 1, 2, or 3 on its own switches to that tab instead. With nothing typed,
- * Enter or Space opens the in-app browser's search. A first letter no key
+ * Enter opens the in-app browser's search. A first letter no key
  * starts with is ignored, so ordinary key presses don't start anything;
  * after that, up to three letters are kept, and shown, matching or not, so
  * a slip can be backspaced. Returns them, whether a tab was just switched
@@ -117,7 +117,7 @@ function useLinkKeys() {
         openLink(link.url);
         return;
       }
-      if ((e.key === "Enter" || e.key === " ") && !buffer && !e.repeat && !pressable(e.target)) {
+      if (e.key === "Enter" && !buffer && !e.repeat && !pressable(e.target)) {
         e.preventDefault();
         openSearch();
         return;
