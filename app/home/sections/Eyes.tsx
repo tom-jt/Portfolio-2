@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Eye } from "lucide-react";
-import { Panel, Stepper, Switch, textButton, type PanelChrome } from "@/components/home/ui";
+import {
+  Panel,
+  Stepper,
+  Switch,
+  textButton,
+  type PanelChrome,
+} from "@/components/home/ui";
 import { primeAudio } from "@/lib/home/ambience";
 import {
   breaksToday,
@@ -100,8 +106,8 @@ const Eyes = ({
       />
       {/* Only means anything with the sound on. */}
       <Switch
-        label="pause spotify for the sound"
-        hint="music picks up again once it's rung"
+        label="pause spotify for reminder"
+        hint="music resumes again after the sound"
         checked={eyes.sound && eyes.pauseSpotify}
         disabled={!eyes.sound}
         onChange={(pauseSpotify) => setEyeOption({ pauseSpotify })}
