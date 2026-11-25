@@ -91,9 +91,9 @@ const Hero = () => {
         <button
           type="button"
           onClick={() => scrollToId("me")}
-          className="border-gold-hair hover:border-gold hover:text-accent-text text-muted-foreground mt-4 cursor-pointer border px-8 py-3 text-sm font-semibold tracking-[0.18em] uppercase transition-colors"
+          className="border-gold-hair hover:border-gold hover:text-accent-text text-muted-foreground mt-4 cursor-pointer border px-8 py-3 text-sm font-semibold tracking-wide transition-colors"
         >
-          Read on
+          Read On
         </button>
       </motion.div>
     </section>

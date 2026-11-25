@@ -48,7 +48,7 @@ export default function LawSpecimenPage() {
         <div className="flex items-center gap-6">
           <SealMark size={88} />
           <div className="flex flex-col gap-1">
-            <p className="c-eyebrow mb-0 text-left">Design specimen</p>
+            <p className="c-eyebrow mb-0 text-left">Design Specimen</p>
             <h1 className="font-display text-6xl leading-none font-medium">
               Law
             </h1>
@@ -80,7 +80,7 @@ export default function LawSpecimenPage() {
         </div>
       </Section>
 
-      <Section label="Type scale">
+      <Section label="Type Scale">
         <div className="flex flex-col gap-6">
           <p className="font-display text-8xl leading-none font-light">
             Display 300
@@ -107,7 +107,7 @@ export default function LawSpecimenPage() {
       </Section>
 
       {/* The decisive test. */}
-      <Section label="Gold, under test">
+      <Section label="Gold, Under Test">
         <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-3">
             <p className="text-muted-foreground text-base">
@@ -177,7 +177,7 @@ export default function LawSpecimenPage() {
       </Section>
 
       {/* Proves phase 0's tokenisation: these are the CS components, unchanged. */}
-      <Section label="Shared components, reskinned">
+      <Section label="Shared Components, Reskinned">
         <div className="flex flex-col gap-8">
           <p className="text-muted-foreground max-w-2xl text-base">
             None of the components below were modified for the law site. They

@@ -1360,7 +1360,7 @@ html:has([data-site="home"]) {
 }
 
 .c-eyebrow {
-  @apply mb-3 text-center text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400;
+  @apply mb-3 text-center text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400;
 }
 
 .c-h1 {

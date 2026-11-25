@@ -6,7 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "Tom Liu";
-const EYEBROW = "COMPUTER SCIENCE | UNSW SYDNEY";
+const EYEBROW = "Computer Science | UNSW Sydney";
 const TAGLINE = "Games, apps, and other creations.";
 
 const GROUND = "#fafafa";
@@ -39,7 +39,7 @@ export default async function Image() {
             display: "flex",
             color: MUTED,
             fontSize: 22,
-            letterSpacing: 8,
+            letterSpacing: 2,
             marginBottom: 24,
           }}
         >

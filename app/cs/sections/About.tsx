@@ -356,7 +356,7 @@ const ContactTeaser = () => {
 const Logos = () => {
   return (
     <div className="flex flex-col w-full items-center gap-8">
-      <p className="c-eyebrow mb-0">Things I use</p>
+      <p className="c-eyebrow mb-0">Things I Use</p>
       <LogoLoop
         logos={techLogos}
         speed={100}

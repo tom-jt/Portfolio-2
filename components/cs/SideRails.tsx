@@ -29,14 +29,14 @@ import {
  */
 
 const SECTIONS = [
-  { id: "home", label: "home" },
-  { id: "me", label: "about" },
-  { id: "projects", label: "projects" },
-  { id: "contact", label: "contact" },
+  { id: "home", label: "Home" },
+  { id: "me", label: "About" },
+  { id: "projects", label: "Projects" },
+  { id: "contact", label: "Contact" },
 ];
 
 const railText =
-  "font-mono text-[11px] tracking-[0.22em] uppercase text-zinc-600 dark:text-zinc-300";
+  "font-mono text-[11px] tracking-[0.08em] text-zinc-600 dark:text-zinc-300";
 
 const Rail = ({
   side,

@@ -119,7 +119,7 @@ const About = () => {
 
           <Reveal delay={0.3}>
             <div className="flex flex-col gap-4 pt-2">
-              <p className="c-eyebrow mb-0 text-left">Areas of interest</p>
+              <p className="c-eyebrow mb-0 text-left">Areas of Interest</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {interests.map((area) => (
                   <span
@@ -137,7 +137,7 @@ const About = () => {
 
       <Reveal delay={0.1}>
         <div className="flex max-w-3xl flex-col items-center gap-5 text-center">
-          <p className="c-eyebrow mb-0">Favourite quote</p>
+          <p className="c-eyebrow mb-0">Favourite Quote</p>
           <figure className="flex flex-col items-center gap-4">
             <blockquote className="font-display text-xl leading-relaxed italic">
               ‘The flame of the Commonwealth’s hatred for that beneficial

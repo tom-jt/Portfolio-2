@@ -256,7 +256,7 @@ export const SiteCurtainProvider = ({
                   className={
                     target === "home"
                       ? "text-sm font-medium tracking-[0.2em]"
-                      : "text-xs font-semibold tracking-[0.42em] uppercase"
+                      : "text-sm font-semibold tracking-[0.12em]"
                   }
                   style={{ color: skin.ink }}
                 >

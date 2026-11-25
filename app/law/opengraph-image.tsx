@@ -6,7 +6,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const TITLE = "Tom Liu";
-const EYEBROW = "BACHELOR OF LAWS | UNSW SYDNEY";
+const EYEBROW = "Bachelor of Laws | UNSW Sydney";
 const TAGLINE = "Legal experience, competitions, and writing.";
 
 const GOLD = "#d4af37";
@@ -85,7 +85,7 @@ export default async function Image() {
             display: "flex",
             color: GOLD,
             fontSize: 22,
-            letterSpacing: 8,
+            letterSpacing: 2,
             marginBottom: 20,
           }}
         >

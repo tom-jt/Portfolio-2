@@ -16,7 +16,7 @@ const Timeline = () => {
         <p className="font-display text-2xl leading-tight font-semibold">
           {m.org}
         </p>
-        <p className="text-accent-text mt-1 text-sm font-semibold tracking-[0.14em] uppercase">
+        <p className="text-accent-text mt-1 text-sm font-semibold tracking-wide">
           {m.role}
         </p>
         <p className="text-muted-foreground mt-4 text-base leading-relaxed">

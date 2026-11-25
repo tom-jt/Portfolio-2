@@ -138,9 +138,9 @@ export const Header = () => {
       >
         <TextType
           text={[
-            "HEY THERE,\nI'M TOM",
+            "Hey There,\nI'm Tom",
             "你好、\n我叫汤姆",
-            "SALUT,\nJE M'APPELLE TOM",
+            "Salut,\nJe M'appelle Tom",
             "はじめまして、\nトムです",
           ]}
           typingSpeed={75}

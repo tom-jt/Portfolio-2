@@ -21,7 +21,7 @@ const ColumnHeader = ({ icon: Icon, label, microcopy }: ColumnHeaderProps) => {
         />
         <h2
           className="
-            text-sm font-semibold uppercase tracking-[0.2em]
+            text-sm font-semibold tracking-wide
             text-zinc-800 dark:text-zinc-100
           "
         >
