@@ -54,6 +54,16 @@
   --color-glow-2: var(--glow-2);
   --color-glow-3: var(--glow-3);
   --font-pixel: var(--font-pixel-face);
+
+  /* /hobby: the hobby's accent, the handwriting face, and a faint text
+     shade. Only the [data-site="hobby"] blocks define these. */
+  --color-hb: var(--hb);
+  --color-hb-ink: var(--hb-ink);
+  --color-hb-btn: var(--hb-btn);
+  --color-hb-on: var(--hb-on);
+  --color-hb-thumb: var(--hb-thumb);
+  --color-faint: var(--faint);
+  --font-hand: var(--font-nanum);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -347,6 +357,222 @@ html.dark:has([data-site="law"]) {
   --scrollbar-thumb: #d4af37;
   --scrollbar-thumb-sheen: #f0dc82;
   --scrollbar-thumb-hover: #f0dc82;
+}
+
+/* ---------------------------------------------------------------
+   Hobbies. Paper (light) or soft near-black (dark), frosted glass
+   panels, and one accent per hobby, set by [data-hobby] on the page.
+   Light is the base block and dark overrides it, as with law.
+   --------------------------------------------------------------- */
+[data-site="hobby"] {
+  --radius: 1rem;
+  --font-display-family: var(--font-bricolage);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --background: #faf9f6;
+  --foreground: #1a1820;
+  --card: rgb(255 255 255 / 72%);
+  --card-foreground: #1a1820;
+  --popover: #ffffff;
+  --popover-foreground: #1a1820;
+  --primary: #1a1820;
+  --primary-foreground: #faf9f6;
+  --secondary: rgb(26 24 34 / 5%);
+  --secondary-foreground: #1a1820;
+  --muted: rgb(26 24 34 / 5%);
+  --muted-foreground: #5c5866;
+  --accent: rgb(26 24 34 / 6%);
+  --accent-foreground: #1a1820;
+  --destructive: #c0392b;
+  --border: rgb(26 24 34 / 10%);
+  --input: rgb(26 24 34 / 14%);
+  --ring: #1a1820;
+  --faint: #6e6a78;
+  --field: #ffffff;
+  --nav-surface: #faf9f6;
+  --nav-fg: #52525b;
+  --nav-fg-hover: #18181b;
+  --nav-pill: rgb(26 24 34 / 6%);
+
+  --hb-on: #ffffff; /* text on an accent button */
+  --hb-dot: rgb(26 24 34 / 10%); /* the dotted ground */
+  --hb-glass-top: rgb(255 255 255 / 82%);
+  --hb-glass-bottom: rgb(255 255 255 / 62%);
+  --hb-glass-edge: rgb(26 24 34 / 8%);
+  --hb-glass-highlight: #ffffff;
+  --hb-glass-shadow: 0 18px 48px rgb(40 30 60 / 10%);
+  --hb-lens: #ffffff;
+  --hb-lens-shadow: inset 0 0 0 1px rgb(26 24 34 / 8%), 0 2px 8px rgb(40 30 60 / 10%);
+  --hb-thumb: #eeecf1;
+  --hb-scrim: rgb(30 28 40 / 30%);
+}
+
+.dark [data-site="hobby"] {
+  --background: #0b0b0f;
+  --foreground: #f2f1ee;
+  --card: rgb(255 255 255 / 5%);
+  --card-foreground: #f2f1ee;
+  --popover: #16151c;
+  --popover-foreground: #f2f1ee;
+  --primary: #f2f1ee;
+  --primary-foreground: #0b0b0f;
+  --secondary: rgb(255 255 255 / 6%);
+  --secondary-foreground: #f2f1ee;
+  --muted: rgb(255 255 255 / 5%);
+  --muted-foreground: #a7a4ae;
+  --accent: rgb(255 255 255 / 8%);
+  --accent-foreground: #f2f1ee;
+  --destructive: #ff9a94;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 14%);
+  --ring: #f2f1ee;
+  --faint: #8f8c99;
+  --field: rgb(0 0 0 / 30%);
+  --nav-surface: #0b0b0f;
+  --nav-fg: #d4d4d8;
+  --nav-fg-hover: #ffffff;
+  --nav-pill: rgb(255 255 255 / 10%);
+
+  --hb-on: #0b0b0f;
+  --hb-dot: rgb(255 255 255 / 7%);
+  --hb-glass-top: rgb(255 255 255 / 8.5%);
+  --hb-glass-bottom: rgb(255 255 255 / 3%);
+  --hb-glass-edge: rgb(255 255 255 / 11%);
+  --hb-glass-highlight: rgb(255 255 255 / 16%);
+  --hb-glass-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+  --hb-lens: rgb(255 255 255 / 13%);
+  --hb-lens-shadow: inset 0 1px 0 rgb(255 255 255 / 32%), inset 0 -1px 0 rgb(255 255 255 / 5%), 0 4px 14px rgb(0 0 0 / 35%);
+  --hb-thumb: #16151b;
+  --hb-scrim: rgb(5 5 8 / 55%);
+}
+
+/* Each hobby's accent: --hb for fills and glows, --hb-ink where it is text
+   (darker on paper so it passes 4.5:1), and --hb-btn under --hb-on. */
+[data-hobby] {
+  --ring: var(--hb);
+  --accent-text: var(--hb-ink);
+}
+[data-hobby="magic"] { --hb: #d63c55; --hb-rgb: 214 60 85; --hb-ink: #b42d45; --hb-btn: #b42d45; }
+[data-hobby="ice"] { --hb: #2b86d6; --hb-rgb: 43 134 214; --hb-ink: #1d64a6; --hb-btn: #1d64a6; }
+[data-hobby="balisong"] { --hb: #d98a0b; --hb-rgb: 217 138 11; --hb-ink: #8f5a00; --hb-btn: #8f5a00; }
+[data-hobby="piano"] { --hb: #1fa374; --hb-rgb: 31 163 116; --hb-ink: #15744f; --hb-btn: #15744f; }
+.dark [data-hobby="magic"] { --hb: #ff6b7d; --hb-rgb: 255 107 125; --hb-ink: #ffb3bd; --hb-btn: #ff6b7d; }
+.dark [data-hobby="ice"] { --hb: #7cc4ff; --hb-rgb: 124 196 255; --hb-ink: #c4e4ff; --hb-btn: #7cc4ff; }
+.dark [data-hobby="balisong"] { --hb: #ffb454; --hb-rgb: 255 180 84; --hb-ink: #ffd9a3; --hb-btn: #ffb454; }
+.dark [data-hobby="piano"] { --hb: #6fe0b0; --hb-rgb: 111 224 176; --hb-ink: #b9f2da; --hb-btn: #6fe0b0; }
+
+[data-site="hobby"],
+html:has([data-site="hobby"]) {
+  --scrollbar-track: #faf9f6;
+  --scrollbar-line: rgb(26 24 34 / 12%);
+  --scrollbar-thumb: #8a8694;
+  --scrollbar-thumb-hover: #1a1820;
+}
+
+.dark [data-site="hobby"],
+html.dark:has([data-site="hobby"]) {
+  --scrollbar-track: #0b0b0f;
+  --scrollbar-line: rgb(255 255 255 / 10%);
+  --scrollbar-thumb: #5e5b67;
+  --scrollbar-thumb-hover: #d9d7dd;
+}
+
+.hb-glass {
+  background: linear-gradient(180deg, var(--hb-glass-top), var(--hb-glass-bottom));
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--hb-glass-edge);
+  box-shadow: inset 0 1px 0 var(--hb-glass-highlight), var(--hb-glass-shadow);
+}
+
+/* Solid enough to read over the page: menus, sheets, and toasts. */
+.hb-pop {
+  background: color-mix(in srgb, var(--popover) 94%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--hb-glass-edge);
+  box-shadow: var(--hb-glass-shadow);
+}
+
+.hb-lens {
+  background: var(--hb-lens);
+  box-shadow: var(--hb-lens-shadow);
+}
+
+.hb-dots {
+  background-image: radial-gradient(var(--hb-dot) 1px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+/* Tag colours. A tag stores its index, so renaming or reordering keeps it.
+   --t is an rgb triplet for tints; --t-ink is the text shade. */
+.hb-tag-0 { --t: 214 51 92; --t-ink: #b8325a; }
+.hb-tag-1 { --t: 47 100 181; --t-ink: #2f64b5; }
+.hb-tag-2 { --t: 100 71 191; --t-ink: #6447bf; }
+.hb-tag-3 { --t: 196 88 36; --t-ink: #b04e1f; }
+.hb-tag-4 { --t: 168 58 134; --t-ink: #a83a86; }
+.hb-tag-5 { --t: 19 115 127; --t-ink: #13737f; }
+.hb-tag-6 { --t: 140 128 20; --t-ink: #6b6210; }
+.dark .hb-tag-0 { --t: 255 143 163; --t-ink: #ffc2ce; }
+.dark .hb-tag-1 { --t: 124 184 255; --t-ink: #c2dcff; }
+.dark .hb-tag-2 { --t: 184 156 255; --t-ink: #dccfff; }
+.dark .hb-tag-3 { --t: 255 159 122; --t-ink: #ffcdb8; }
+.dark .hb-tag-4 { --t: 245 154 216; --t-ink: #fad0ec; }
+.dark .hb-tag-5 { --t: 106 215 232; --t-ink: #bdeff6; }
+.dark .hb-tag-6 { --t: 232 224 122; --t-ink: #f4efbe; }
+
+/* Progress: grey, amber, and green, and the mark's shape (empty, half,
+   ticked) tells them apart without colour too. */
+.hb-p-todo { --t: 110 106 120; --t-ink: #55515e; --t-solid: #8a8694; }
+.hb-p-progressing { --t: 214 140 20; --t-ink: #875200; --t-solid: #d98a0b; }
+.hb-p-done { --t: 31 150 95; --t-ink: #17683f; --t-solid: #1f965f; }
+.dark .hb-p-todo { --t: 154 151 163; --t-ink: #d0cdd6; --t-solid: #9a97a3; }
+.dark .hb-p-progressing { --t: 255 181 71; --t-ink: #ffd9a0; --t-solid: #ffb547; }
+.dark .hb-p-done { --t: 95 212 154; --t-ink: #b4edcf; --t-solid: #5fd49a; }
+
+.hb-chip {
+  color: var(--t-ink);
+  background: rgb(var(--t) / 13%);
+  border: 1px solid rgb(var(--t) / 38%);
+}
+
+@keyframes hb-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hb-draw {
+  from { stroke-dashoffset: 700; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes hb-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes hb-sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes hb-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.hb-rise { animation: hb-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hb-draw :is(path, circle, rect, ellipse) {
+  stroke-dasharray: 700;
+  animation: hb-draw 2.2s 0.3s ease both;
+}
+.hb-bob { animation: hb-bob 4.5s ease-in-out infinite; }
+.hb-sheet { animation: hb-sheet 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.hb-fade { animation: hb-fade 0.3s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hb-rise,
+  .hb-draw :is(path, circle, rect, ellipse),
+  .hb-bob,
+  .hb-sheet,
+  .hb-fade {
+    animation: none;
+  }
 }
 
 /* ---------------------------------------------------------------

@@ -16,11 +16,11 @@ import {
   MotionConfig,
   useAnimationControls,
 } from "motion/react";
-import { CloudRain } from "lucide-react";
+import { CloudRain, Shapes } from "lucide-react";
 import SealMark from "@/components/law/SealMark";
 import { useIsDark } from "@/hooks/use-is-dark";
 
-export type Site = "cs" | "law" | "home";
+export type Site = "cs" | "law" | "home" | "hobby";
 
 interface CurtainContextValue {
   switchTo: (site: Site) => void;
@@ -41,6 +41,7 @@ export const SITE_HREF: Record<Site, string> = {
   cs: "/cs",
   law: "/law",
   home: "/home",
+  hobby: "/hobby",
 };
 
 /**
@@ -73,16 +74,24 @@ const CURTAIN = {
     },
   },
   home: { panel: "#0d1428", ink: "#f2b46d" },
+  // A blush panel in light and a plum one in dark, with the magic tab's
+  // rose: the colour the site opens on.
+  hobby: {
+    light: { panel: "#fff1f3", ink: "#b42d45" },
+    dark: { panel: "#1f1218", ink: "#ff8a9a" },
+  },
 } as const;
 
 /**
  * Law sweeps left-to-right and CS comes back right-to-left, so those two
- * read as opposites. Home falls from the top, like the rain it leads to.
+ * read as opposites. Home falls from the top, like the rain it leads to,
+ * and hobbies rise from the bottom, the one direction left.
  */
 const SWEEP: Record<Site, { axis: "x" | "y"; from: string; exit: string }> = {
   law: { axis: "x", from: "-100%", exit: "100%" },
   cs: { axis: "x", from: "100%", exit: "-100%" },
   home: { axis: "y", from: "-100%", exit: "100%" },
+  hobby: { axis: "y", from: "100%", exit: "-100%" },
 };
 
 /** Panel is fully across the screen for at least this long, even on an
@@ -173,11 +182,19 @@ export const SiteCurtainProvider = ({
       ? CURTAIN.home
       : target === "law"
         ? CURTAIN.law[mode]
-        : CURTAIN.cs[mode];
+        : target === "hobby"
+          ? CURTAIN.hobby[mode]
+          : CURTAIN.cs[mode];
 
   // Which edge of the panel leads the sweep, for the hairline.
   const leadingEdge =
-    axis === "y" ? "bottom" : from === "-100%" ? "right" : "left";
+    axis === "y"
+      ? from === "-100%"
+        ? "bottom"
+        : "top"
+      : from === "-100%"
+        ? "right"
+        : "left";
 
   return (
     <CurtainContext.Provider value={{ switchTo, busy }}>
@@ -237,6 +254,12 @@ export const SiteCurtainProvider = ({
                     strokeWidth={1.2}
                     style={{ color: skin.ink }}
                   />
+                ) : target === "hobby" ? (
+                  <Shapes
+                    size={84}
+                    strokeWidth={1.2}
+                    style={{ color: skin.ink }}
+                  />
                 ) : target === "law" ? (
                   <SealMark
                     size={132}
@@ -262,9 +285,11 @@ export const SiteCurtainProvider = ({
                 >
                   {target === "home"
                     ? "home"
-                    : target === "law"
-                      ? "Law"
-                      : "Computer Science"}
+                    : target === "hobby"
+                      ? "Hobbies"
+                      : target === "law"
+                        ? "Law"
+                        : "Computer Science"}
                 </span>
               </motion.div>
             </motion.div>

@@ -31,8 +31,15 @@ interface NavItemsProps {
   items: {
     name: string;
     id: string;
+    /** Real link for the item; defaults to the in-page anchor `#id`. */
+    href?: string;
   }[];
   className?: string;
+  /** Keeps the pill on this item, for items that are pages rather than
+   *  sections (the /hobby tabs). */
+  activeId?: string;
+  /** Replaces the default scroll-to-section on click. */
+  onSelect?: (id: string) => void;
 }
 
 interface MobileNavProps {
@@ -108,7 +115,12 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className }: NavItemsProps) => {
+export const NavItems = ({
+  items,
+  className,
+  activeId,
+  onSelect,
+}: NavItemsProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
 
   return (
@@ -121,16 +133,19 @@ export const NavItems = ({ items, className }: NavItemsProps) => {
     >
       {items.map((item, idx) => (
         <a
-          href={`#${item.id}`}
+          href={item.href ?? `#${item.id}`}
+          aria-current={activeId === item.id ? "page" : undefined}
           onMouseEnter={() => setHovered(idx)}
           onClick={(e) => {
             e.preventDefault();
-            scrollToId(item.id);
+            if (onSelect) onSelect(item.id);
+            else scrollToId(item.id);
           }}
           className="text-nav-fg relative cursor-pointer px-4 py-2"
           key={`link-${idx}`}
         >
-          {hovered === idx && (
+          {(hovered === idx ||
+            (hovered === null && activeId === item.id)) && (
             <motion.div
               layoutId="hovered"
               className="bg-nav-pill absolute inset-0 h-full w-full rounded-full"
