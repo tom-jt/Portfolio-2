@@ -40,6 +40,7 @@ const NavBar = ({
           <div className="text-nav-fg relative z-20 flex items-center gap-5">
             <SiteSwitcher to="home" className="hover:text-nav-fg-hover" />
             <SiteSwitcher to="cs" className="hover:text-nav-fg-hover" />
+            <SiteSwitcher to="hobby" className="hover:text-nav-fg-hover" />
             <AnimatedThemeToggler className="hover:text-nav-fg-hover cursor-pointer transition-colors" />
           </div>
         </NavBody>
@@ -49,9 +50,9 @@ const NavBar = ({
             <NavbarLogo onClick={() => scrollToId("home")}>
               <SealMark size={30} />
             </NavbarLogo>
+            {/* The other sites live in the menu, so the header keeps to the
+                logo, the theme, and the menu itself. */}
             <div className="text-nav-fg flex items-center gap-4">
-              <SiteSwitcher to="home" />
-              <SiteSwitcher to="cs" />
               <AnimatedThemeToggler className="cursor-pointer" />
               <MobileNavToggle
                 isOpen={isMobileMenuOpen}
@@ -79,7 +80,9 @@ const NavBar = ({
               </a>
             ))}
             <div className="border-border text-nav-fg mt-2 flex w-full flex-col gap-4 border-t px-4 pt-4">
+              <SiteSwitcher to="home" withLabel className="text-sm" />
               <SiteSwitcher to="cs" withLabel className="text-sm" />
+              <SiteSwitcher to="hobby" withLabel className="text-sm" />
             </div>
           </MobileNavMenu>
         </MobileNav>

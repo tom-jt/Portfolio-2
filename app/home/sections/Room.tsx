@@ -7,7 +7,6 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Eye,
@@ -28,9 +27,9 @@ import Pet from "@/components/home/Pet";
 import { BrowserChip, BrowserWindows } from "@/components/home/Browser";
 import { LinkKeys, QuickLinksBar, QuickLinksMenu, QuickLinksPanel } from "@/components/home/QuickLinks";
 import SceneSwitcher from "@/components/home/SceneSwitcher";
+import SitesMenu from "@/components/home/SitesMenu";
 import TimerEngine from "@/components/home/TimerEngine";
 import { chipButton, chipGlass } from "@/components/home/ui";
-import SiteSwitcher from "@/components/shared/SiteSwitcher";
 import { primeAudio, useAmbiencePlaying } from "@/lib/home/ambience";
 import { isUnlocked } from "@/lib/home/cosmetics";
 import { formatClock } from "@/lib/home/format";
@@ -605,28 +604,8 @@ const Room = () => {
         >
           {immersive ? <LayoutGrid className="size-5" /> : <Scan className="size-5" />}
         </button>
-        <Fade hide={immersive} className="flex items-center gap-1.5 md:gap-2.5">
-          {/* Phones: one mark for both portfolios, opening the CS one. */}
-          <SiteSwitcher
-            to="cs"
-            className="size-10 justify-center md:hidden"
-            icon={
-              <Image
-                src="/images/logos/LogoSimpleDarkTrans.png"
-                alt=""
-                width={24}
-                height={24}
-              />
-            }
-          />
-          <SiteSwitcher
-            to="cs"
-            className="text-nav-fg hover:text-nav-fg-hover hidden size-10 justify-center md:flex"
-          />
-          <SiteSwitcher
-            to="law"
-            className="text-nav-fg hover:text-nav-fg-hover hidden size-10 justify-center md:flex"
-          />
+        <Fade hide={immersive}>
+          <SitesMenu />
         </Fade>
       </div>
 
