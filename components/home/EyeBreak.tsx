@@ -31,7 +31,7 @@ function useEyeEngine() {
 
     const announce = () => {
       const s = eyeStore.get();
-      if (s.sound) playEyeChime();
+      if (s.sound) playEyeChime(s.pauseSpotify);
       if (s.notify && away()) {
         showNotification("rest your eyes", `look at something far away for ${REST_SECONDS} seconds`, "eyes");
       }
@@ -41,7 +41,7 @@ function useEyeEngine() {
       const now = Date.now();
       if (markDueIfTime(now)) announce();
       startRestIfDue(now);
-      if (finishRestIfDone(now) && eyeStore.get().sound) playRestDone();
+      if (finishRestIfDone(now) && eyeStore.get().sound) playRestDone(eyeStore.get().pauseSpotify);
     };
 
     const sync = () => {

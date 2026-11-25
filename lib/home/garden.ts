@@ -640,7 +640,7 @@ export const luckLeft = (s: GardenState, now = Date.now()) =>
   Math.max(0, s.luckUntil - now);
 /** What ladybug luck multiplies plants by: ×2, and a half more for each
  *  rank of Basking ladybugs. */
-const luckBoost = (s: GardenState) => 2 + 0.5 * skillRank(s, "basking");
+export const luckBoost = (s: GardenState) => 2 + 0.5 * skillRank(s, "basking");
 const luck = (s: GardenState) => (luckLeft(s) > 0 ? luckBoost(s) : 1);
 
 export const ladybugMayAppear = (s: GardenState, now = Date.now()) =>

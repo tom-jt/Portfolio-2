@@ -98,6 +98,14 @@ const Eyes = ({
         checked={eyes.sound}
         onChange={(sound) => setEyeOption({ sound })}
       />
+      {/* Only means anything with the sound on. */}
+      <Switch
+        label="pause spotify for the sound"
+        hint="music picks up again once it's rung"
+        checked={eyes.sound && eyes.pauseSpotify}
+        disabled={!eyes.sound}
+        onChange={(pauseSpotify) => setEyeOption({ pauseSpotify })}
+      />
       {notificationsSupported() && (
         <Switch
           label="notify me when away"

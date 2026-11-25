@@ -1009,7 +1009,7 @@ const lastRung = new Map<string, number>();
  */
 function bell(
   notes: [freq: number, delay: number][],
-  { level = 0.22, attack = 0.012, decay = 2.6 } = {},
+  { level = 0.22, attack = 0.012, decay = 2.6, pauseSpotify = true } = {},
 ) {
   if (typeof window === "undefined") return;
   const activated = navigator.userActivation?.hasBeenActive ?? true;
@@ -1031,7 +1031,8 @@ function bell(
   // Spotify can only be paused, not dipped: paused now and played again
   // once the chime has rung and the ambience is back up. A paused player
   // takes a moment to fall silent, so the chime waits for that too.
-  if (hushSpotify((lead + ring + DUCK_HOLD + DUCK_EASE) * 1000)) lead = Math.max(lead, 0.6);
+  // Unless asked not to (the eye reminders can leave the music playing).
+  if (pauseSpotify && hushSpotify((lead + ring + DUCK_HOLD + DUCK_EASE) * 1000)) lead = Math.max(lead, 0.6);
   for (const [freq, at] of notes) {
     const delay = at + lead;
     for (const [mult, amount] of [
@@ -1071,25 +1072,26 @@ export const playChime = () =>
     { level: 0.13, attack: 0.008, decay: 2.8 },
   );
 
-/** Time to rest your eyes: two low notes falling, eased in so it never startles. */
-export const playEyeChime = () =>
+/** Time to rest your eyes: two low notes falling, eased in so it never
+ *  startles. `pauseSpotify` is the eye card's setting. */
+export const playEyeChime = (pauseSpotify = true) =>
   bell(
     [
       [523.25, 0],
       [392, 0.45],
     ],
-    { level: 0.16, attack: 0.09, decay: 3.2 },
+    { level: 0.16, attack: 0.09, decay: 3.2, pauseSpotify },
   );
 
 /** The rest is over: the start chime's answer, three soft notes rising. */
-export const playRestDone = () =>
+export const playRestDone = (pauseSpotify = true) =>
   bell(
     [
       [392, 0],
       [523.25, 0.3],
       [659.25, 0.6],
     ],
-    { level: 0.11, attack: 0.07, decay: 2.6 },
+    { level: 0.11, attack: 0.07, decay: 2.6, pauseSpotify },
   );
 
 // ----------------------------------------------------------------- catches

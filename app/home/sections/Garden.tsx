@@ -50,6 +50,7 @@ import {
   levelProgress,
   titleFor,
   totalXp,
+  luckBoost,
   luckLeft,
   maxAffordable,
   milestoneBonus,
@@ -1141,18 +1142,19 @@ const Garden = ({
         )}
       >
         <FrameRing id={frame} />
-        {/* Ladybug luck, pinned in the window's corner so it moves nothing
-            when it comes and goes. */}
+        {/* Ladybug luck, pinned at the top of the window so it moves nothing
+            when it comes and goes. Centred, so a frame with a shaped top
+            (the cathedral's pointed arch) never cuts it off. */}
         {luck > 0 && (
           <p
             aria-live="polite"
-            className="bg-glass-strong/85 pointer-events-none absolute top-3 left-3 z-20 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] text-[#ffb3ad]"
+            className="bg-glass-strong/85 pointer-events-none absolute top-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] whitespace-nowrap text-[#ffb3ad]"
           >
             <span
               aria-hidden="true"
               className="size-2 rounded-full bg-[#e5483f] shadow-[0_0_6px_#e5483f]"
             />
-            plants ×2{" "}
+            plants ×{luckBoost(garden)}{" "}
             <span className="font-pixel tabular-nums">{formatClock(luck)}</span>
           </p>
         )}

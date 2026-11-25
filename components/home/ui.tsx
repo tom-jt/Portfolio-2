@@ -155,13 +155,21 @@ export const Switch = ({
   onChange,
   label,
   hint,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
   hint?: string;
+  /** Greyed out and fixed, where another setting makes it moot. */
+  disabled?: boolean;
 }) => (
-  <label className="flex cursor-pointer items-center justify-between gap-4 py-1.5">
+  <label
+    className={cn(
+      "flex cursor-pointer items-center justify-between gap-4 py-1.5",
+      disabled && "cursor-not-allowed opacity-45",
+    )}
+  >
     <span className="text-sm">
       {label}
       {hint && (
@@ -172,9 +180,10 @@ export const Switch = ({
       type="button"
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "focus-visible:ring-ring relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition focus-visible:ring-2 focus-visible:outline-none",
+        "focus-visible:ring-ring relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed",
         checked ? "bg-glow" : "bg-white/15",
       )}
     >

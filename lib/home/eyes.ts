@@ -20,6 +20,8 @@ export interface EyeState {
   /** Minutes between reminders. */
   interval: number;
   sound: boolean;
+  /** Whether Spotify pauses while the chime rings (only with `sound`). */
+  pauseSpotify: boolean;
   notify: boolean;
   phase: EyePhase;
   /** When the next reminder falls due; 0 while unscheduled. */
@@ -42,6 +44,7 @@ const initial: EyeState = {
   enabled: true,
   interval: 20,
   sound: true,
+  pauseSpotify: true,
   notify: false,
   phase: "idle",
   nextAt: 0,
@@ -93,7 +96,7 @@ export function setEyeInterval(interval: number) {
   });
 }
 
-export const setEyeOption = (patch: Partial<Pick<EyeState, "sound" | "notify">>) =>
+export const setEyeOption = (patch: Partial<Pick<EyeState, "sound" | "pauseSpotify" | "notify">>) =>
   eyeStore.set((s) => ({ ...s, ...patch }));
 
 /**
