@@ -23,6 +23,7 @@ import AdminDoor from "./AdminDoor";
 import { Mark } from "./bits";
 import CardPanel from "./CardPanel";
 import CardTile from "./CardTile";
+import { DecoAnchor, DecoBottom, DecoGround, DecoHero, DecoSides } from "./deco/Deco";
 import Doodle from "./Doodle";
 import HobbyNav from "./HobbyNav";
 import TagTabs from "./TagTabs";
@@ -255,18 +256,25 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
   const filtered = !!(view.tag || view.q.trim() || view.progress.length || view.contains.trim());
 
   return (
-    <div data-hobby={hobbyId} className="relative min-h-dvh overflow-x-clip">
-      {/* The ground: dots, the hobby's glow, and its mark, large and faint. */}
+    <div data-hobby={hobbyId} className="relative isolate min-h-dvh overflow-x-clip">
+      {/* The ground: dots, the hobby's glow, and its mark, large and faint.
+          Wide windows swap the mark for the hobby's own decoration. */}
       <div aria-hidden="true" className="hb-dots pointer-events-none fixed inset-0 -z-10">
         <div className="absolute top-[120px] right-[6%] size-[640px] rounded-full bg-[radial-gradient(circle,var(--hb)_0%,transparent_62%)] opacity-[0.16]" />
-        <Mark d={hobby.mark} strokeWidth={0.09} className="text-hb absolute -top-[120px] -right-[220px] size-[980px] opacity-[0.22]" />
+        <Mark
+          d={hobby.mark}
+          strokeWidth={0.09}
+          className="text-hb absolute -top-[120px] -right-[220px] size-[980px] opacity-[0.12] min-[1300px]:hidden"
+        />
+        <DecoGround hobby={hobbyId} />
       </div>
 
       <HobbyNav hobby={hobbyId} leave={leave} />
+      <DecoSides hobby={hobbyId} />
 
-      <main className="mx-auto flex w-full max-w-[1376px] flex-col gap-6 px-4 pt-24 pb-16 sm:px-8 lg:pt-28">
+      <main className="mx-auto flex w-full max-w-[1376px] flex-col gap-6 px-4 pt-24 pb-16 sm:px-8 md:pb-44 lg:pt-28">
         <header className="flex flex-col">
-          <div className="flex items-end justify-between gap-8">
+          <div className="flex items-end gap-8">
             <div className="hb-rise flex max-w-[600px] flex-col gap-2 pb-6">
               <span className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm font-medium tracking-wide">
                 Hobbies
@@ -294,22 +302,28 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
               </h1>
               <p className="text-muted-foreground mt-1 max-w-[520px] text-[15px] leading-normal">{hobby.blurb}</p>
             </div>
-            <div className="relative z-[2] -mb-3 flex shrink-0 items-end gap-1 pr-10 max-sm:hidden">
-              <span className="font-hand text-hb-ink hb-rise relative -top-14 -rotate-5 text-[26px] leading-none">
-                {hobby.quip}
-              </span>
+            {/* Tom, doing the hobby, just past the title. */}
+            <div className="relative z-[2] -mb-3 flex shrink-0 items-start gap-0.5 max-sm:hidden">
               <span className="hb-bob inline-flex">
                 <Doodle hobby={hobbyId} />
               </span>
+              <span className="font-hand text-hb-ink hb-rise mt-[22px] -rotate-5 text-[26px] leading-none whitespace-nowrap max-md:hidden">
+                {hobby.quip}
+              </span>
             </div>
+            <DecoHero hobby={hobbyId} className="-mt-[110px] ml-auto hidden min-[1300px]:block" />
           </div>
-          <Toolbar view={view} hobbyName={hobby.name} fields={doc.fields} admin={admin} onNew={startNew} />
+          <div className="relative">
+            <Toolbar view={view} hobbyName={hobby.name} fields={doc.fields} admin={admin} onNew={startNew} />
+            <DecoAnchor hobby={hobbyId} slot="Toolbar" />
+          </div>
         </header>
 
         <div className="flex items-start gap-5">
           <section aria-label="Cards" className="flex min-w-0 flex-1 flex-col">
             <TagTabs doc={doc} active={view.tag} admin={admin} busy={busy} {...tagOps} />
-            <div className="hb-glass flex flex-col gap-3.5 rounded-[28px] px-4 pt-[18px] pb-5 sm:px-5">
+            <div className="hb-glass relative flex flex-col gap-3.5 rounded-[28px] px-4 pt-[18px] pb-5 sm:px-5">
+              <DecoAnchor hobby={hobbyId} slot="Grid" />
               <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 px-1 text-sm">
                 <span>
                   {cards.length} of {total}
@@ -358,21 +372,26 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
             </div>
           </section>
 
-          <aside
-            aria-label="Card details"
-            className="hb-glass sticky top-24 hidden max-h-[calc(100dvh-7rem)] w-[min(460px,36vw)] shrink-0 overflow-y-auto rounded-[30px] p-3.5 [scrollbar-width:thin] lg:block"
-          >
-            {wide && panel ? (
-              panel
-            ) : (
-              <div className="flex flex-col items-center gap-1.5 px-6 py-[70px] text-center">
-                <span className="font-hand text-hb-ink text-[34px]">pick a card, any card</span>
-                <span className="text-muted-foreground text-sm">Its details and video open here.</span>
-              </div>
-            )}
-          </aside>
+          <div className="sticky top-24 hidden shrink-0 lg:block">
+            <DecoAnchor hobby={hobbyId} slot="Panel" />
+            <aside
+              aria-label="Card details"
+              className="hb-glass max-h-[calc(100dvh-7rem)] w-[min(460px,36vw)] overflow-y-auto rounded-[30px] p-3.5 [scrollbar-width:thin]"
+            >
+              {wide && panel ? (
+                panel
+              ) : (
+                <div className="flex flex-col items-center gap-1.5 px-6 py-[70px] text-center">
+                  <span className="font-hand text-hb-ink text-[34px]">pick a card, any card</span>
+                  <span className="text-muted-foreground text-sm">Its details and video open here.</span>
+                </div>
+              )}
+            </aside>
+          </div>
         </div>
       </main>
+
+      <DecoBottom hobby={hobbyId} />
 
       {/* Phones and narrow windows: the card opens as a sheet over the grid. */}
       {!wide && panel && (

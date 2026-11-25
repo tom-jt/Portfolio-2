@@ -1,0 +1,625 @@
+/* Decoration for /hobby: stickers, doodles, and small loops of motion around
+   the page. Everything here is aria-hidden and ignores the pointer. Classes
+   start hd- so they cannot meet anything else on the site. */
+
+[data-hobby] {
+  --hd-cream: #fff6ec;
+  --hd-ink: #1a1820;
+  --hd-red: #d63c55;
+  --hd-snow: #8fbde6;
+  --hd-snow-2: #b5d4ef;
+  --hd-drop: rgb(40 30 60 / 22%);
+  --hd-line: var(--hb);
+  --hd-glint: #b7aec4; /* sparkles: cream on the dark ground, lilac grey on paper */
+}
+.dark [data-hobby] {
+  --hd-snow: #ffffff;
+  --hd-snow-2: #c4e4ff;
+  --hd-drop: rgb(0 0 0 / 45%);
+  --hd-glint: #fff6ec;
+}
+
+.hd {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* A die-cut sticker: a white edge all round and a soft shadow under it. */
+.hd-sticker {
+  position: absolute;
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+    drop-shadow(0 8px 12px var(--hd-drop));
+}
+
+/* Off-screen regions stop animating (set by the Region component). */
+.hd[data-off] *,
+.hd[data-off] {
+  animation-play-state: paused !important;
+}
+
+/* ---- shared motion ---- */
+@keyframes hd-wob {
+  0%,
+  100% {
+    transform: rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: rotate(calc(var(--r, 0deg) + 5deg)) translateY(-3px);
+  }
+}
+.hd-wob {
+  animation: hd-wob 4.6s ease-in-out infinite;
+}
+
+@keyframes hd-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.55) rotate(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+}
+.hd-spark {
+  position: absolute;
+  animation: hd-twinkle 3.4s ease-in-out infinite;
+}
+
+@keyframes hd-blink {
+  0%,
+  46%,
+  50%,
+  100% {
+    transform: scaleY(1);
+  }
+  48% {
+    transform: scaleY(0.1);
+  }
+}
+.hd-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hd-blink 4.2s infinite;
+}
+
+@keyframes hd-along {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+.hd-path {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: hd-along linear infinite;
+}
+
+@keyframes hd-up {
+  from {
+    transform: translateY(0) rotate(-20deg);
+  }
+  to {
+    transform: translateY(-115vh) rotate(200deg);
+  }
+}
+.hd-rise {
+  position: absolute;
+  top: 102%;
+  animation: hd-up linear infinite;
+}
+
+@keyframes hd-fall {
+  from {
+    transform: translateY(-60px);
+  }
+  to {
+    transform: translateY(110vh);
+  }
+}
+@keyframes hd-sway {
+  0%,
+  100% {
+    transform: translateX(-14px) rotate(-20deg);
+  }
+  50% {
+    transform: translateX(14px) rotate(20deg);
+  }
+}
+.hd-flake {
+  position: absolute;
+  top: 0;
+  animation: hd-fall linear infinite;
+}
+.hd-flake > svg {
+  display: block;
+  animation: hd-sway ease-in-out infinite;
+}
+
+@keyframes hd-swing {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+.hd-swing {
+  transform-origin: 50% 0;
+  animation: hd-swing 3.6s ease-in-out infinite;
+}
+
+/* ---- magic ---- */
+.hd-stage {
+  perspective: 1100px;
+}
+@keyframes hd-fan-sway {
+  0%,
+  100% {
+    transform: rotateX(16deg) rotateY(-16deg);
+  }
+  50% {
+    transform: rotateX(10deg) rotateY(16deg);
+  }
+}
+.hd-fan {
+  transform-style: preserve-3d;
+  animation: hd-fan-sway 9s ease-in-out infinite;
+}
+@keyframes hd-spread {
+  0%,
+  8% {
+    transform: rotateZ(0deg) translateZ(0);
+  }
+  38%,
+  72% {
+    transform: rotateZ(var(--a)) translateZ(var(--z));
+  }
+  96%,
+  100% {
+    transform: rotateZ(0deg) translateZ(0);
+  }
+}
+.hd-card {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 92px;
+  height: 130px;
+  border-radius: 11px;
+  transform-origin: 50% 92%;
+  animation: hd-spread 6.5s cubic-bezier(0.45, 0.05, 0.3, 1) infinite;
+  backface-visibility: hidden;
+}
+.hd-card-face {
+  box-shadow: 0 10px 24px var(--hd-drop);
+}
+@keyframes hd-flip {
+  0%,
+  58% {
+    transform: rotateY(0);
+  }
+  66%,
+  92% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+.hd-flipper {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: hd-flip 6.5s ease-in-out infinite;
+}
+.hd-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  backface-visibility: hidden;
+}
+
+.hd-spring {
+  offset-rotate: auto;
+  animation: hd-along 2.6s cubic-bezier(0.3, 0.1, 0.7, 0.9) infinite;
+}
+
+@keyframes hd-peek {
+  0%,
+  18% {
+    transform: translateY(58px);
+  }
+  30%,
+  62% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  78% {
+    transform: translateY(0) rotate(4deg);
+  }
+  88%,
+  100% {
+    transform: translateY(58px);
+  }
+}
+.hd-bunny {
+  animation: hd-peek 7s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes hd-wave {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0) rotate(var(--r));
+  }
+  12% {
+    transform: translateY(-16px) rotate(var(--r));
+  }
+}
+.hd-ribbon > span {
+  position: absolute;
+  bottom: 0;
+  animation: hd-wave 4.2s ease-in-out infinite;
+}
+
+@keyframes hd-wand {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+.hd-wand {
+  transform-origin: 20% 80%;
+  animation: hd-wand 3.2s ease-in-out infinite;
+}
+@keyframes hd-pop {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  70% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.4);
+  }
+}
+.hd-pop {
+  position: absolute;
+  animation: hd-pop 3.2s ease-out infinite;
+}
+
+/* ---- ice ---- */
+@keyframes hd-ink {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -60;
+  }
+}
+.hd-eight {
+  animation: hd-ink 3s linear infinite;
+}
+.hd-trace {
+  offset-rotate: auto;
+  animation-duration: 9s;
+}
+@keyframes hd-slide {
+  0% {
+    transform: translateX(-160px);
+  }
+  50%,
+  100% {
+    transform: translateX(calc(100vw + 160px));
+  }
+}
+@keyframes hd-waddle {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+.hd-slider {
+  position: absolute;
+  left: 0;
+  animation: hd-slide 16s cubic-bezier(0.35, 0.1, 0.4, 1) infinite;
+}
+.hd-slider > svg {
+  animation: hd-waddle 0.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes hd-steam {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-26px);
+    opacity: 0;
+  }
+}
+.hd-steam {
+  animation: hd-steam 3s ease-out infinite;
+}
+@keyframes hd-drip {
+  0%,
+  70% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  74% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(70px) scale(1);
+    opacity: 0;
+  }
+}
+.hd-drip {
+  position: absolute;
+  width: 6px;
+  height: 8px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: var(--hd-snow-2);
+  animation: hd-drip 5s ease-in infinite;
+}
+@keyframes hd-glint {
+  0%,
+  80% {
+    transform: translateX(-200px) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(calc(100vw + 200px)) skewX(-20deg);
+  }
+}
+.hd-glint {
+  animation: hd-glint 9s ease-in-out infinite;
+}
+
+/* ---- balisong ---- */
+.hd-fly {
+  offset-rotate: auto 90deg;
+}
+@keyframes hd-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.22);
+  }
+}
+.hd-wing {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: hd-flap 0.28s ease-in-out infinite alternate;
+}
+.hd-slow .hd-wing {
+  animation-duration: 0.5s;
+}
+.hd-rest .hd-wing {
+  animation: hd-flap 1.8s ease-in-out infinite alternate;
+}
+@keyframes hd-knife {
+  0%,
+  55% {
+    transform: rotate(-20deg);
+  }
+  75%,
+  100% {
+    transform: rotate(340deg);
+  }
+}
+.hd-knife {
+  transform-origin: 50% 50%;
+  animation: hd-knife 5s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+}
+@keyframes hd-stem {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+.hd-stem {
+  transform-origin: 50% 100%;
+  animation: hd-stem 5s ease-in-out infinite;
+}
+@keyframes hd-nod {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+.hd-nod {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: hd-nod 3.4s ease-in-out infinite;
+}
+@keyframes hd-petal {
+  from {
+    transform: translate(0, -40px) rotate(0);
+  }
+  to {
+    transform: translate(var(--dx), 110vh) rotate(540deg);
+  }
+}
+.hd-petal {
+  position: absolute;
+  top: 0;
+  animation: hd-petal linear infinite;
+}
+@keyframes hd-crawl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--far, 240px));
+  }
+}
+.hd-crawl {
+  animation: hd-crawl 34s linear infinite alternate;
+}
+@keyframes hd-inch {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.hd-seg {
+  animation: hd-inch 0.9s ease-in-out infinite;
+}
+
+/* ---- piano ---- */
+@keyframes hd-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.hd-track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  animation: hd-scroll 22s linear infinite;
+}
+@keyframes hd-hum {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.hd-note {
+  animation: hd-hum 2.4s ease-in-out infinite;
+}
+@keyframes hd-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.hd-playhead {
+  animation: hd-glow 2.4s ease-in-out infinite;
+}
+@keyframes hd-float {
+  0% {
+    transform: translate(0, 0) rotate(-8deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), -300px) rotate(12deg);
+    opacity: 0;
+  }
+}
+.hd-float {
+  position: absolute;
+  animation: hd-float 7s ease-out infinite;
+}
+@keyframes hd-press {
+  0%,
+  10%,
+  100% {
+    transform: translateY(0);
+    background: #f7f6f2;
+  }
+  4% {
+    transform: translateY(4px);
+    background: #b9f2da;
+  }
+}
+.hd-key {
+  flex: none;
+  width: 39px;
+  height: 84px;
+  border-radius: 0 0 7px 7px;
+  background: #f7f6f2;
+  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 12%);
+  animation: hd-press 7s ease-in-out infinite;
+}
+.hd-ride {
+  offset-rotate: 0deg;
+  animation-duration: 14s;
+}
+@keyframes hd-tick {
+  0%,
+  100% {
+    transform: rotate(-22deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
+}
+.hd-tick {
+  transform-box: view-box;
+  transform-origin: 50px 112px;
+  animation: hd-tick 1.2s ease-in-out infinite;
+}
+@keyframes hd-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.hd-hop {
+  animation: hd-hop 1.2s ease-in-out infinite;
+}
+
+/* Reduced motion: things that only make sense moving go away; stickers and
+   doodles stay, still. */
+@media (prefers-reduced-motion: reduce) {
+  .hd *,
+  .hd {
+    animation: none !important;
+  }
+  .hd .hd-move {
+    display: none;
+  }
+  .hd .hd-card {
+    transform: rotateZ(var(--a)) translateZ(var(--z));
+  }
+}
