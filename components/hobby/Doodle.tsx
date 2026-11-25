@@ -87,15 +87,13 @@ const Piano = () => (
     <path d="M150 56V42l10 3M150 56a4 4 0 1 1-4-4h4z" stroke={HB} />
     <path d="M66 106q24-10 48 0l4 26H62z" fill={BG} />
     <circle cx="90" cy="76" r="24" fill={BG} />
-    <path
-      d="M68 70q4-26 30-22q16 4 16 20q-10-12-28-8q-10 2-18 10z"
-      fill="currentColor"
-      strokeWidth="1.5"
-    />
+    {/* Spiky hair, the same as the balisong doodle's. */}
+    <path d="M68 66l6-14 6 8 6-12 6 12 6-10 6 12 6-6" />
     <path d="M80 80q3-3 6 0M94 80q3-3 6 0M86 88q4 3 8 0" />
     <ellipse cx="76" cy="86" rx="3.6" ry="2.3" fill={HB} stroke="none" opacity="0.6" />
     <ellipse cx="104" cy="86" rx="3.6" ry="2.3" fill={HB} stroke="none" opacity="0.6" />
-    <path d="M68 114q-8 10 0 20M112 114q8 10 0 20" />
+    {/* Arms down the sides, hands resting on the keys. */}
+    <path d="M66 108q-14 12-4 28M114 108q14 12 4 28" />
     <rect x="30" y="134" width="120" height="30" rx="3" fill={BG} />
     <path d="M45 134v30M60 134v30M75 134v30M90 134v30M105 134v30M120 134v30M135 134v30" />
     <path
@@ -104,6 +102,8 @@ const Piano = () => (
       stroke="none"
     />
     <path d="M30 164l-4 12M150 164l4 12" />
+    <ellipse cx="63" cy="137" rx="5.5" ry="3.5" fill={BG} />
+    <ellipse cx="117" cy="137" rx="5.5" ry="3.5" fill={BG} />
   </>
 );
 

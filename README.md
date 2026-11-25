@@ -45,9 +45,9 @@ Set these in the Vercel env (or `.env.local` for development):
 | --- | --- |
 | `HOBBY_ADMIN_PASSWORD_HASH` | From `node scripts/hobby-password.mjs "your password"` |
 | `HOBBY_SESSION_SECRET` | Printed by the same script |
-| `HOBBY_GITHUB_REPO` | `owner/name` of the private data repo |
+| `HOBBY_GITHUB_REPO` | `owner/name` of the private data repo (a pasted repo URL also works) |
 | `HOBBY_GITHUB_TOKEN` | A fine-grained token for that repo only, with Contents set to read and write |
-| `HOBBY_GITHUB_BRANCH` | Optional; defaults to `main` |
+| `HOBBY_GITHUB_BRANCH` | Optional; defaults to the repo's default branch |
 
 In the data repo, protect the branch so force pushes and deletion are blocked; that keeps the history append-only. A Vercel Firewall rate-limit rule on `/hobby` backs up the app's own per-instance limits.
 

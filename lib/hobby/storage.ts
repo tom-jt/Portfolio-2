@@ -5,7 +5,7 @@
  * a commit, so git history is the audit log and `git revert` is the rollback.
  * Set HOBBY_GITHUB_TOKEN (fine-grained, that repo only, Contents: read and
  * write) and HOBBY_GITHUB_REPO ("owner/name"); HOBBY_GITHUB_BRANCH defaults
- * to main. Protect that branch against force pushes and deletion so the
+ * to the repo's default branch. Protect that branch against force pushes and deletion so the
  * history stays append-only.
  *
  * Without them, local dev keeps the files in .hobby-data/ (gitignored), with a
@@ -34,9 +34,14 @@ export class StorageError extends Error {
   }
 }
 
-const token = process.env.HOBBY_GITHUB_TOKEN;
-const repo = process.env.HOBBY_GITHUB_REPO;
-const branch = process.env.HOBBY_GITHUB_BRANCH || "main";
+const token = process.env.HOBBY_GITHUB_TOKEN?.trim();
+/** "owner/name". A pasted repo URL works too: https://github.com/owner/name(.git). */
+const repo = process.env.HOBBY_GITHUB_REPO?.trim()
+  .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, "")
+  .replace(/\.git$/i, "")
+  .replace(/\/+$/, "");
+/** Unset means the repo's default branch, whatever it is called. */
+const branch = process.env.HOBBY_GITHUB_BRANCH?.trim() || undefined;
 
 type Mode = "github" | "local" | "none";
 const mode: Mode = token && repo ? "github" : process.env.VERCEL ? "none" : "local";
@@ -77,12 +82,12 @@ const ghHeaders = () => ({
 });
 
 async function ghRead(hobby: HobbyId): Promise<Stored> {
-  const res = await fetch(`${api(`${hobby}.json`)}?ref=${encodeURIComponent(branch)}`, {
+  const res = await fetch(`${api(`${hobby}.json`)}${branch ? `?ref=${encodeURIComponent(branch)}` : ""}`, {
     headers: ghHeaders(),
     cache: "no-store",
   });
   if (res.status === 404) return { doc: emptyDoc(hobby), sha: null };
-  if (!res.ok) throw new StorageError(`GitHub read failed (${res.status})`, "failed");
+  if (!res.ok) throw new StorageError(await ghProblem("read", res), "failed");
   const body = (await res.json()) as { content: string; sha: string };
   const text = Buffer.from(body.content, "base64").toString("utf8");
   return { doc: normalise(hobby, JSON.parse(text)), sha: body.sha };
@@ -94,17 +99,34 @@ async function ghWrite(hobby: HobbyId, doc: HobbyDoc, sha: string | null, messag
     headers: { ...ghHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({
       message,
-      branch,
+      ...(branch ? { branch } : {}),
       content: Buffer.from(JSON.stringify(doc, null, 2) + "\n").toString("base64"),
       ...(sha ? { sha } : {}),
     }),
     cache: "no-store",
   });
   // GitHub answers a stale sha with 409, or 422 when the file appeared meanwhile.
-  if (res.status === 409 || res.status === 422) {
+  if (res.status === 409 || (res.status === 422 && !sha)) {
     throw new StorageError("Someone saved this tab meanwhile. Reload and try again.", "conflict");
   }
-  if (!res.ok) throw new StorageError(`GitHub save failed (${res.status})`, "failed");
+  if (!res.ok) throw new StorageError(await ghProblem("save", res), "failed");
+}
+
+/** GitHub's own reason, plus the likely fix, for the toast and the logs. */
+async function ghProblem(what: string, res: Response) {
+  const reason = await res
+    .json()
+    .then((b: { message?: string }) => b.message)
+    .catch(() => undefined);
+  const hint =
+    res.status === 404
+      ? ` Check HOBBY_GITHUB_REPO is "owner/name" (now "${repo}") and the token has access to that repo.`
+      : res.status === 401 || res.status === 403
+        ? " Check the token hasn't expired and has Contents: read and write."
+        : "";
+  const text = `GitHub ${what} failed (${res.status}${reason ? `: ${reason}` : ""}).${hint}`;
+  console.error(`[hobby] ${text}`);
+  return text;
 }
 
 // ---------------------------------------------------------------------------

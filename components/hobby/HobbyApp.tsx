@@ -19,6 +19,7 @@ import { parseSearch, setSearch, useAdmin, useSearch, useWide } from "@/lib/hobb
 import { draftFrom, draftShow, sameDraft, type Draft } from "@/lib/hobby/draft";
 import { runQuery, slug, youTube, type Card, type HobbyDoc, type Tag } from "@/lib/hobby/model";
 import { cn } from "@/lib/utils";
+import AdminDoor from "./AdminDoor";
 import { Mark } from "./bits";
 import CardPanel from "./CardPanel";
 import CardTile from "./CardTile";
@@ -288,7 +289,7 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                   </>
                 )}
               </span>
-              <h1 className="font-display text-[clamp(3.5rem,9vw,5.25rem)] leading-[0.92] font-bold tracking-[-3px]">
+              <h1 className="font-display text-(color:--hb-title) text-[clamp(3.5rem,9vw,5.25rem)] leading-[0.92] font-bold tracking-[-3px]">
                 {hobby.name}
               </h1>
               <p className="text-muted-foreground mt-1 max-w-[520px] text-[15px] leading-normal">{hobby.blurb}</p>
@@ -385,6 +386,8 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
           </div>
         </div>
       )}
+
+      {!admin && <AdminDoor hobby={hobbyId} />}
 
       {toast && (
         <div

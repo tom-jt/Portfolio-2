@@ -451,7 +451,11 @@ html.dark:has([data-site="law"]) {
 [data-hobby] {
   --ring: var(--hb);
   --accent-text: var(--hb-ink);
+  /* The big page title: the deep ink on paper (the plain accent is too light
+     for amber there), the full accent on the dark ground. */
+  --hb-title: var(--hb-ink);
 }
+.dark [data-hobby] { --hb-title: var(--hb); }
 [data-hobby="magic"] { --hb: #d63c55; --hb-rgb: 214 60 85; --hb-ink: #b42d45; --hb-btn: #b42d45; }
 [data-hobby="ice"] { --hb: #2b86d6; --hb-rgb: 43 134 214; --hb-ink: #1d64a6; --hb-btn: #1d64a6; }
 [data-hobby="balisong"] { --hb: #d98a0b; --hb-rgb: 217 138 11; --hb-ink: #8f5a00; --hb-btn: #8f5a00; }
@@ -552,6 +556,11 @@ html.dark:has([data-site="hobby"]) {
   from { transform: translateY(100%); }
   to { transform: none; }
 }
+/* Menus and popovers drop a few pixels into place as they fade in. */
+@keyframes hb-drop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
 @keyframes hb-fade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -564,13 +573,15 @@ html.dark:has([data-site="hobby"]) {
 .hb-bob { animation: hb-bob 4.5s ease-in-out infinite; }
 .hb-sheet { animation: hb-sheet 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .hb-fade { animation: hb-fade 0.3s ease both; }
+.hb-drop { animation: hb-drop 0.16s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .hb-rise,
   .hb-draw :is(path, circle, rect, ellipse),
   .hb-bob,
   .hb-sheet,
-  .hb-fade {
+  .hb-fade,
+  .hb-drop {
     animation: none;
   }
 }

@@ -6,6 +6,7 @@ import { setSearch, type View } from "@/lib/hobby/client";
 import { DEFAULT_DIR, PROGRESS, SORTS, type Field, type SortKey } from "@/lib/hobby/model";
 import { cn } from "@/lib/utils";
 import { ProgressMark } from "./bits";
+import Select from "./Select";
 
 const control =
   "border-border bg-muted text-foreground flex h-[46px] items-center rounded-[17px] border text-sm font-medium";
@@ -35,7 +36,8 @@ const Toolbar = ({
       if (!filterRef.current?.contains(e.target as Node)) setFilterOpen(false);
     };
     const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFilterOpen(false);
+      // A dropdown inside handles its own Esc and marks it handled.
+      if (e.key === "Escape" && !e.defaultPrevented) setFilterOpen(false);
     };
     document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", esc);
@@ -108,7 +110,7 @@ const Toolbar = ({
           )}
         </button>
         {filterOpen && (
-          <div className="hb-pop absolute top-14 right-0 z-30 flex w-[min(340px,calc(100vw-2rem))] flex-col gap-3 rounded-[22px] p-[18px] max-sm:-right-24">
+          <div className="hb-pop hb-drop absolute top-14 right-0 z-30 flex w-[min(340px,calc(100vw-2rem))] flex-col gap-3 rounded-[22px] p-[18px] max-sm:-right-24">
             <span className="text-muted-foreground text-[13px]">Progress</span>
             <div className="flex flex-wrap gap-1.5">
               {PROGRESS.map((p) => {
@@ -134,22 +136,13 @@ const Toolbar = ({
             </div>
             <span className="text-muted-foreground pt-1 text-[13px]">Other fields</span>
             <div className="flex gap-1.5">
-              <label htmlFor="hb-ff" className="sr-only">
-                Field
-              </label>
-              <select
-                id="hb-ff"
+              <Select
+                label="Field"
                 value={view.field}
-                onChange={(e) => setSearch({ field: e.target.value || null })}
-                className="border-input bg-field h-10 rounded-xl border px-2 text-sm"
-              >
-                <option value="">Any field</option>
-                {fields.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+                options={[{ value: "", label: "Any field" }, ...fields.map((f) => ({ value: f.id, label: f.name }))]}
+                onChange={(field) => setSearch({ field: field || null })}
+                className="border-input bg-field h-10 w-[128px] shrink-0 rounded-xl border px-3 text-sm"
+              />
               <label htmlFor="hb-fv" className="sr-only">
                 Contains
               </label>
@@ -182,24 +175,17 @@ const Toolbar = ({
       </div>
 
       <div className={cn(control, "gap-1.5 pr-1.5 pl-3.5")}>
-        <label htmlFor="hb-sort" className="text-muted-foreground">
+        <span className="text-muted-foreground" aria-hidden="true">
           Sort
-        </label>
-        <select
-          id="hb-sort"
+        </span>
+        <Select
+          label="Sort by"
           value={view.sort}
-          onChange={(e) => {
-            const sort = e.target.value as SortKey;
-            setSearch({ sort: sort === "updated" ? null : sort, dir: null });
-          }}
-          className="h-[34px] cursor-pointer bg-transparent text-sm font-medium outline-none"
-        >
-          {(Object.keys(SORTS) as SortKey[]).map((k) => (
-            <option key={k} value={k}>
-              {SORTS[k]}
-            </option>
-          ))}
-        </select>
+          options={(Object.keys(SORTS) as SortKey[]).map((k) => ({ value: k, label: SORTS[k] }))}
+          onChange={(sort) => setSearch({ sort: sort === "updated" ? null : sort, dir: null })}
+          align="right"
+          className="h-[34px] w-[118px] text-sm font-medium"
+        />
         <button
           type="button"
           onClick={() => {
