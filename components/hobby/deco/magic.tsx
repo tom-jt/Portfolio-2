@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { DecoSet } from "./Deco";
-import { A, BLUSH, CREAM, GLINT, I, INK, Note, RED, Spark, vars, vh } from "./parts";
+import { A, BLUSH, CREAM, GLINT, I, INK, Note, Poke, RED, Spark, vars, vh } from "./parts";
 
 type Suit = "heart" | "diamond" | "spade" | "club";
 
@@ -65,89 +65,98 @@ const MiniCard = ({
 
 const Star = ({ c }: { c: string }) => <path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z" fill={c} />;
 
-/* ---- hero: a fan of cards that spreads, sways in 3D, and flips its ace ---- */
-const FAN: ({
-  a: number;
-  z: number;
-  d: number;
-  rank: string;
-  kind: Suit;
-} | null)[] = [
-  { a: -36, z: -24, d: 0, rank: "10", kind: "spade" },
-  { a: -18, z: -12, d: 0.05, rank: "J", kind: "diamond" },
-  null,
-  { a: 18, z: -12, d: 0.15, rank: "K", kind: "club" },
-  { a: 36, z: -24, d: 0.2, rank: "Q", kind: "heart" },
+/* ---- hero: a royal flush that fans out, sways in 3D, and flips its ace ---- */
+
+/**
+ * Ten to ace, left to right. Each card sits a hair nearer than the one
+ * before, so the right one is on top and every card's corner index shows, as
+ * in a real fan. The ace is the one that turns over.
+ */
+const FAN: { a: number; z: number; d: number; rank: string }[] = [
+  { a: -36, z: 0, d: 0, rank: "10" },
+  { a: -18, z: 2, d: 0.05, rank: "J" },
+  { a: 0, z: 4, d: 0.1, rank: "Q" },
+  { a: 18, z: 6, d: 0.15, rank: "K" },
+  { a: 36, z: 8, d: 0.2, rank: "A" },
 ];
 
-const Rank = ({ children, colour }: { children: ReactNode; colour: string }) => (
-  <span className="font-display absolute top-1.5 left-[9px] text-lg font-bold" style={{ color: colour }}>
-    {children}
-  </span>
+/** A card face: an index in two corners and the suit in the middle. */
+const Face = ({ rank }: { rank: string }) => (
+  <>
+    <span
+      className="font-display absolute top-1.5 left-2 flex flex-col items-center text-lg leading-none font-bold"
+      style={{ color: RED }}
+    >
+      {rank}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill={RED} className="mt-0.5">
+        {SUITS.heart}
+      </svg>
+    </span>
+    <span
+      className="font-display absolute right-2 bottom-1.5 flex rotate-180 flex-col items-center text-lg leading-none font-bold"
+      style={{ color: RED }}
+    >
+      {rank}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill={RED} className="mt-0.5">
+        {SUITS.heart}
+      </svg>
+    </span>
+    <svg className="absolute top-[45px] left-[26px]" width="40" height="40" viewBox="0 0 24 24" fill={RED}>
+      {SUITS.heart}
+    </svg>
+  </>
 );
 
-const Hero = () => (
-  <div className="hd-stage absolute inset-0">
-    <div className="hd-fan absolute" style={{ left: 134, top: 110, width: 92, height: 130 }}>
-      {FAN.map((c, i) =>
-        c ? (
-          <div
-            key={i}
-            className="hd-card hd-card-face"
-            style={vars({
-              "--a": `${c.a}deg`,
-              "--z": `${c.z}px`,
-              animationDelay: `${c.d}s`,
-              background: CREAM,
+const BACK = `repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 6px, transparent 6px 12px), ${RED}`;
+
+const Hero = () => {
+  const [spin, setSpin] = useState(false);
+  return (
+    <div className="absolute inset-0">
+      {/* Tap the fan and it spins round once. */}
+      <Poke
+        className="hd-stage absolute"
+        style={{ left: 134, top: 110, width: 92, height: 130 }}
+        onPoke={() => setSpin(true)}
+      >
+        <div
+          className="hd-shuffler absolute inset-0"
+          data-spin={spin ? "" : undefined}
+          onAnimationEnd={(e) => {
+            if (e.target === e.currentTarget) setSpin(false);
+          }}
+        >
+          <div className="hd-fan absolute inset-0">
+            {FAN.map((c, i) => {
+              const style = vars({ "--a": `${c.a}deg`, "--z": `${c.z}px`, animationDelay: `${c.d}s` });
+              return i < FAN.length - 1 ? (
+                <div key={c.rank} className="hd-card hd-card-face" style={{ ...style, background: CREAM }}>
+                  <Face rank={c.rank} />
+                </div>
+              ) : (
+                <div key={c.rank} className="hd-card" style={style}>
+                  <div className="hd-flipper">
+                    <div className="hd-face hd-card-face" style={{ background: CREAM }}>
+                      <Face rank={c.rank} />
+                    </div>
+                    <div
+                      className="hd-face hd-card-face"
+                      style={{ transform: "rotateY(180deg)", background: BACK, border: `5px solid ${CREAM}` }}
+                    />
+                  </div>
+                </div>
+              );
             })}
-          >
-            <Rank colour={red(c.kind) ? RED : INK}>{c.rank}</Rank>
-            <svg
-              className="absolute top-[46px] left-7"
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill={red(c.kind) ? RED : INK}
-            >
-              {SUITS[c.kind]}
-            </svg>
           </div>
-        ) : (
-          <div
-            key={i}
-            className="hd-card"
-            style={vars({
-              "--a": "0deg",
-              "--z": "0px",
-              animationDelay: "0.1s",
-            })}
-          >
-            <div className="hd-flipper">
-              <div className="hd-face hd-card-face" style={{ background: CREAM }}>
-                <Rank colour={RED}>A</Rank>
-                <svg className="absolute top-10 left-6" width="44" height="44" viewBox="0 0 24 24" fill={RED}>
-                  {SUITS.heart}
-                </svg>
-              </div>
-              <div
-                className="hd-face hd-card-face"
-                style={{
-                  transform: "rotateY(180deg)",
-                  background: `repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 6px, transparent 6px 12px), ${RED}`,
-                  border: `5px solid ${CREAM}`,
-                }}
-              />
-            </div>
-          </div>
-        ),
-      )}
+        </div>
+      </Poke>
+      <Spark x={40} y={60} s={24} c={I} d={-0.4} />
+      <Spark x={300} y={84} s={16} c={GLINT} d={-1.6} />
+      <Spark x={330} y={170} s={20} c={A} d={-2.4} />
+      <Spark x={10} y={190} s={13} c={GLINT} d={-1} />
     </div>
-    <Spark x={40} y={60} s={24} c={I} d={-0.4} />
-    <Spark x={300} y={84} s={16} c={GLINT} d={-1.6} />
-    <Spark x={330} y={170} s={20} c={A} d={-2.4} />
-    <Spark x={10} y={190} s={13} c={GLINT} d={-1} />
-  </div>
-);
+  );
+};
 
 /* ---- sides ---- */
 const SuitRise = ({
@@ -169,12 +178,7 @@ const SuitRise = ({
 }) => (
   <span
     className="hd-rise hd-move"
-    style={{
-      left: x,
-      animationDuration: `${dur}s`,
-      animationDelay: `${delay}s`,
-      opacity: op,
-    }}
+    style={{ left: x, animationDuration: `${dur}s`, animationDelay: `${delay}s`, opacity: op }}
   >
     <svg width={s} height={s} viewBox="0 0 24 24" fill={c}>
       {SUITS[kind]}
@@ -182,26 +186,32 @@ const SuitRise = ({
   </span>
 );
 
-const SPRING = "M70 280 C70 60 250 60 250 260";
+/** Where a tapped wand throws its sparkles: eight ways, out and fading. */
+const BURST = Array.from({ length: 8 }, (_, i) => {
+  const t = (i / 8) * Math.PI * 2;
+  const r = i % 2 ? 46 : 64;
+  return {
+    dx: Math.round(Math.cos(t) * r),
+    dy: Math.round(Math.sin(t) * r),
+    c: [I, GLINT, A][i % 3],
+    s: i % 2 ? 12 : 16,
+  };
+});
 
-const Left = () => (
-  <>
-    <SuitRise kind="heart" x={40} s={22} c={A} dur={30} delay={-2} op={0.6} />
-    <SuitRise kind="spade" x={190} s={16} c={GLINT} dur={36} delay={-14} op={0.4} />
-    <SuitRise kind="diamond" x={110} s={14} c={I} dur={26} delay={-21} op={0.45} />
-    <SuitRise kind="club" x={250} s={20} c={GLINT} dur={40} delay={-30} op={0.35} />
-    <SuitRise kind="diamond" x={20} s={12} c={GLINT} dur={33} delay={-9} op={0.25} />
-
-    {/* A wand, shaking off sparkles. */}
+const Wand = () => {
+  const [burst, setBurst] = useState(0);
+  return (
     <div className="absolute" style={{ left: 96, top: vh(150), width: 150, height: 140 }}>
       <div className="hd-sticker" style={{ left: 0, top: 30 }}>
-        <div className="hd-wand">
-          <svg width="110" height="110" viewBox="0 0 110 110">
-            <path d="M18 96L84 26" stroke={INK} strokeWidth="11" strokeLinecap="round" />
-            <path d="M18 96l9-9.5" stroke={CREAM} strokeWidth="11" strokeLinecap="round" />
-            <path d="M75 35.5l9-9.5" stroke={CREAM} strokeWidth="11" strokeLinecap="round" />
-          </svg>
-        </div>
+        <Poke onPoke={() => setBurst((b) => b + 1)}>
+          <div className="hd-wand">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <path d="M18 96L84 26" stroke={INK} strokeWidth="11" strokeLinecap="round" />
+              <path d="M18 96l9-9.5" stroke={CREAM} strokeWidth="11" strokeLinecap="round" />
+              <path d="M75 35.5l9-9.5" stroke={CREAM} strokeWidth="11" strokeLinecap="round" />
+            </svg>
+          </div>
+        </Poke>
       </div>
       <svg
         className="hd-pop hd-move"
@@ -214,13 +224,7 @@ const Left = () => (
       </svg>
       <svg
         className="hd-pop hd-move"
-        style={vars({
-          left: 96,
-          top: 26,
-          "--dx": "40px",
-          "--dy": "6px",
-          animationDelay: "-1s",
-        })}
+        style={vars({ left: 96, top: 26, "--dx": "40px", "--dy": "6px", animationDelay: "-1s" })}
         width="13"
         height="13"
         viewBox="0 0 24 24"
@@ -229,20 +233,44 @@ const Left = () => (
       </svg>
       <svg
         className="hd-pop hd-move"
-        style={vars({
-          left: 90,
-          top: 24,
-          "--dx": "8px",
-          "--dy": "-40px",
-          animationDelay: "-2.1s",
-        })}
+        style={vars({ left: 90, top: 24, "--dx": "8px", "--dy": "-40px", animationDelay: "-2.1s" })}
         width="15"
         height="15"
         viewBox="0 0 24 24"
       >
         <Star c={A} />
       </svg>
+      {burst > 0 && (
+        <span key={burst} className="hd-move absolute" style={{ left: 92, top: 30 }}>
+          {BURST.map((b, i) => (
+            <svg
+              key={i}
+              className="hd-burst"
+              style={vars({ left: -b.s / 2, top: -b.s / 2, "--dx": `${b.dx}px`, "--dy": `${b.dy}px` })}
+              width={b.s}
+              height={b.s}
+              viewBox="0 0 24 24"
+            >
+              <Star c={b.c} />
+            </svg>
+          ))}
+        </span>
+      )}
     </div>
+  );
+};
+
+const SPRING = "M70 280 C70 60 250 60 250 260";
+
+const Left = () => (
+  <>
+    <SuitRise kind="heart" x={40} s={22} c={A} dur={30} delay={-2} op={0.6} />
+    <SuitRise kind="spade" x={190} s={16} c={GLINT} dur={36} delay={-14} op={0.4} />
+    <SuitRise kind="diamond" x={110} s={14} c={I} dur={26} delay={-21} op={0.45} />
+    <SuitRise kind="club" x={250} s={20} c={GLINT} dur={40} delay={-30} op={0.35} />
+    <SuitRise kind="diamond" x={20} s={12} c={GLINT} dur={33} delay={-9} op={0.25} />
+
+    <Wand />
     <Note x={60} y={vh(300)} rotate={-6}>
       abracadab… oops
     </Note>
@@ -256,10 +284,7 @@ const Left = () => (
         <div
           key={i}
           className="hd-path hd-spring hd-move"
-          style={{
-            offsetPath: `path('${SPRING}')`,
-            animationDelay: `${-i * 0.2}s`,
-          }}
+          style={{ offsetPath: `path('${SPRING}')`, animationDelay: `${-i * 0.2}s` }}
         >
           <MiniCard
             face={i % 3 !== 0}
@@ -296,6 +321,69 @@ const Left = () => (
   </>
 );
 
+/**
+ * A top hat and a shy bunny. Drawn in three layers so the bunny sits inside
+ * the hat: the dark opening at the back, then the bunny, then the crown and
+ * the front of the rim over him. Tap the hat and he hops all the way out.
+ */
+const Hat = () => {
+  const [out, setOut] = useState(false);
+  const bunny = useRef<SVGSVGElement>(null);
+  /* Start the hop from wherever the peek has him right now, so he never
+     snaps back into the hat first. */
+  const hop = () => {
+    const el = bunny.current;
+    if (!el || out) return;
+    const y = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42;
+    el.style.setProperty("--from", `${Math.round(y)}px`);
+    setOut(true);
+  };
+  return (
+    <div className="hd-sticker" style={{ left: 64, top: vh(470) }}>
+      <Poke onPoke={hop}>
+        <div className="hd-wob relative" style={vars({ "--r": "-6deg", width: 170, height: 190 })}>
+          <svg className="absolute" style={{ left: 0, top: 62 }} width="170" height="26" viewBox="0 0 170 26">
+            <ellipse cx="85" cy="12" rx="48" ry="11" fill="#2A2733" />
+          </svg>
+          <div className="absolute overflow-hidden" style={{ left: 39, top: -60, width: 92, height: 144 }}>
+            <svg
+              ref={bunny}
+              className={out ? "hd-bunny-out absolute" : "hd-bunny absolute"}
+              style={{ left: 6, top: 66, transform: "translateY(84px)" }}
+              width="80"
+              height="70"
+              viewBox="0 0 80 70"
+              onAnimationEnd={(e) => {
+                if (e.target === e.currentTarget) setOut(false);
+              }}
+            >
+              <path d="M26 34C18 10 20 0 26 0s10 14 8 34z" fill="#fff" />
+              <path d="M27 30c-4-14-3-22 0-22s5 10 4 22z" fill="#FFC9D1" />
+              <path d="M46 34c2-20 6-34 12-34s6 12-4 34z" fill="#fff" />
+              <path d="M49 30c2-14 4-22 7-22s2 10-3 22z" fill="#FFC9D1" />
+              <ellipse cx="40" cy="52" rx="24" ry="20" fill="#fff" />
+              <ellipse className="hd-blink" cx="32" cy="50" rx="2.6" ry="3.2" fill={INK} />
+              <ellipse className="hd-blink" cx="48" cy="50" rx="2.6" ry="3.2" fill={INK} />
+              <ellipse cx="26" cy="58" rx="4" ry="2.4" fill={BLUSH} />
+              <ellipse cx="54" cy="58" rx="4" ry="2.4" fill={BLUSH} />
+              <path d="M38 56l2 2 2-2" stroke={INK} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            </svg>
+          </div>
+          <svg className="absolute" style={{ left: 0, top: 62 }} width="170" height="128" viewBox="0 0 170 128">
+            {/* The brim first, so the crown stands on it. */}
+            <ellipse cx="85" cy="108" rx="82" ry="18" fill={INK} />
+            <path d="M10 106q75 22 150 0" stroke="#3A3644" strokeWidth="2" fill="none" />
+            <path d="M37 12v76c0 10 22 16 48 16s48-6 48-16V12c0 6-22 11-48 11S37 18 37 12z" fill={INK} />
+            <path d="M37 12c0 6 22 11 48 11s48-5 48-11" stroke="#3A3644" strokeWidth="2" fill="none" />
+            <path d="M37 88c0 10 22 16 48 16s48-6 48-16" stroke="#3A3644" strokeWidth="2" fill="none" />
+            <path d="M37 68c0 10 22 15 48 15s48-5 48-15v16c0 10-22 15-48 15s-48-5-48-15z" fill={RED} />
+          </svg>
+        </div>
+      </Poke>
+    </div>
+  );
+};
+
 const Right = () => (
   <>
     <SuitRise kind="heart" x={44} s={16} c={I} dur={32} delay={-8} op={0.45} />
@@ -306,53 +394,22 @@ const Right = () => (
 
     <div
       className="hd-sticker hd-wob"
-      style={vars({
-        left: 84,
-        top: vh(150),
-        "--r": "12deg",
-        animationDelay: "-1.2s",
-      })}
+      style={vars({ left: 84, top: vh(150), "--r": "12deg", animationDelay: "-1.2s" })}
     >
-      <MiniCard rank="A" kind="spade" w={70} />
+      <Poke>
+        <MiniCard rank="A" kind="spade" w={70} />
+      </Poke>
     </div>
     <div
       className="hd-sticker hd-wob"
-      style={vars({
-        left: 174,
-        top: vh(230),
-        "--r": "-10deg",
-        animationDelay: "-2.8s",
-      })}
+      style={vars({ left: 174, top: vh(230), "--r": "-10deg", animationDelay: "-2.8s" })}
     >
-      <MiniCard rank="7" kind="heart" w={56} />
+      <Poke>
+        <MiniCard rank="7" kind="heart" w={56} />
+      </Poke>
     </div>
 
-    {/* A top hat, and a bunny who peeks out now and then. */}
-    <div className="hd-sticker" style={{ left: 64, top: vh(470) }}>
-      <div className="hd-wob relative" style={vars({ "--r": "-6deg", width: 170, height: 190 })}>
-        <div className="absolute overflow-hidden" style={{ left: 39, top: 0, width: 92, height: 72 }}>
-          <svg className="hd-bunny absolute" style={{ left: 6, top: 6 }} width="80" height="70" viewBox="0 0 80 70">
-            <path d="M26 34C18 10 20 0 26 0s10 14 8 34z" fill="#fff" />
-            <path d="M27 30c-4-14-3-22 0-22s5 10 4 22z" fill="#FFC9D1" />
-            <path d="M46 34c2-20 6-34 12-34s6 12-4 34z" fill="#fff" />
-            <path d="M49 30c2-14 4-22 7-22s2 10-3 22z" fill="#FFC9D1" />
-            <ellipse cx="40" cy="52" rx="24" ry="20" fill="#fff" />
-            <ellipse className="hd-blink" cx="32" cy="50" rx="2.6" ry="3.2" fill={INK} />
-            <ellipse className="hd-blink" cx="48" cy="50" rx="2.6" ry="3.2" fill={INK} />
-            <ellipse cx="26" cy="58" rx="4" ry="2.4" fill={BLUSH} />
-            <ellipse cx="54" cy="58" rx="4" ry="2.4" fill={BLUSH} />
-            <path d="M38 56l2 2 2-2" stroke={INK} strokeWidth="1.6" fill="none" strokeLinecap="round" />
-          </svg>
-        </div>
-        <svg className="absolute" style={{ left: 0, top: 62 }} width="170" height="128" viewBox="0 0 170 128">
-          <ellipse cx="85" cy="12" rx="48" ry="11" fill="#2A2733" />
-          <path d="M37 12v76c0 10 22 16 48 16s48-6 48-16V12c0 6-22 11-48 11S37 18 37 12z" fill={INK} />
-          <path d="M37 68c0 10 22 15 48 15s48-5 48-15v16c0 10-22 15-48 15s-48-5-48-15z" fill={RED} />
-          <ellipse cx="85" cy="108" rx="82" ry="18" fill={INK} />
-          <path d="M10 106q75 22 150 0" stroke="#3A3644" strokeWidth="2" fill="none" />
-        </svg>
-      </div>
-    </div>
+    <Hat />
     <Note x={74} y={vh(690)} rotate={4}>
       he&apos;s a bit shy
     </Note>
@@ -366,12 +423,12 @@ const Right = () => (
   </>
 );
 
-/* ---- the foot of the page: a ribbon spread that ripples ---- */
+/* ---- the foot of the page: a ribbon spread that ripples, and rises to the pointer ---- */
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "J", "Q", "K"];
 const KINDS: Suit[] = ["heart", "spade", "diamond", "club"];
 
 const Bottom = () => (
-  <div className="absolute bottom-6 left-1/2 -translate-x-1/2" style={{ width: 920, height: 90 }}>
+  <div className="absolute bottom-2 left-1/2 -translate-x-1/2" style={{ width: 920, height: 84 }}>
     <div className="hd-ribbon absolute inset-0">
       {Array.from({ length: 30 }, (_, i) => (
         <span
@@ -382,7 +439,7 @@ const Bottom = () => (
             animationDelay: `${(i * 0.07).toFixed(2)}s`,
           })}
         >
-          <MiniCard face={i % 7 !== 3} rank={RANKS[i % 12]} kind={KINDS[i % 4]} w={50} />
+          <MiniCard face={i % 7 !== 3} rank={RANKS[i % 12]} kind={KINDS[i % 4]} w={46} />
         </span>
       ))}
     </div>
@@ -394,12 +451,14 @@ const Bottom = () => (
 
 /* ---- an ace taped to the grid's corner ---- */
 const Grid = () => (
-  <div className="absolute -top-[26px] -right-1 rotate-[9deg]">
-    <div style={{ filter: "drop-shadow(0 8px 12px var(--hd-drop))" }}>
-      <MiniCard rank="A" kind="heart" w={58} />
-    </div>
+  <div className="absolute -top-1 right-1 rotate-[9deg]">
+    <Poke>
+      <span className="block" style={{ filter: "drop-shadow(0 8px 12px var(--hd-drop))" }}>
+        <MiniCard rank="A" kind="heart" w={38} />
+      </span>
+    </Poke>
     <span
-      className="absolute -top-2 left-2 h-4 w-11 -rotate-12 rounded-[2px]"
+      className="absolute -top-1.5 left-1 h-3 w-8 -rotate-12 rounded-[2px]"
       style={{ background: "rgba(255,150,170,.55)" }}
     />
   </div>

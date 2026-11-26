@@ -9,11 +9,12 @@ import { DEFAULT_HOBBY } from "@/data/hobby/hobbies";
 const field =
   "border-input bg-field h-[46px] rounded-[14px] border px-3.5 text-[15px] outline-none transition focus:border-[var(--hb)]";
 
-const LoginForm = ({ next }: { next: string }) => {
+/** `open`: local dev, where no password is asked for. */
+const LoginForm = ({ next, open = false }: { next: string; open?: boolean }) => {
   const [state, action, pending] = useActionState(login, null);
 
   return (
-    <main data-hobby={DEFAULT_HOBBY} className="hb-dots relative grid min-h-dvh place-items-center overflow-hidden px-4">
+    <main data-hobby={DEFAULT_HOBBY} className="hb-ground relative grid min-h-dvh place-items-center overflow-hidden px-4">
       <div
         aria-hidden="true"
         className="absolute top-[54%] left-1/2 size-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,var(--hb)_0%,transparent_62%)] opacity-[0.18]"
@@ -26,18 +27,26 @@ const LoginForm = ({ next }: { next: string }) => {
           <span className="font-hand text-hb-ink -rotate-2 text-2xl">only Tom past this point</span>
         </div>
         <input type="hidden" name="next" value={next} />
-        <label htmlFor="hb-pass" className="text-muted-foreground text-[13px]">
-          Password
-        </label>
-        <input
-          id="hb-pass"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          autoFocus
-          required
-          className={`${field} -mt-2`}
-        />
+        {open ? (
+          <p className="text-muted-foreground text-center text-[13px]">
+            Local dev: no password needed.
+          </p>
+        ) : (
+          <>
+            <label htmlFor="hb-pass" className="text-muted-foreground text-[13px]">
+              Password
+            </label>
+            <input
+              id="hb-pass"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              autoFocus
+              required
+              className={`${field} -mt-2`}
+            />
+          </>
+        )}
         {state?.error && (
           <p role="alert" className="text-destructive text-sm">
             {state.error}
@@ -46,6 +55,7 @@ const LoginForm = ({ next }: { next: string }) => {
         <button
           type="submit"
           disabled={pending}
+          autoFocus={open}
           className="bg-hb-btn text-hb-on mt-2 h-12 cursor-pointer rounded-full text-[15px] font-semibold shadow-[inset_0_1px_0_rgb(255_255_255/45%)] disabled:opacity-60"
         >
           {pending ? "Signing in…" : "Sign in"}

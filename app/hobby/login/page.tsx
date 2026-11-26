@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LoginForm from "@/components/hobby/LoginForm";
+import { devOpen } from "@/lib/hobby/auth";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -13,5 +14,5 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  return <LoginForm next={next ?? ""} />;
+  return <LoginForm next={next ?? ""} open={devOpen()} />;
 }

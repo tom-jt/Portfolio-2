@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Inter, Nanum_Pen_Script } from "next/font/google";
+import { Fraunces, Instrument_Sans, Nanum_Pen_Script } from "next/font/google";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+/** Titles: a soft, slightly wonky serif, like a label on a scrapbook page. */
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  style: ["normal", "italic"],
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const instrument = Instrument_Sans({
+  variable: "--font-isans",
   subsets: ["latin"],
 });
 
-/** Handwriting, for the quips and empty states only, never card content. */
+/** Handwriting: quips, tags, notes, and the stamps. */
 const nanum = Nanum_Pen_Script({
   variable: "--font-nanum",
   subsets: ["latin"],
@@ -46,7 +48,7 @@ export default function HobbyLayout({
   return (
     <div
       data-site="hobby"
-      className={`${bricolage.variable} ${inter.variable} ${nanum.variable} bg-background text-foreground min-h-dvh`}
+      className={`${fraunces.variable} ${instrument.variable} ${nanum.variable} bg-background text-foreground min-h-dvh`}
     >
       {children}
     </div>

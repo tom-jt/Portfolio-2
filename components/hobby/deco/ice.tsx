@@ -1,5 +1,5 @@
 import type { DecoSet } from "./Deco";
-import { BLUSH, I, INK, Note, seeded, vars, vh } from "./parts";
+import { BLUSH, I, INK, Note, Poke, seeded, vars, vh } from "./parts";
 
 const NAVY = "#25304A";
 const SNOW = "#F7FBFF";
@@ -92,7 +92,9 @@ const Skate = ({ w }: { w: number }) => (
 const Hero = () => (
   <>
     <div className="hd-sticker hd-wob" style={vars({ left: 24, top: 74, "--r": "-8deg", animationDelay: "-1s" })}>
-      <Penguin w={120} />
+      <Poke>
+        <Penguin w={120} />
+      </Poke>
     </div>
     <div
       className="hd-sticker hd-wob"
@@ -103,7 +105,9 @@ const Hero = () => (
         animationDelay: "-2.6s",
       })}
     >
-      <Skate w={104} />
+      <Poke>
+        <Skate w={104} />
+      </Poke>
     </div>
     <div
       className="hd-sticker hd-wob"
@@ -114,16 +118,18 @@ const Hero = () => (
         animationDelay: "-.4s",
       })}
     >
-      <svg width="66" height="66" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="11" fill="#E9F5FF" />
-        <path
-          d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.6L12 6.4l2.5-1.8M9.5 19.4L12 17.6l2.5 1.8"
-          stroke={SKY}
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          fill="none"
-        />
-      </svg>
+      <Poke>
+        <svg width="66" height="66" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="11" fill="#E9F5FF" />
+          <path
+            d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.6L12 6.4l2.5-1.8M9.5 19.4L12 17.6l2.5 1.8"
+            stroke={SKY}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+      </Poke>
     </div>
   </>
 );
@@ -142,23 +148,25 @@ const Left = () => (
         animationDelay: "-1.8s",
       })}
     >
-      <svg width="112" height="100" viewBox="0 0 112 100">
-        <path d="M14 70C14 34 32 14 56 14s42 20 42 56z" fill={SKY} />
-        <path
-          d="M30 30v40M44 20v50M58 16v54M72 20v50M86 32v38"
-          stroke="#5EA8E8"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <rect x="8" y="64" width="96" height="24" rx="10" fill={SNOW} />
-        <path
-          d="M18 70v12M30 70v12M42 70v12M54 70v12M66 70v12M78 70v12M90 70v12"
-          stroke="#D8E8F7"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <circle cx="56" cy="12" r="11" fill={SNOW} />
-      </svg>
+      <Poke>
+        <svg width="112" height="100" viewBox="0 0 112 100">
+          <path d="M14 70C14 34 32 14 56 14s42 20 42 56z" fill={SKY} />
+          <path
+            d="M30 30v40M44 20v50M58 16v54M72 20v50M86 32v38"
+            stroke="#5EA8E8"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+          <rect x="8" y="64" width="96" height="24" rx="10" fill={SNOW} />
+          <path
+            d="M18 70v12M30 70v12M42 70v12M54 70v12M66 70v12M78 70v12M90 70v12"
+            stroke="#D8E8F7"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+          <circle cx="56" cy="12" r="11" fill={SNOW} />
+        </svg>
+      </Poke>
     </div>
     <Note x={70} y={vh(270)} rotate={-5}>
       rink is 4°C, dress up
@@ -216,29 +224,31 @@ const Right = () => (
         animationDelay: "-3s",
       })}
     >
-      <svg width="110" height="120" viewBox="0 0 110 120" style={{ overflow: "visible" }}>
-        {[38, 56, 74].map((x, i) => (
-          <path
-            key={x}
-            className="hd-steam"
-            style={{ animationDelay: `${-i}s` }}
-            d={`M${x} 34q-8-10 0-18t0-16`}
-            stroke="#E9F5FF"
-            strokeWidth="4"
-            strokeLinecap="round"
-            fill="none"
-          />
-        ))}
-        <path d="M18 44h76l-6 58c-1 8-8 14-16 14H40c-8 0-15-6-16-14z" fill={BLUSH} />
-        <path d="M92 56c14 0 16 22 0 24" stroke={BLUSH} strokeWidth="8" fill="none" />
-        <ellipse cx="56" cy="44" rx="38" ry="8" fill="#8A5A44" />
-        <circle cx="44" cy="42" r="6" fill="#fff" />
-        <circle cx="58" cy="44" r="5" fill="#fff" />
-        <circle cx="68" cy="41" r="5.5" fill="#fff" />
-        <ellipse className="hd-blink" cx="44" cy="78" rx="3" ry="3.6" fill={INK} />
-        <ellipse className="hd-blink" cx="66" cy="78" rx="3" ry="3.6" fill={INK} />
-        <path d="M51 86q4 4 8 0" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
-      </svg>
+      <Poke>
+        <svg width="110" height="120" viewBox="0 0 110 120" style={{ overflow: "visible" }}>
+          {[38, 56, 74].map((x, i) => (
+            <path
+              key={x}
+              className="hd-steam"
+              style={{ animationDelay: `${-i}s` }}
+              d={`M${x} 34q-8-10 0-18t0-16`}
+              stroke="#E9F5FF"
+              strokeWidth="4"
+              strokeLinecap="round"
+              fill="none"
+            />
+          ))}
+          <path d="M18 44h76l-6 58c-1 8-8 14-16 14H40c-8 0-15-6-16-14z" fill={BLUSH} />
+          <path d="M92 56c14 0 16 22 0 24" stroke={BLUSH} strokeWidth="8" fill="none" />
+          <ellipse cx="56" cy="44" rx="38" ry="8" fill="#8A5A44" />
+          <circle cx="44" cy="42" r="6" fill="#fff" />
+          <circle cx="58" cy="44" r="5" fill="#fff" />
+          <circle cx="68" cy="41" r="5.5" fill="#fff" />
+          <ellipse className="hd-blink" cx="44" cy="78" rx="3" ry="3.6" fill={INK} />
+          <ellipse className="hd-blink" cx="66" cy="78" rx="3" ry="3.6" fill={INK} />
+          <path d="M51 86q4 4 8 0" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+        </svg>
+      </Poke>
     </div>
 
     {/* Mittens on a string. */}
@@ -248,10 +258,14 @@ const Right = () => (
           <path d="M30 60Q110 0 190 60" stroke="var(--hd-snow-2)" strokeWidth="2" />
         </svg>
         <div className="hd-sticker" style={{ left: 6, top: 52, transform: "rotate(14deg)" }}>
-          <Mitten />
+          <Poke>
+            <Mitten />
+          </Poke>
         </div>
         <div className="hd-sticker" style={{ left: 150, top: 52, transform: "rotate(-14deg)" }}>
-          <Mitten flip />
+          <Poke>
+            <Mitten flip />
+          </Poke>
         </div>
       </div>
     </div>
@@ -269,23 +283,25 @@ const Right = () => (
         animationDelay: "-2s",
       })}
     >
-      <svg width="130" height="170" viewBox="0 0 130 170">
-        <circle cx="65" cy="124" r="42" fill={SNOW} />
-        <circle cx="65" cy="62" r="32" fill={SNOW} />
-        <path d="M30 86q35 16 70 0v12q-35 16-70 0z" fill={BLUSH} />
-        <path d="M84 94l6 26h-11l-3-22z" fill={BLUSH} />
-        <path d="M38 40h54l-4-26H42z" fill={NAVY} />
-        <rect x="30" y="38" width="70" height="8" rx="4" fill={NAVY} />
-        <path d="M42 30h46" stroke={SKY} strokeWidth="5" />
-        <ellipse className="hd-blink" cx="54" cy="60" rx="3.6" ry="4.4" fill={INK} />
-        <ellipse className="hd-blink" cx="76" cy="60" rx="3.6" ry="4.4" fill={INK} />
-        <path d="M65 68l14 4-14 3z" fill={ORANGE} />
-        <ellipse cx="46" cy="72" rx="5" ry="3" fill={BLUSH} />
-        <ellipse cx="84" cy="72" rx="5" ry="3" fill={BLUSH} />
-        <circle cx="65" cy="112" r="3.4" fill={NAVY} />
-        <circle cx="65" cy="128" r="3.4" fill={NAVY} />
-        <path d="M24 108L4 92M106 108l20-16" stroke="#8A5A44" strokeWidth="4" strokeLinecap="round" />
-      </svg>
+      <Poke>
+        <svg width="130" height="170" viewBox="0 0 130 170">
+          <circle cx="65" cy="124" r="42" fill={SNOW} />
+          <circle cx="65" cy="62" r="32" fill={SNOW} />
+          <path d="M30 86q35 16 70 0v12q-35 16-70 0z" fill={BLUSH} />
+          <path d="M84 94l6 26h-11l-3-22z" fill={BLUSH} />
+          <path d="M38 40h54l-4-26H42z" fill={NAVY} />
+          <rect x="30" y="38" width="70" height="8" rx="4" fill={NAVY} />
+          <path d="M42 30h46" stroke={SKY} strokeWidth="5" />
+          <ellipse className="hd-blink" cx="54" cy="60" rx="3.6" ry="4.4" fill={INK} />
+          <ellipse className="hd-blink" cx="76" cy="60" rx="3.6" ry="4.4" fill={INK} />
+          <path d="M65 68l14 4-14 3z" fill={ORANGE} />
+          <ellipse cx="46" cy="72" rx="5" ry="3" fill={BLUSH} />
+          <ellipse cx="84" cy="72" rx="5" ry="3" fill={BLUSH} />
+          <circle cx="65" cy="112" r="3.4" fill={NAVY} />
+          <circle cx="65" cy="128" r="3.4" fill={NAVY} />
+          <path d="M24 108L4 92M106 108l20-16" stroke="#8A5A44" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      </Poke>
     </div>
   </>
 );
@@ -312,26 +328,6 @@ const Cap = ({ left, w, h = 34 }: { left: number; w: number; h?: number }) => (
   </svg>
 );
 
-const ICICLES =
-  "M0 0h260l-8 0-6 20-6-20-10 0-5 30-5-30-12 0-6 16-6-16-10 0-6 26-6-26-14 0-5 14-5-14-12 0-7 32-7-32-12 0-5 18-5-18-12 0-6 24-6-24-12 0-5 12-5-12-14 0-6 28-6-28-10 0-5 16-5-16z";
-
-const Toolbar = () => (
-  <>
-    <Cap left={44} w={320} />
-    {/* Short enough to clear the card panel just below. */}
-    <svg
-      className="absolute top-[calc(100%-1px)] right-[26px]"
-      width="200"
-      height="22"
-      viewBox="0 0 260 34"
-      preserveAspectRatio="none"
-    >
-      <path d={ICICLES} fill="#DDEFFF" opacity=".85" />
-    </svg>
-    <span className="hd-drip hd-move top-[calc(100%+18px)] right-[148px]" />
-    <span className="hd-drip hd-move top-[calc(100%+17px)] right-[68px]" style={{ animationDelay: "-2.4s" }} />
-  </>
-);
 
 const Panel = () => <Cap left={24} w={190} />;
 
@@ -339,7 +335,7 @@ const Panel = () => <Cap left={24} w={190} />;
 const Bottom = () => (
   <>
     <div
-      className="absolute inset-x-0 top-[60px] bottom-0 overflow-hidden"
+      className="absolute inset-x-0 top-[52px] bottom-0 overflow-hidden"
       style={{
         background: "linear-gradient(180deg, transparent, rgb(var(--hb-rgb) / 10%))",
         borderTop: "2px dashed rgb(var(--hb-rgb) / 45%)",
@@ -363,10 +359,10 @@ const Bottom = () => (
         <path d="M80 40q160-40 320 10M500 70q200-50 380 0M1000 30q180 40 360-10M1440 60q160-40 380 10M240 80q80-20 160 0M1900 40q200-40 380 10M2200 70q120-30 300 0" />
       </svg>
     </div>
-    <div className="hd-slider hd-move" style={{ top: 6 }}>
-      <Penguin w={52} />
+    <div className="hd-slider hd-move" style={{ top: 4 }}>
+      <Penguin w={46} />
     </div>
-    <div className="hd-slider hd-move" style={{ top: 28, animationDelay: ".45s" }}>
+    <div className="hd-slider hd-move" style={{ top: 20, animationDelay: ".45s" }}>
       <svg width="32" height="35" viewBox="0 0 120 132" style={{ animationDuration: ".45s" }}>
         <ellipse cx="60" cy="74" rx="44" ry="52" fill="#9AA3B5" />
         <ellipse cx="60" cy="84" rx="30" ry="38" fill={SNOW} />
@@ -377,7 +373,7 @@ const Bottom = () => (
         <ellipse cx="84" cy="74" rx="7" ry="4" fill={BLUSH} />
       </svg>
     </div>
-    <span className="absolute left-1/2" style={{ top: 100 }}>
+    <span className="absolute left-1/2" style={{ top: 78 }}>
       <Note x={-60} y={0} rotate={-2}>
         wait for meee
       </Note>
@@ -385,5 +381,5 @@ const Bottom = () => (
   </>
 );
 
-const set: DecoSet = { Ground, Hero, Left, Right, Toolbar, Panel, Bottom };
+const set: DecoSet = { Ground, Hero, Left, Right, Panel, Bottom };
 export default set;

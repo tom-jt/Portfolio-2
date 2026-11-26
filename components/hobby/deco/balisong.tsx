@@ -1,5 +1,5 @@
 import type { DecoSet } from "./Deco";
-import { A, I, INK, Note, seeded, vars, vh } from "./parts";
+import { A, I, INK, Note, Poke, seeded, vars, vh } from "./parts";
 
 const BROWN = "#3A2A14";
 const LEAF = "#7FCB8F";
@@ -119,15 +119,17 @@ const Hero = () => (
       <path d={P_HERO} stroke={I} strokeWidth="1.6" strokeDasharray="2 9" strokeLinecap="round" opacity=".35" />
     </svg>
     <div className="hd-sticker" style={{ left: 164, top: 96, transform: "rotate(8deg)" }}>
-      <div className="hd-knife grid size-[120px] place-items-center">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <rect x="56" y="14" width="8" height="54" rx="3" fill="#D9DCE3" />
-          <rect x="47" y="62" width="11" height="48" rx="5" fill={AMBER} />
-          <rect x="62" y="62" width="11" height="48" rx="5" fill="#E0962E" />
-          <circle cx="60" cy="64" r="4" fill={BROWN} />
-          <path d="M52 104h16" stroke={BROWN} strokeWidth="3" strokeLinecap="round" />
-        </svg>
-      </div>
+      <Poke className="hd-spinner">
+        <div className="hd-knife grid size-[120px] place-items-center">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <rect x="56" y="14" width="8" height="54" rx="3" fill="#D9DCE3" />
+            <rect x="47" y="62" width="11" height="48" rx="5" fill={AMBER} />
+            <rect x="62" y="62" width="11" height="48" rx="5" fill="#E0962E" />
+            <circle cx="60" cy="64" r="4" fill={BROWN} />
+            <path d="M52 104h16" stroke={BROWN} strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </div>
+      </Poke>
     </div>
     <Fly path={P_HERO} size={52} c1={AMBER} c2={AMBER_2} dur={16} delay={0} />
   </>
@@ -181,7 +183,9 @@ const Left = () => (
         animationDelay: "-2s",
       })}
     >
-      <Butterfly size={96} c1="#C9B2FF" c2="#E6DBFF" rest face />
+      <Poke>
+        <Butterfly size={96} c1="#C9B2FF" c2="#E6DBFF" rest face />
+      </Poke>
     </div>
     <Note x={70} y={vh(290)}>
       flutter, not flick
@@ -228,27 +232,32 @@ const Left = () => (
 const Right = () => (
   <>
     <Petals shift={9} />
-    {/* A cocoon on a thread, nearly ready. */}
+    {/* A cocoon on a thread, nearly ready. Thread and cocoon swing as one,
+        from the top of the thread. */}
     <div className="absolute" style={{ left: 84, top: vh(120), width: 100, height: 300 }}>
-      <svg className="absolute top-0 left-0" width="100" height="180" fill="none">
-        <path d="M50 0v180" stroke={I} strokeWidth="1.4" opacity=".6" />
-      </svg>
-      <div className="hd-swing absolute" style={{ left: 26, top: 170, transformOrigin: "50% -170px" }}>
-        <svg width="48" height="80" viewBox="0 0 48 80">
-          <path d="M24 2c14 6 20 24 18 44s-10 30-18 32c-8-2-16-12-18-32S10 8 24 2z" fill="#C9A97A" />
-          <path
-            d="M10 26q14 6 28 0M8 40q16 6 32 0M10 54q14 6 28 0"
-            stroke="#A88758"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <ellipse className="hd-blink" cx="18" cy="34" rx="2.4" ry="3" fill={INK} />
-          <ellipse className="hd-blink" cx="30" cy="34" rx="2.4" ry="3" fill={INK} />
-          <path d="M20 44q4 3 8 0" stroke={INK} strokeWidth="2" strokeLinecap="round" fill="none" />
+      <div className="hd-swing absolute top-0 left-0 h-[252px] w-[100px]">
+        <svg className="absolute top-0 left-0" width="100" height="176" fill="none">
+          <path d="M50 0v176" stroke={I} strokeWidth="1.4" opacity=".6" />
         </svg>
+        <div className="absolute" style={{ left: 26, top: 170 }}>
+          <Poke>
+            <svg width="48" height="80" viewBox="0 0 48 80">
+              <path d="M24 2c14 6 20 24 18 44s-10 30-18 32c-8-2-16-12-18-32S10 8 24 2z" fill="#C9A97A" />
+              <path
+                d="M10 26q14 6 28 0M8 40q16 6 32 0M10 54q14 6 28 0"
+                stroke="#A88758"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <ellipse className="hd-blink" cx="18" cy="34" rx="2.4" ry="3" fill={INK} />
+              <ellipse className="hd-blink" cx="30" cy="34" rx="2.4" ry="3" fill={INK} />
+              <path d="M20 44q4 3 8 0" stroke={INK} strokeWidth="2" strokeLinecap="round" fill="none" />
+            </svg>
+          </Poke>
+        </div>
       </div>
-      <Note x={96} y={180} rotate={5}>
+      <Note x={120} y={184} rotate={5}>
         nearly
         <br />
         ready
@@ -286,34 +295,38 @@ const Right = () => (
 
 /* ---- resting on the boxes ---- */
 const Grid = () => (
-  <div className="hd-sticker hd-wob -top-8 -right-[22px]" style={vars({ "--r": "-12deg" })}>
-    <Butterfly size={64} c1={AMBER} c2={AMBER_2} rest face />
+  <div className="hd-sticker hd-wob -top-0.5 right-1" style={vars({ "--r": "-12deg" })}>
+    <Poke>
+      <Butterfly size={46} c1={AMBER} c2={AMBER_2} rest face />
+    </Poke>
   </div>
 );
 
 const Panel = () => (
   <div className="hd-crawl absolute -top-[24px] left-7" style={vars({ "--far": "220px" })}>
-    <svg width="110" height="34" viewBox="0 0 110 34" style={{ overflow: "visible" }}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <circle
-          key={i}
-          className="hd-seg"
-          cx={12 + i * 15}
-          cy="16"
-          r="10"
-          fill={i % 2 ? "#9BDB7A" : "#86CC66"}
-          style={{ animationDelay: `${-i * 0.12}s` }}
-        />
-      ))}
-      <g className="hd-seg" style={{ animationDelay: "-.7s" }}>
-        <circle cx="94" cy="14" r="12" fill="#9BDB7A" />
-        <circle cx="90" cy="11" r="2.2" fill={INK} />
-        <circle cx="99" cy="11" r="2.2" fill={INK} />
-        <ellipse cx="88" cy="18" rx="3" ry="1.8" fill="#FFB3BD" />
-        <ellipse cx="101" cy="18" rx="3" ry="1.8" fill="#FFB3BD" />
-        <path d="M90 2l-3-6M98 2l3-6" stroke={INK} strokeWidth="1.6" strokeLinecap="round" />
-      </g>
-    </svg>
+    <Poke>
+      <svg width="110" height="34" viewBox="0 0 110 34" style={{ overflow: "visible" }}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <circle
+            key={i}
+            className="hd-seg"
+            cx={12 + i * 15}
+            cy="16"
+            r="10"
+            fill={i % 2 ? "#9BDB7A" : "#86CC66"}
+            style={{ animationDelay: `${-i * 0.12}s` }}
+          />
+        ))}
+        <g className="hd-seg" style={{ animationDelay: "-.7s" }}>
+          <circle cx="94" cy="14" r="12" fill="#9BDB7A" />
+          <circle cx="90" cy="11" r="2.2" fill={INK} />
+          <circle cx="99" cy="11" r="2.2" fill={INK} />
+          <ellipse cx="88" cy="18" rx="3" ry="1.8" fill="#FFB3BD" />
+          <ellipse cx="101" cy="18" rx="3" ry="1.8" fill="#FFB3BD" />
+          <path d="M90 2l-3-6M98 2l3-6" stroke={INK} strokeWidth="1.6" strokeLinecap="round" />
+        </g>
+      </svg>
+    </Poke>
   </div>
 );
 

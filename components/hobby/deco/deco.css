@@ -233,7 +233,7 @@
 @keyframes hd-peek {
   0%,
   18% {
-    transform: translateY(58px);
+    transform: translateY(84px);
   }
   30%,
   62% {
@@ -247,7 +247,7 @@
   }
   88%,
   100% {
-    transform: translateY(58px);
+    transform: translateY(84px);
   }
 }
 .hd-bunny {
@@ -609,6 +609,143 @@
   animation: hd-hop 1.2s ease-in-out infinite;
 }
 
+/* ---- poking things ----
+   Most stickers lift a little under the pointer and boing when clicked. They
+   use the separate scale, rotate, and translate properties, so they stack
+   on top of whatever transform loop the sticker is already running. */
+.hd-poke {
+  display: inline-block;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: scale 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.hd-poke:hover {
+  scale: 1.08;
+}
+@keyframes hd-boing {
+  0% {
+    scale: 1;
+  }
+  30% {
+    scale: 1.22 0.86;
+  }
+  55% {
+    scale: 0.9 1.12;
+  }
+  75% {
+    scale: 1.06 0.96;
+  }
+  100% {
+    scale: 1;
+  }
+}
+.hd-poke[data-boing] {
+  animation: hd-boing 0.6s ease;
+}
+/* The trainer spins three times instead. */
+@keyframes hd-spin3 {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 1080deg;
+  }
+}
+.hd-poke.hd-spinner[data-boing] {
+  animation: hd-spin3 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* A poked butterfly flaps like mad for a moment. */
+.hd-poke[data-boing] .hd-wing {
+  animation: hd-flap 0.12s ease-in-out infinite alternate !important;
+}
+
+/* The fan of cards: a click spins it round once. */
+.hd-shuffler {
+  transform-style: preserve-3d;
+}
+@keyframes hd-shuffle {
+  from {
+    transform: rotateY(0);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+.hd-shuffler[data-spin] {
+  animation: hd-shuffle 1s cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+/* The bunny, when the hat is tapped: all the way out, a wiggle, back in. */
+@keyframes hd-hop-out {
+  0% {
+    transform: translateY(var(--from, 84px));
+  }
+  28% {
+    transform: translateY(-44px);
+  }
+  42% {
+    transform: translateY(-30px) rotate(-8deg);
+  }
+  56% {
+    transform: translateY(-30px) rotate(8deg);
+  }
+  70% {
+    transform: translateY(-30px) rotate(0);
+  }
+  100% {
+    transform: translateY(84px);
+  }
+}
+/* Fill both ways, and his resting place is inside the hat, so there is no
+   frame between the hop and the peek where he shows in the wrong spot. */
+.hd-bunny-out {
+  animation: hd-hop-out 1.8s cubic-bezier(0.4, 0, 0.3, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* Sparkles thrown off by the wand. */
+@keyframes hd-burst {
+  0% {
+    translate: 0 0;
+    scale: 0.4;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--dx) var(--dy);
+    scale: 1;
+    opacity: 0;
+  }
+}
+.hd-burst {
+  position: absolute;
+  animation: hd-burst 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+/* Ribbon cards rise to meet the pointer. */
+.hd-ribbon > span {
+  pointer-events: auto;
+  transition: translate 0.2s ease;
+}
+.hd-ribbon > span:hover {
+  translate: 0 -18px;
+}
+
+/* Keys you can play. */
+.hd-key,
+.hd-black {
+  pointer-events: auto;
+  cursor: pointer;
+  transition: translate 0.08s ease;
+}
+.hd-key[data-down] {
+  translate: 0 4px;
+  background: #b9f2da !important;
+}
+.hd-black[data-down] {
+  translate: 0 3px;
+  background: #2f8f6b !important;
+}
+
 /* Reduced motion: things that only make sense moving go away; stickers and
    doodles stay, still. */
 @media (prefers-reduced-motion: reduce) {
@@ -618,6 +755,9 @@
   }
   .hd .hd-move {
     display: none;
+  }
+  .hd .hd-poke {
+    transition: none;
   }
   .hd .hd-card {
     transform: rotateZ(var(--a)) translateZ(var(--z));

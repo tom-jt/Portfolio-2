@@ -7,6 +7,10 @@
  *
  * The session is a signed, httpOnly, Secure, SameSite=Strict cookie, and
  * every save checks it again on the server.
+ *
+ * Local dev (`next dev`, off Vercel) needs neither: sign-in takes no
+ * password, and the cookie is signed with a fixed dev secret. Production
+ * builds never take this path, as NODE_ENV is "production" there.
  */
 
 import { createHmac, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
@@ -18,10 +22,15 @@ const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) =>
 export const SESSION_COOKIE = "hobby_session";
 const SESSION_DAYS = 7;
 
-const secret = () => process.env.HOBBY_SESSION_SECRET ?? "";
+/** Running under `next dev` on this machine: sign-in is open. */
+export const devOpen = () => process.env.NODE_ENV === "development" && !process.env.VERCEL;
+
+const DEV_SECRET = "local-dev-only-hobby-session-secret-not-for-production";
+
+const secret = () => process.env.HOBBY_SESSION_SECRET || (devOpen() ? DEV_SECRET : "");
 
 export const authConfigured = () =>
-  !!process.env.HOBBY_ADMIN_PASSWORD_HASH && secret().length >= 32;
+  devOpen() || (!!process.env.HOBBY_ADMIN_PASSWORD_HASH && secret().length >= 32);
 
 const b64url = (b: Buffer | string) => Buffer.from(b).toString("base64url");
 const sign = (payload: string) => createHmac("sha256", secret()).update(payload).digest();
@@ -42,6 +51,7 @@ async function passwordMatches(password: string) {
 
 /** There is one admin, so the password alone signs in. */
 export async function checkPassword(password: string) {
+  if (devOpen()) return true;
   return authConfigured() && passwordMatches(password);
 }
 

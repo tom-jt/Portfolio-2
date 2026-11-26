@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** The hobby's accent, and its text shade (pale on dark, deep on paper). */
@@ -102,3 +102,39 @@ export const Note = ({
     {children}
   </span>
 );
+
+/**
+ * Something you can poke: it lifts under the pointer and boings on a click.
+ * `onPoke` adds the sticker's own trick. It is mouse and touch only; the
+ * decoration stays hidden from keyboard and screen-reader users, as it is
+ * just for fun.
+ */
+export const Poke = ({
+  children,
+  onPoke,
+  className,
+  style,
+}: {
+  children: ReactNode;
+  onPoke?: () => void;
+  className?: string;
+  style?: CSSProperties;
+}) => {
+  const [boing, setBoing] = useState(false);
+  return (
+    <span
+      className={cn("hd-poke", className)}
+      style={style}
+      data-boing={boing ? "" : undefined}
+      onClick={() => {
+        setBoing(true);
+        onPoke?.();
+      }}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget) setBoing(false);
+      }}
+    >
+      {children}
+    </span>
+  );
+};

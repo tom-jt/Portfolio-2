@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { DecoSet } from "./Deco";
-import { A, I, INK, Note, vars, vh } from "./parts";
+import { A, I, INK, Note, Poke, vars, vh } from "./parts";
 
 const MINT = "#6FE0B0";
 const MINT_2 = "#B9F2DA";
@@ -164,23 +164,27 @@ const Face = ({ cx, cy }: { cx: number; cy: number }) => (
 const Left = () => (
   <>
     <div className="hd-sticker" style={{ left: 70, top: vh(140) }}>
-      <svg width="140" height="120" viewBox="0 0 140 120" style={{ overflow: "visible" }}>
-        <path d="M44 24L120 10" stroke={INK} strokeWidth="12" strokeLinecap="round" />
-        <g className="hd-hop">
-          <path d="M44 24v66" stroke={INK} strokeWidth="5" />
-          <ellipse cx="28" cy="92" rx="20" ry="15" transform="rotate(-18 28 92)" fill={MINT} />
-          <Face cx={28} cy={92} />
-        </g>
-        <g className="hd-hop" style={{ animationDelay: "-.6s" }}>
-          <path d="M120 10v66" stroke={INK} strokeWidth="5" />
-          <ellipse cx="104" cy="78" rx="20" ry="15" transform="rotate(-18 104 78)" fill={MINT_2} />
-          <Face cx={104} cy={78} />
-        </g>
-      </svg>
+      <Poke>
+        <svg width="140" height="120" viewBox="0 0 140 120" style={{ overflow: "visible" }}>
+          <path d="M44 24L120 10" stroke={INK} strokeWidth="12" strokeLinecap="round" />
+          <g className="hd-hop">
+            <path d="M44 24v66" stroke={INK} strokeWidth="5" />
+            <ellipse cx="28" cy="92" rx="20" ry="15" transform="rotate(-18 28 92)" fill={MINT} />
+            <Face cx={28} cy={92} />
+          </g>
+          <g className="hd-hop" style={{ animationDelay: "-.6s" }}>
+            <path d="M120 10v66" stroke={INK} strokeWidth="5" />
+            <ellipse cx="104" cy="78" rx="20" ry="15" transform="rotate(-18 104 78)" fill={MINT_2} />
+            <Face cx={104} cy={78} />
+          </g>
+        </svg>
+      </Poke>
     </div>
 
     <div className="hd-sticker hd-wob" style={vars({ left: 118, top: vh(300), "--r": "-8deg" })}>
-      <Treble w={58} c={MINT} />
+      <Poke>
+        <Treble w={58} c={MINT} />
+      </Poke>
     </div>
 
     <div className="absolute" style={{ left: 0, top: vh(400), width: 304, height: 700 }}>
@@ -246,7 +250,9 @@ const Right = () => (
         animationDelay: "-2s",
       })}
     >
-      <Bass w={96} c={MINT} />
+      <Poke>
+        <Bass w={96} c={MINT} />
+      </Poke>
     </div>
     <div
       className="hd-sticker hd-wob"
@@ -257,21 +263,25 @@ const Right = () => (
         animationDelay: "-1s",
       })}
     >
-      <Treble w={34} c={MINT_2} />
+      <Poke>
+        <Treble w={34} c={MINT_2} />
+      </Poke>
     </div>
 
     <div className="hd-sticker" style={{ left: 74, top: vh(440) }}>
-      <svg width="100" height="140" viewBox="0 0 100 140">
-        <path d="M34 8h32l22 120H12z" fill={MINT} />
-        <path d="M38 14h24l17 92H21z" fill={PAPER} />
-        <path d="M30 70h40M28 82h44M26 94h48" stroke="#9FDCC2" strokeWidth="2" />
-        <g className="hd-tick">
-          <path d="M50 112V26" stroke={INK} strokeWidth="4" strokeLinecap="round" />
-          <rect x="42" y="46" width="16" height="12" rx="3" fill={INK} />
-        </g>
-        <rect x="8" y="124" width="84" height="12" rx="4" fill="#4FC497" />
-        <circle cx="50" cy="112" r="5" fill={INK} />
-      </svg>
+      <Poke>
+        <svg width="100" height="140" viewBox="0 0 100 140">
+          <path d="M34 8h32l22 120H12z" fill={MINT} />
+          <path d="M38 14h24l17 92H21z" fill={PAPER} />
+          <path d="M30 70h40M28 82h44M26 94h48" stroke="#9FDCC2" strokeWidth="2" />
+          <g className="hd-tick">
+            <path d="M50 112V26" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+            <rect x="42" y="46" width="16" height="12" rx="3" fill={INK} />
+          </g>
+          <rect x="8" y="124" width="84" height="12" rx="4" fill="#4FC497" />
+          <circle cx="50" cy="112" r="5" fill={INK} />
+        </svg>
+      </Poke>
     </div>
     <Note x={84} y={vh(600)} rotate={4} size={26}>
       ♩ = 60, no faster
@@ -307,53 +317,133 @@ const Right = () => (
 
 /* ---- resting on the boxes: a repeat sign and a fermata ---- */
 const Grid = () => (
-  <div className="hd-sticker hd-wob -top-[30px] right-0.5" style={vars({ "--r": "-6deg", animationDelay: "-2s" })}>
-    <svg width="44" height="58" viewBox="0 0 44 58">
-      <rect x="2" y="2" width="40" height="54" rx="8" fill={PAPER} />
-      <path d="M12 10v38" stroke={INK} strokeWidth="7" />
-      <path d="M22 10v38" stroke={INK} strokeWidth="2.4" />
-      <circle cx="31" cy="22" r="3.2" fill={INK} />
-      <circle cx="31" cy="36" r="3.2" fill={INK} />
-    </svg>
+  <div className="hd-sticker hd-wob top-0 right-1.5" style={vars({ "--r": "-6deg", animationDelay: "-2s" })}>
+    <Poke>
+      <svg width="32" height="42" viewBox="0 0 44 58">
+        <rect x="2" y="2" width="40" height="54" rx="8" fill={PAPER} />
+        <path d="M12 10v38" stroke={INK} strokeWidth="7" />
+        <path d="M22 10v38" stroke={INK} strokeWidth="2.4" />
+        <circle cx="31" cy="22" r="3.2" fill={INK} />
+        <circle cx="31" cy="36" r="3.2" fill={INK} />
+      </svg>
+    </Poke>
   </div>
 );
 
 const Panel = () => (
   <div className="hd-sticker hd-wob -top-[22px] right-8" style={vars({ "--r": "6deg" })}>
-    <svg width="52" height="33" viewBox="0 0 70 44">
-      <path d="M4 34C6 14 20 4 35 4s29 10 31 30c-1 2-3 2-4 0C58 20 48 12 35 12S12 20 8 34c-1 2-3 2-4 0z" fill={MINT} />
-      <circle cx="35" cy="31" r="6.5" fill={MINT} />
-    </svg>
+    <Poke>
+      <svg width="52" height="33" viewBox="0 0 70 44">
+        <path
+          d="M4 34C6 14 20 4 35 4s29 10 31 30c-1 2-3 2-4 0C58 20 48 12 35 12S12 20 8 34c-1 2-3 2-4 0z"
+          fill={MINT}
+        />
+        <circle cx="35" cy="31" r="6.5" fill={MINT} />
+      </svg>
+    </Poke>
   </div>
 );
 
 /* ---- the foot of the page: a keyboard, its keys pressing in a slow wave ---- */
 const WHITE = 64;
+/** Semitones above C for each white key in an octave, and where black keys sit. */
+const STEPS = [0, 2, 4, 5, 7, 9, 11];
+const HAS_BLACK = [0, 1, 3, 4, 5];
+/** White key i, from C2 up through six octaves and round again. */
+const whiteMidi = (i: number) => 36 + 12 * (Math.floor(i / 7) % 6) + STEPS[i % 7];
+
+let audio: AudioContext | null = null;
+
+/**
+ * One soft, bell-ish piano note. Every note is its own little chain of
+ * nodes that stops and lets go after a second and a half, rather than one
+ * long-lived voice being re-shaped, which newer Chromium handles badly.
+ */
+const playNote = (midi: number) => {
+  try {
+    audio ??= new AudioContext();
+    if (audio.state === "suspended") void audio.resume();
+    const ctx = audio;
+    const t = ctx.currentTime;
+    const f = 440 * 2 ** ((midi - 69) / 12);
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.14, t + 0.012);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+    out.connect(ctx.destination);
+    const partials: [number, OscillatorType, number][] = [
+      [1, "triangle", 1],
+      [2, "sine", 0.3],
+      [3, "sine", 0.08],
+    ];
+    for (const [mult, type, level] of partials) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = f * mult;
+      gain.gain.value = level;
+      osc.connect(gain).connect(out);
+      osc.start(t);
+      osc.stop(t + 1.5);
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
+    }
+    window.setTimeout(() => out.disconnect(), 1700);
+  } catch {
+    // No audio here; the key still presses.
+  }
+};
+
+/** Pointer handlers for a key: press and sound, drag across to glide, let go. */
+const keyProps = (midi: number) => {
+  const down = (el: HTMLElement) => {
+    if (el.hasAttribute("data-down")) return;
+    el.setAttribute("data-down", "");
+    playNote(midi);
+  };
+  const up = (el: HTMLElement) => el.removeAttribute("data-down");
+  return {
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.releasePointerCapture?.(e.pointerId);
+      down(e.currentTarget);
+    },
+    onPointerEnter: (e: React.PointerEvent<HTMLElement>) => {
+      if (e.buttons & 1) down(e.currentTarget);
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => up(e.currentTarget),
+    onPointerLeave: (e: React.PointerEvent<HTMLElement>) => up(e.currentTarget),
+    onPointerCancel: (e: React.PointerEvent<HTMLElement>) => up(e.currentTarget),
+  };
+};
+
+/* ---- the foot of the page: a keyboard, its keys pressing in a slow wave. It plays, too. ---- */
 const Bottom = () => (
   <>
     <div
-      className="absolute inset-x-0 top-[52px] h-2 opacity-35 blur-[4px]"
-      style={{
-        background: `linear-gradient(90deg, transparent, ${A}, transparent)`,
-      }}
+      className="absolute inset-x-0 top-[18px] h-2 opacity-35 blur-[4px]"
+      style={{ background: `linear-gradient(90deg, transparent, ${A}, transparent)` }}
     />
     <div
-      className="absolute -left-[30px] top-[60px] flex gap-[3px] rounded-t-2xl px-1.5 pt-1.5"
+      className="absolute top-[26px] -left-[30px] flex touch-none gap-[3px] rounded-t-2xl px-1.5 pt-1.5"
       style={{ background: INK }}
     >
       {Array.from({ length: WHITE }, (_, i) => (
-        <span key={i} className="hd-key" style={{ animationDelay: `${(i * 0.11).toFixed(2)}s` }} />
+        <span
+          key={i}
+          className="hd-key"
+          style={{ animationDelay: `${(i * 0.11).toFixed(2)}s` }}
+          {...keyProps(whiteMidi(i))}
+        />
       ))}
       {Array.from({ length: WHITE - 1 }, (_, i) =>
-        [0, 1, 3, 4, 5].includes(i % 7) ? (
+        HAS_BLACK.includes(i % 7) ? (
           <span
             key={`b${i}`}
-            className="absolute top-1.5 h-[52px] w-6 rounded-b-[5px]"
-            style={{
-              left: 6 + i * 42 + 30,
-              background: INK,
-              boxShadow: "inset 0 -3px 0 rgba(255,255,255,.08)",
-            }}
+            className="hd-black absolute top-1.5 h-[52px] w-6 rounded-b-[5px]"
+            style={{ left: 6 + i * 42 + 30, background: INK, boxShadow: "inset 0 -3px 0 rgba(255,255,255,.08)" }}
+            {...keyProps(whiteMidi(i) + 1)}
           />
         ) : null,
       )}

@@ -2,6 +2,11 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* /hobby on a desktop window with room: the page fits the window, and only
+   the card grid scrolls. */
+@custom-variant fit (@media (min-width: 1024px) and (min-height: 700px));
+/* The same, on a short window: the foot band goes, so the cards keep room. */
+@custom-variant fit-short (@media (min-width: 1024px) and (min-height: 700px) and (max-height: 819px));
 
 @theme inline {
   --color-background: var(--background);
@@ -360,14 +365,16 @@ html.dark:has([data-site="law"]) {
 }
 
 /* ---------------------------------------------------------------
-   Hobbies. Paper (light) or soft near-black (dark), frosted glass
-   panels, and one accent per hobby, set by [data-hobby] on the page.
+   Hobbies. A scrapbook: a dotted page, paper (light) or soft
+   near-black (dark), with polaroids, tape, index cards, and ink
+   stamps on it, and one accent per hobby, set by [data-hobby].
    Light is the base block and dark overrides it, as with law.
    --------------------------------------------------------------- */
 [data-site="hobby"] {
   --radius: 1rem;
-  --font-display-family: var(--font-bricolage);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display-family: var(--font-fraunces);
+  font-family: var(--font-isans), ui-sans-serif, system-ui, sans-serif;
+  --hb-polaroid-shadow: 0 10px 22px rgb(40 30 60 / 16%), 0 1px 3px rgb(40 30 60 / 18%);
 
   --background: #faf9f6;
   --foreground: #1a1820;
@@ -395,7 +402,10 @@ html.dark:has([data-site="law"]) {
   --nav-pill: rgb(26 24 34 / 6%);
 
   --hb-on: #ffffff; /* text on an accent button */
-  --hb-dot: rgb(26 24 34 / 10%); /* the dotted ground */
+  /* The page: paper grain, fine and coarse, and a soft edge. */
+  --hb-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.29 0 0 0 0 0.2 0 0 0 0.66 -0.21'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hb-grain-big: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.36 0 0 0 0 0.24 0 0 0 0.3 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hb-vignette: rgb(120 90 50 / 10%);
   --hb-glass-top: rgb(255 255 255 / 82%);
   --hb-glass-bottom: rgb(255 255 255 / 62%);
   --hb-glass-edge: rgb(26 24 34 / 8%);
@@ -434,7 +444,9 @@ html.dark:has([data-site="law"]) {
   --nav-pill: rgb(255 255 255 / 10%);
 
   --hb-on: #0b0b0f;
-  --hb-dot: rgb(255 255 255 / 7%);
+  --hb-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.3 -0.125'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hb-grain-big: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.12 -0.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hb-vignette: rgb(0 0 0 / 45%);
   --hb-glass-top: rgb(255 255 255 / 8.5%);
   --hb-glass-bottom: rgb(255 255 255 / 3%);
   --hb-glass-edge: rgb(255 255 255 / 11%);
@@ -444,6 +456,12 @@ html.dark:has([data-site="law"]) {
   --hb-lens-shadow: inset 0 1px 0 rgb(255 255 255 / 32%), inset 0 -1px 0 rgb(255 255 255 / 5%), 0 4px 14px rgb(0 0 0 / 35%);
   --hb-thumb: #16151b;
   --hb-scrim: rgb(5 5 8 / 55%);
+  --hb-polaroid-shadow: 0 14px 28px rgb(0 0 0 / 42%), 0 2px 4px rgb(0 0 0 / 30%);
+}
+
+/* Fraunces at its softest, with its wonky italics. */
+[data-site="hobby"] .font-display {
+  font-variation-settings: "SOFT" 100, "WONK" 1;
 }
 
 /* Each hobby's accent: --hb for fills and glows, --hb-ink where it is text
@@ -460,6 +478,11 @@ html.dark:has([data-site="law"]) {
 [data-hobby="ice"] { --hb: #2b86d6; --hb-rgb: 43 134 214; --hb-ink: #1d64a6; --hb-btn: #1d64a6; }
 [data-hobby="balisong"] { --hb: #d98a0b; --hb-rgb: 217 138 11; --hb-ink: #8f5a00; --hb-btn: #8f5a00; }
 [data-hobby="piano"] { --hb: #1fa374; --hb-rgb: 31 163 116; --hb-ink: #15744f; --hb-btn: #15744f; }
+/* The same accents as ink on paper, in both themes: paper is always light. */
+[data-hobby="magic"] { --hb-paper-rgb: 214 60 85; --hb-paper-ink: #b42d45; }
+[data-hobby="ice"] { --hb-paper-rgb: 43 134 214; --hb-paper-ink: #1d64a6; }
+[data-hobby="balisong"] { --hb-paper-rgb: 217 138 11; --hb-paper-ink: #8f5a00; }
+[data-hobby="piano"] { --hb-paper-rgb: 31 163 116; --hb-paper-ink: #15744f; }
 .dark [data-hobby="magic"] { --hb: #ff6b7d; --hb-rgb: 255 107 125; --hb-ink: #ffb3bd; --hb-btn: #ff6b7d; }
 .dark [data-hobby="ice"] { --hb: #7cc4ff; --hb-rgb: 124 196 255; --hb-ink: #c4e4ff; --hb-btn: #7cc4ff; }
 .dark [data-hobby="balisong"] { --hb: #ffb454; --hb-rgb: 255 180 84; --hb-ink: #ffd9a3; --hb-btn: #ffb454; }
@@ -503,9 +526,18 @@ html.dark:has([data-site="hobby"]) {
   box-shadow: var(--hb-lens-shadow);
 }
 
-.hb-dots {
-  background-image: radial-gradient(var(--hb-dot) 1px, transparent 1.2px);
-  background-size: 24px 24px;
+/* The page itself: plain paper with a fine fibre grain, a faint larger
+   mottle, and edges a shade darker, like a sheet under a desk lamp. */
+.hb-ground {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(120% 90% at 50% 35%, transparent 55%, var(--hb-vignette) 100%),
+    var(--hb-grain-big),
+    var(--hb-grain);
+  background-size:
+    100% 100%,
+    900px 900px,
+    240px 240px;
 }
 
 /* Tag colours. A tag stores its index, so renaming or reordering keeps it.
@@ -538,6 +570,99 @@ html.dark:has([data-site="hobby"]) {
   color: var(--t-ink);
   background: rgb(var(--t) / 13%);
   border: 1px solid rgb(var(--t) / 38%);
+}
+
+/* ---- The scrapbook ----
+   .hb-paper is anything printed on paper: polaroids, the index card, the
+   tag editor, the phone sheet. Paper is light in both themes, so inside it
+   every token goes back to its light value, and the accent becomes ink. */
+.hb-paper {
+  --background: #f6f1e7;
+  --foreground: #2a2530;
+  --card: #fbf8f1;
+  --card-foreground: #2a2530;
+  --popover: #fffdf8;
+  --popover-foreground: #2a2530;
+  --primary: #2a2530;
+  --primary-foreground: #fbf8f1;
+  --muted: rgb(42 37 48 / 6%);
+  --muted-foreground: #5f5866;
+  --accent: rgb(42 37 48 / 7%);
+  --accent-foreground: #2a2530;
+  --destructive: #c0392b;
+  --border: rgb(42 37 48 / 12%);
+  --input: rgb(42 37 48 / 18%);
+  --faint: #7a7282;
+  --field: #fffdf8;
+  --ring: var(--hb-paper-ink);
+  --hb: rgb(var(--hb-paper-rgb));
+  --hb-rgb: var(--hb-paper-rgb);
+  --hb-ink: var(--hb-paper-ink);
+  --hb-btn: var(--hb-paper-ink);
+  --hb-on: #ffffff;
+  --hb-thumb: #e6dfd1;
+  --hb-lens: #ffffff;
+  --hb-lens-shadow: inset 0 0 0 1px rgb(42 37 48 / 8%), 0 2px 8px rgb(40 30 60 / 10%);
+  --hb-glass-edge: rgb(42 37 48 / 10%);
+  --hb-glass-shadow: 0 18px 40px rgb(40 30 60 / 14%);
+  --rule: rgb(70 110 190 / 20%);
+  color: var(--foreground);
+  background: linear-gradient(180deg, #f8f4eb, #efe8da);
+}
+.hb-paper .hb-tag-0 { --t: 214 51 92; --t-ink: #b8325a; }
+.hb-paper .hb-tag-1 { --t: 47 100 181; --t-ink: #2f64b5; }
+.hb-paper .hb-tag-2 { --t: 100 71 191; --t-ink: #6447bf; }
+.hb-paper .hb-tag-3 { --t: 196 88 36; --t-ink: #b04e1f; }
+.hb-paper .hb-tag-4 { --t: 168 58 134; --t-ink: #a83a86; }
+.hb-paper .hb-tag-5 { --t: 19 115 127; --t-ink: #13737f; }
+.hb-paper .hb-tag-6 { --t: 140 128 20; --t-ink: #6b6210; }
+.hb-paper .hb-p-todo { --t: 110 106 120; --t-ink: #55515e; --t-solid: #8a8694; }
+.hb-paper .hb-p-progressing { --t: 214 140 20; --t-ink: #875200; --t-solid: #d98a0b; }
+.hb-paper .hb-p-done { --t: 31 150 95; --t-ink: #17683f; --t-solid: #1f965f; }
+
+/* A polaroid: a white border, a deeper bottom for the caption, a slight
+   tilt that straightens when you point at it or pick it. */
+.hb-polaroid {
+  --tilt: 0deg;
+  rotate: var(--tilt);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 60%), var(--hb-polaroid-shadow);
+  transition:
+    rotate 0.25s ease,
+    translate 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.hb-polaroid:hover {
+  rotate: 0deg;
+  translate: 0 -4px;
+}
+.hb-polaroid[aria-pressed="true"] {
+  rotate: 0deg;
+  translate: 0 -6px;
+  outline: 2px solid rgb(var(--hb-paper-rgb) / 70%);
+  outline-offset: 4px;
+}
+
+/* Washi tape: torn ends, faint stripes, a bit see-through. */
+.hb-tape {
+  clip-path: polygon(0 0, 100% 0, 97% 20%, 100% 40%, 97% 60%, 100% 80%, 97% 100%, 0 100%, 3% 80%, 0 60%, 3% 40%, 0 20%);
+  background-color: var(--tape, rgb(244 239 229 / 90%));
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 28%) 0 5px, transparent 5px 11px);
+}
+
+/* The open card: an index card with a red margin line. */
+.hb-index {
+  background:
+    linear-gradient(90deg, transparent 22px, rgb(229 154 165 / 60%) 22px 23.5px, transparent 23.5px),
+    linear-gradient(180deg, #f8f4eb, #efe8da);
+  background-attachment: local;
+  border-radius: 4px;
+  box-shadow: var(--hb-polaroid-shadow);
+}
+/* Ruled lines under handwriting; the text's line height is the rule. */
+.hb-ruled {
+  line-height: 30px;
+  background-image: repeating-linear-gradient(180deg, transparent 0 29px, var(--rule) 29px 30px);
 }
 
 @keyframes hb-rise {

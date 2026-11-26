@@ -76,7 +76,7 @@ export const DecoSides = ({ hobby }: { hobby: HobbyId }) => {
 export const DecoBottom = ({ hobby }: { hobby: HobbyId }) => {
   const Bottom = SETS[hobby].Bottom;
   return Bottom ? (
-    <Region className="absolute inset-x-0 bottom-0 hidden h-[150px] overflow-hidden md:block">
+    <Region className="fit-short:hidden absolute inset-x-0 bottom-0 hidden h-[116px] overflow-hidden md:block">
       <Bottom />
     </Region>
   ) : null;

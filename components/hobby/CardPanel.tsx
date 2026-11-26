@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  Link2,
   Lock,
   Pencil,
   Play,
@@ -28,7 +27,7 @@ import {
   type HobbyDoc,
 } from "@/lib/hobby/model";
 import { cn } from "@/lib/utils";
-import { ProgressBadge, TagChip, Thumb } from "./bits";
+import { Stamp, TagChip, TagNote, Thumb } from "./bits";
 
 const isNotes = (name: string) => name.trim().toLowerCase() === "notes";
 
@@ -54,6 +53,10 @@ const Tape = () => (
   </>
 );
 
+/** A photo stuck on the index card: a white border and a small tilt. */
+const photo =
+  "fit:max-h-[26dvh] fit-short:max-h-[22dvh] relative block aspect-video w-full -rotate-1 overflow-hidden rounded-[2px] border-[7px] border-white shadow-[0_6px_14px_rgb(40_30_60/0.18)]";
+
 /** The card's picture; a click plays its YouTube video in place, or opens
  *  any other link in a new tab. */
 const Media = ({ card, mark, spot }: { card: Card; mark: string; spot: number }) => {
@@ -61,14 +64,14 @@ const Media = ({ card, mark, spot }: { card: Card; mark: string; spot: number })
   const yt = youTube(card.url);
   if (!card.url) {
     return (
-      <div className="bg-muted grid aspect-video place-items-center rounded-[18px]">
+      <div className="bg-muted fit:max-h-[26dvh] fit-short:max-h-[22dvh] grid aspect-video place-items-center rounded-[2px] border-[7px] border-white shadow-[0_6px_14px_rgb(40_30_60/0.18)]">
         <span className="font-hand text-hb-ink text-[28px]">no video for this one</span>
       </div>
     );
   }
   if (yt && playing) {
     return (
-      <div className="relative aspect-video overflow-hidden rounded-[18px] bg-black">
+      <div className="fit:max-h-[26dvh] fit-short:max-h-[22dvh] relative aspect-video overflow-hidden rounded-[2px] border-[7px] border-white bg-black shadow-[0_6px_14px_rgb(40_30_60/0.18)]">
         <iframe
           src={youTubeEmbed(yt)}
           title={card.title}
@@ -106,7 +109,7 @@ const Media = ({ card, mark, spot }: { card: Card; mark: string; spot: number })
       type="button"
       onClick={() => setPlaying(true)}
       aria-label={`Play ${card.title}`}
-      className="relative block aspect-video w-full cursor-pointer overflow-hidden rounded-[18px]"
+      className={cn(photo, "cursor-pointer")}
     >
       {inner}
     </button>
@@ -116,7 +119,7 @@ const Media = ({ card, mark, spot }: { card: Card; mark: string; spot: number })
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Open ${card.title} in a new tab`}
-      className="relative block aspect-video w-full overflow-hidden rounded-[18px]"
+      className={photo}
     >
       {inner}
     </a>
@@ -187,7 +190,7 @@ const Editor = ({
     [...t.name].reduce((n, c) => n + c.charCodeAt(0), 0) % 7;
 
   return (
-    <div className="flex flex-col gap-0.5 px-1 pt-4 pb-1">
+    <div className="flex flex-col gap-0.5 pt-4 pr-1 pb-1 pl-5">
       <div className={cn(row, "min-h-[54px]")}>
         <label htmlFor="hb-e-title" className="text-faint text-[13px]">
           Title
@@ -407,47 +410,40 @@ const View = ({ doc, card }: { doc: HobbyDoc; card: Card }) => {
   const notes = fields.filter((f) => isNotes(f.name));
   const rest = fields.filter((f) => !isNotes(f.name));
   return (
-    <div className="flex flex-col gap-3.5 px-2.5 pt-[18px] pb-2.5">
-      <span className="self-start">
-        <ProgressBadge progress={card.progress} large />
-      </span>
-      <h2 id="hb-card-title" className="font-display text-4xl leading-[1.02] font-bold tracking-[-1px] text-balance">
-        {card.title}
-      </h2>
+    <div className="flex flex-col gap-2.5 pt-4 pr-2.5 pb-1 pl-6">
+      <div className="flex items-start justify-between gap-3">
+        <h2
+          id="hb-card-title"
+          className="font-display text-[30px] leading-[1.04] font-semibold tracking-[-0.6px] text-balance"
+        >
+          {card.title}
+        </h2>
+        <Stamp progress={card.progress} size={1.05} className="mt-1 -rotate-6" />
+      </div>
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
           {tags.map((t) => (
-            <TagChip key={t.id} tag={t} large />
+            <TagNote key={t.id} tag={t} className="text-[24px]" />
           ))}
         </div>
       )}
+      {/* Fields and notes, written on the card's ruled lines. */}
       {rest.length > 0 && (
-        <dl className="border-border mt-1.5 flex flex-col gap-3 border-t pt-4">
+        <dl className="hb-ruled font-hand mt-1 text-[22px]">
           {rest.map((f) => (
-            <div key={f.id} className="grid grid-cols-[96px_minmax(0,1fr)] items-baseline gap-3">
-              <dt className="text-faint text-[13px]">{f.name}</dt>
-              <dd className="text-[15px] leading-normal break-words">{card.values[f.id]}</dd>
+            <div key={f.id} className="grid grid-cols-[100px_minmax(0,1fr)] gap-3">
+              <dt className="text-muted-foreground">{f.name}</dt>
+              <dd className="break-words">{card.values[f.id]}</dd>
             </div>
           ))}
         </dl>
       )}
       {notes.map((f) => (
-        <div key={f.id} className="bg-muted border-input relative mt-1 rounded-[14px] border border-dashed px-4 pt-3.5 pb-3">
-          <span className="text-faint bg-background absolute -top-2.5 left-3.5 rounded-md px-1.5 text-xs">{f.name}</span>
-          <p className="text-[15px] leading-relaxed whitespace-pre-line">{card.values[f.id]}</p>
+        <div key={f.id} className="font-hand text-[22px]">
+          <span className="text-muted-foreground block leading-[30px]">{f.name}</span>
+          <p className="hb-ruled break-words whitespace-pre-line">{card.values[f.id]}</p>
         </div>
       ))}
-      {card.url && (
-        <a
-          href={card.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-muted-foreground hover:text-foreground flex min-h-11 items-center gap-2 px-1 text-sm"
-        >
-          <Link2 size={16} aria-hidden="true" />
-          {shortUrl(card.url)}
-        </a>
-      )}
     </div>
   );
 };
@@ -528,6 +524,18 @@ const CardPanel = ({
             </button>
           </>
         )}
+        {!draft && card?.url && (
+          <a
+            href={card.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${shortUrl(card.url)} in a new tab`}
+            title={shortUrl(card.url)}
+            className="hover:bg-accent grid size-10 place-items-center rounded-full"
+          >
+            <ExternalLink size={16} />
+          </a>
+        )}
         {!draft && (
           <button
             type="button"
@@ -547,7 +555,7 @@ const CardPanel = ({
               image={previewImage}
               mark={hobby.mark}
               spot={spot}
-              className={cn("aspect-[16/6] rounded-[18px] transition-opacity", !draft.show.thumb && "opacity-40")}
+              className={cn("aspect-[16/6] rounded-[2px] border-[7px] border-white transition-opacity", !draft.show.thumb && "opacity-40")}
               markClassName="-right-7 -bottom-12 size-[200px]"
             />
           </div>

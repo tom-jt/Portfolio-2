@@ -15,15 +15,34 @@ import {
   type ActionResult,
 } from "@/app/hobby/actions";
 import { hobbyById, type HobbyId } from "@/data/hobby/hobbies";
-import { parseSearch, setSearch, useAdmin, useSearch, useWide } from "@/lib/hobby/client";
+import {
+  parseSearch,
+  setSearch,
+  useAdmin,
+  useSearch,
+  useWide,
+} from "@/lib/hobby/client";
 import { draftFrom, draftShow, sameDraft, type Draft } from "@/lib/hobby/draft";
-import { runQuery, slug, youTube, type Card, type HobbyDoc, type Tag } from "@/lib/hobby/model";
+import {
+  runQuery,
+  slug,
+  youTube,
+  type Card,
+  type HobbyDoc,
+  type Tag,
+} from "@/lib/hobby/model";
 import { cn } from "@/lib/utils";
 import AdminDoor from "./AdminDoor";
-import { Mark } from "./bits";
+import { InkFilter, Mark } from "./bits";
 import CardPanel from "./CardPanel";
 import CardTile from "./CardTile";
-import { DecoAnchor, DecoBottom, DecoGround, DecoHero, DecoSides } from "./deco/Deco";
+import {
+  DecoAnchor,
+  DecoBottom,
+  DecoGround,
+  DecoHero,
+  DecoSides,
+} from "./deco/Deco";
 import Doodle from "./Doodle";
 import HobbyNav from "./HobbyNav";
 import TagTabs from "./TagTabs";
@@ -41,7 +60,13 @@ interface Toast {
   action?: { label: string; run: () => void };
 }
 
-const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: HobbyDoc }) => {
+const HobbyApp = ({
+  hobby: hobbyId,
+  initialDoc,
+}: {
+  hobby: HobbyId;
+  initialDoc: HobbyDoc;
+}) => {
   const hobby = hobbyById(hobbyId)!;
   const [doc, setDoc] = useState(initialDoc);
   const admin = useAdmin();
@@ -53,7 +78,9 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
 
   const cards = runQuery(doc, view);
   const total = doc.cards.filter((c) => !c.deletedAt).length;
-  const selected = view.card ? doc.cards.find((c) => c.id === view.card && !c.deletedAt) ?? null : null;
+  const selected = view.card
+    ? (doc.cards.find((c) => c.id === view.card && !c.deletedAt) ?? null)
+    : null;
   const creating = !!edit && edit.draft.card.id === null;
   const panelOpen = !!selected || creating;
   const dirty = !!edit && !sameDraft(edit.draft, edit.base);
@@ -87,7 +114,10 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
   }, [dirty]);
 
   // ---- actions ------------------------------------------------------------
-  const run = async (act: () => Promise<ActionResult>, ok?: (r: Extract<ActionResult, { ok: true }>) => void) => {
+  const run = async (
+    act: () => Promise<ActionResult>,
+    ok?: (r: Extract<ActionResult, { ok: true }>) => void,
+  ) => {
     setBusy(true);
     try {
       const r = await act();
@@ -133,16 +163,24 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
     if (!leave()) return;
     setEdit(null);
   };
-  const setDraft = (fn: (d: Draft) => Draft) => setEdit((e) => (e ? { ...e, draft: fn(e.draft) } : e));
+  const setDraft = (fn: (d: Draft) => Draft) =>
+    setEdit((e) => (e ? { ...e, draft: fn(e.draft) } : e));
 
   const save = async () => {
     if (!edit || busy) return;
     const d = edit.draft;
     await run(
-      () => saveCard({ hobby: hobbyId, card: d.card, fields: d.fields, show: d.show }),
+      () =>
+        saveCard({
+          hobby: hobbyId,
+          card: d.card,
+          fields: d.fields,
+          show: d.show,
+        }),
       (r) => {
         setEdit(null);
-        if (r.cardId && r.cardId !== view.card) setSearch({ card: r.cardId }, !view.card);
+        if (r.cardId && r.cardId !== view.card)
+          setSearch({ card: r.cardId }, !view.card);
         say(d.card.id ? "Saved." : "Card added.");
       },
     );
@@ -172,14 +210,21 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
 
   const lookup = async (url: string) => {
     if (!edit || !url.trim() || url === edit.base.card.url) return;
-    const found = await lookupLink(url).catch(() => ({}) as { title?: string; image?: string });
+    const found = await lookupLink(url).catch(
+      () => ({}) as { title?: string; image?: string },
+    );
     setEdit((e) => {
       if (!e || e.draft.card.url !== url) return e;
       return {
         ...e,
         draft: {
           ...e.draft,
-          card: { ...e.draft.card, title: e.draft.card.title.trim() ? e.draft.card.title : found.title ?? "" },
+          card: {
+            ...e.draft.card,
+            title: e.draft.card.title.trim()
+              ? e.draft.card.title
+              : (found.title ?? ""),
+          },
           previewImage: youTube(url) ? undefined : found.image,
         },
       };
@@ -194,7 +239,11 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const k = keys.current;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && k.editing) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "s" &&
+        k.editing
+      ) {
         e.preventDefault();
         void k.save();
       } else if (e.key === "Escape" && !e.defaultPrevented) {
@@ -223,8 +272,15 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
       ),
     onMove: (t: Tag, by: -1 | 1) => void run(() => moveTag(hobbyId, t.id, by)),
     onDelete: (t: Tag) => {
-      const n = doc.cards.filter((c) => !c.deletedAt && c.tagIds.includes(t.id)).length;
-      if (!window.confirm(`Delete the tag “${t.name}”? ${n ? `It comes off ${n} card${n === 1 ? "" : "s"}.` : "No cards use it."}`)) return;
+      const n = doc.cards.filter(
+        (c) => !c.deletedAt && c.tagIds.includes(t.id),
+      ).length;
+      if (
+        !window.confirm(
+          `Delete the tag “${t.name}”? ${n ? `It comes off ${n} card${n === 1 ? "" : "s"}.` : "No cards use it."}`,
+        )
+      )
+        return;
       void run(
         () => deleteTag(hobbyId, t.id),
         () => {
@@ -253,14 +309,25 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
     />
   ) : null;
 
-  const filtered = !!(view.tag || view.q.trim() || view.progress.length || view.contains.trim());
+  const filtered = !!(
+    view.tag ||
+    view.q.trim() ||
+    view.progress.length ||
+    view.contains.trim()
+  );
 
   return (
-    <div data-hobby={hobbyId} className="relative isolate min-h-dvh overflow-x-clip">
-      {/* The ground: dots, the hobby's glow, and its mark, large and faint.
+    <div
+      data-hobby={hobbyId}
+      className="fit:h-dvh fit:overflow-hidden relative isolate min-h-dvh overflow-x-clip"
+    >
+      <InkFilter />
+      {/* The ground: a sheet of paper, and the hobby's mark, large and faint.
           Wide windows swap the mark for the hobby's own decoration. */}
-      <div aria-hidden="true" className="hb-dots pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute top-[120px] right-[6%] size-[640px] rounded-full bg-[radial-gradient(circle,var(--hb)_0%,transparent_62%)] opacity-[0.16]" />
+      <div
+        aria-hidden="true"
+        className="hb-ground pointer-events-none fixed inset-0 -z-10"
+      >
         <Mark
           d={hobby.mark}
           strokeWidth={0.09}
@@ -272,10 +339,10 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
       <HobbyNav hobby={hobbyId} leave={leave} />
       <DecoSides hobby={hobbyId} />
 
-      <main className="mx-auto flex w-full max-w-[1376px] flex-col gap-6 px-4 pt-24 pb-16 sm:px-8 md:pb-44 lg:pt-28">
+      <main className="fit:h-dvh fit:gap-4 fit:pt-[84px] fit:pb-[124px] fit-short:pb-6 mx-auto flex w-full max-w-[1376px] flex-col gap-6 px-4 pt-24 pb-16 sm:px-8 md:pb-[136px] lg:pt-28">
         <header className="flex flex-col">
           <div className="flex items-end gap-8">
-            <div className="hb-rise flex max-w-[600px] flex-col gap-2 pb-6">
+            <div className="hb-rise fit:pb-4 flex max-w-[600px] flex-col gap-2 pb-6">
               <span className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm font-medium tracking-wide">
                 Hobbies
                 {admin && (
@@ -297,10 +364,12 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                   </>
                 )}
               </span>
-              <h1 className="font-display text-(color:--hb-title) text-[clamp(3.5rem,9vw,5.25rem)] leading-[0.92] font-bold tracking-[-3px]">
+              <h1 className="font-display text-(color:--hb-title) fit-short:text-[4.5rem] text-[clamp(3.75rem,9vw,6rem)] leading-[0.9] font-semibold tracking-[-3px] italic">
                 {hobby.name}
               </h1>
-              <p className="text-muted-foreground mt-1 max-w-[520px] text-[15px] leading-normal">{hobby.blurb}</p>
+              <p className="text-muted-foreground mt-1 max-w-[520px] text-[15px] leading-normal">
+                {hobby.blurb}
+              </p>
             </div>
             {/* Tom, doing the hobby, just past the title. */}
             <div className="relative z-[2] -mb-3 flex shrink-0 items-start gap-0.5 max-sm:hidden">
@@ -311,27 +380,60 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                 {hobby.quip}
               </span>
             </div>
-            <DecoHero hobby={hobbyId} className="-mt-[110px] ml-auto hidden min-[1300px]:block" />
-          </div>
-          <div className="relative">
-            <Toolbar view={view} hobbyName={hobby.name} fields={doc.fields} admin={admin} onNew={startNew} />
-            <DecoAnchor hobby={hobbyId} slot="Toolbar" />
+            <DecoHero
+              hobby={hobbyId}
+              className="-mt-[110px] ml-auto hidden min-[1300px]:block"
+            />
           </div>
         </header>
 
-        <div className="flex items-start gap-5">
-          <section aria-label="Cards" className="flex min-w-0 flex-1 flex-col">
-            <TagTabs doc={doc} active={view.tag} admin={admin} busy={busy} {...tagOps} />
-            <div className="hb-glass relative flex flex-col gap-3.5 rounded-[28px] px-4 pt-[18px] pb-5 sm:px-5">
+        <div className="fit:min-h-0 fit:flex-1 flex items-start gap-5">
+          <section
+            aria-label="Cards"
+            className="fit:h-full flex min-w-0 flex-1 flex-col"
+          >
+            {/* Search, filter, and sort sit over the cards they act on,
+                which leaves the index card the full height beside them. */}
+            <div className="relative mb-2">
+              <Toolbar
+                view={view}
+                hobbyName={hobby.name}
+                fields={doc.fields}
+                admin={admin}
+                onNew={startNew}
+              />
+              <DecoAnchor hobby={hobbyId} slot="Toolbar" />
+            </div>
+            <div className="relative">
+              <TagTabs
+                doc={doc}
+                active={view.tag}
+                admin={admin}
+                busy={busy}
+                {...tagOps}
+              />
               <DecoAnchor hobby={hobbyId} slot="Grid" />
+            </div>
+            {/* The cards, straight on the page: no box round them. When the
+                page fits the window, this is the one part that scrolls, with
+                soft edges, and a little room so tilts and tape aren't cut. */}
+            <div className="fit:-mx-3 fit:min-h-0 fit:flex-1 fit:overflow-y-auto fit:px-3 fit:pb-6 fit:[mask-image:linear-gradient(transparent,#000_14px,#000_calc(100%-28px),transparent)] flex flex-col gap-5 pt-2 [scrollbar-width:thin]">
               <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 px-1 text-sm">
-                <span>
+                <span className="font-hand text-[21px] leading-none">
                   {cards.length} of {total}
                 </span>
                 {filtered && (
                   <button
                     type="button"
-                    onClick={() => setSearch({ tag: null, q: null, progress: null, field: null, has: null })}
+                    onClick={() =>
+                      setSearch({
+                        tag: null,
+                        q: null,
+                        progress: null,
+                        field: null,
+                        has: null,
+                      })
+                    }
                     className="hover:text-foreground cursor-pointer underline underline-offset-[3px]"
                   >
                     Clear filters
@@ -339,7 +441,7 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                 )}
               </div>
               {cards.length > 0 ? (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(200px,100%),1fr))] gap-3.5 max-sm:grid-cols-2">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(210px,100%),1fr))] gap-x-7 gap-y-9 px-1 pt-2 max-sm:grid-cols-2 max-sm:gap-x-4 max-sm:gap-y-7">
                   {cards.map((c, i) => (
                     <CardTile
                       key={c.id}
@@ -356,7 +458,9 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1.5 px-4 py-12 text-center">
-                  <span className="font-hand text-hb-ink text-[34px]">hmm, nothing here yet</span>
+                  <span className="font-hand text-hb-ink text-[34px]">
+                    hmm, nothing here yet
+                  </span>
                   <span className="text-muted-foreground text-sm">
                     {filtered
                       ? "Try another tag, or loosen the filters."
@@ -366,24 +470,27 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
                   </span>
                 </div>
               )}
-              <span className="font-hand text-faint self-center pt-1.5 text-[22px]">
+              <span className="font-hand text-faint self-center pt-4 text-[22px]">
                 learnt slowly, logged happily — Tom
               </span>
             </div>
           </section>
 
-          <div className="sticky top-24 hidden shrink-0 lg:block">
+          {/* When the page fits the window, the index card runs down over the
+              foot band (it is only decoration) to get room for a whole card. */}
+          <div className="fit:z-[3] fit:h-[calc(100%+100px)] fit-short:h-full sticky top-24 hidden shrink-0 lg:block">
             <DecoAnchor hobby={hobbyId} slot="Panel" />
             <aside
               aria-label="Card details"
-              className="hb-glass max-h-[calc(100dvh-7rem)] w-[min(460px,36vw)] overflow-y-auto rounded-[30px] p-3.5 [scrollbar-width:thin]"
+              className="hb-paper hb-index fit:max-h-full max-h-[calc(100dvh-7rem)] w-[min(460px,36vw)] overflow-y-auto p-3.5 [scrollbar-width:thin]"
             >
               {wide && panel ? (
                 panel
               ) : (
                 <div className="flex flex-col items-center gap-1.5 px-6 py-[70px] text-center">
-                  <span className="font-hand text-hb-ink text-[34px]">pick a card, any card</span>
-                  <span className="text-muted-foreground text-sm">Its details and video open here.</span>
+                  <span className="font-hand text-hb-ink text-[34px]">
+                    pick a card, any card
+                  </span>
                 </div>
               )}
             </aside>
@@ -395,9 +502,17 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
 
       {/* Phones and narrow windows: the card opens as a sheet over the grid. */}
       {!wide && panel && (
-        <div className="fixed inset-0 z-[110] lg:hidden" role="dialog" aria-modal="true" aria-label="Card details">
-          <div className="hb-fade absolute inset-0 bg-(--hb-scrim) backdrop-blur-[4px]" onClick={close} />
-          <div className="hb-sheet hb-pop absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-[34px] border-b-0">
+        <div
+          className="fixed inset-0 z-[110] lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Card details"
+        >
+          <div
+            className="hb-fade absolute inset-0 bg-(--hb-scrim) backdrop-blur-[4px]"
+            onClick={close}
+          />
+          <div className="hb-sheet hb-paper hb-index absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-[22px]">
             <div className="flex justify-center pt-2.5 pb-1">
               <span className="bg-muted-foreground/40 h-[5px] w-10 rounded-full" />
             </div>
@@ -428,7 +543,9 @@ const HobbyApp = ({ hobby: hobbyId, initialDoc }: { hobby: HobbyId; initialDoc: 
               type="button"
               onClick={() => setToast(null)}
               aria-label="Dismiss"
-              className={cn("text-muted-foreground hover:text-foreground h-9 cursor-pointer rounded-full px-3")}
+              className={cn(
+                "text-muted-foreground hover:text-foreground h-9 cursor-pointer rounded-full px-3",
+              )}
             >
               OK
             </button>

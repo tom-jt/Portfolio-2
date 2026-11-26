@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2, Check } from "lucide-react";
 import { setSearch } from "@/lib/hobby/client";
 import { slug, type HobbyDoc, type Tag } from "@/lib/hobby/model";
@@ -8,15 +8,24 @@ import { cn } from "@/lib/utils";
 
 const tab = (active: boolean) =>
   cn(
-    "border-border flex shrink-0 items-center gap-2 rounded-t-2xl border border-b-0 px-[18px] text-sm font-medium transition-[height,background-color]",
-    active
-      ? "text-foreground h-12 bg-(--hb-glass-top) shadow-[inset_0_1px_0_var(--hb-glass-highlight)]"
-      : "text-muted-foreground hover:text-foreground bg-muted h-10",
+    "hb-tape flex h-[30px] shrink-0 cursor-pointer items-center gap-1.5 px-4 text-[13px] font-semibold text-[#2a2530] transition-[translate,filter]",
+    active ? "-translate-y-0.5 drop-shadow-[0_3px_4px_rgb(0_0_0/0.25)]" : "opacity-85 hover:-translate-y-0.5 hover:opacity-100",
   );
 
+/** Each strip sits a little crooked, and the picked one is fully inked. */
+const TILTS = [-3, 2, -1.5, 3, -2.5, 1.5, -1];
+const tapeStyle = (i: number, rgb: string, active: boolean) =>
+  ({
+    rotate: `${TILTS[i % TILTS.length]}deg`,
+    "--tape": active
+      ? `color-mix(in srgb, rgb(${rgb}) 72%, white)`
+      : `color-mix(in srgb, rgb(${rgb}) 30%, #f4efe5)`,
+  }) as CSSProperties;
+
 /**
- * The tag filter, as bookmarks along the top of the grid. In admin mode a
- * pencil turns them into editors: rename, move, delete, and add.
+ * The tag filter, as strips of washi tape above the grid, each in its tag's
+ * colour. In admin mode a pencil turns them into editors: rename, move,
+ * delete, and add.
  */
 const TagTabs = ({
   doc,
@@ -48,7 +57,7 @@ const TagTabs = ({
 
   if (admin && editing) {
     return (
-      <div className="hb-glass mb-3 flex flex-col gap-2 rounded-3xl p-3">
+      <div className="hb-paper mb-3 flex flex-col gap-2 rounded-md p-3 [box-shadow:var(--hb-polaroid-shadow)]">
         <div className="flex items-center justify-between gap-2 px-1">
           <span className="text-muted-foreground text-[13px]">
             Tags for this tab. Changes save as you make them.
@@ -152,19 +161,36 @@ const TagTabs = ({
   }
 
   return (
-    <div role="tablist" aria-label="Tags" className="flex items-end gap-1 overflow-x-auto px-[22px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
-      <button type="button" role="tab" aria-selected={!activeTag} onClick={() => pick(null)} className={tab(!activeTag)}>
-        <span className="bg-muted-foreground/60 size-2 rounded-[3px]" />
+    <div
+      role="tablist"
+      aria-label="Tags"
+      className="flex items-center gap-2.5 overflow-x-auto px-1 py-2 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={!activeTag}
+        onClick={() => pick(null)}
+        className={tab(!activeTag)}
+        style={tapeStyle(0, "var(--hb-rgb)", !activeTag)}
+      >
         All
-        <span className={cn("text-xs", !activeTag ? "text-hb-ink" : "text-faint")}>{live.length}</span>
+        <span className="font-medium opacity-60">{live.length}</span>
       </button>
-      {doc.tags.map((t) => {
+      {doc.tags.map((t, i) => {
         const on = activeTag?.id === t.id;
         return (
-          <button key={t.id} type="button" role="tab" aria-selected={on} onClick={() => pick(on ? null : t)} className={tab(on)}>
-            <span className={`hb-tag-${t.colour} size-2 rounded-[3px] bg-[rgb(var(--t))]`} />
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => pick(on ? null : t)}
+            className={cn(tab(on), `hb-tag-${t.colour}`)}
+            style={tapeStyle(i + 1, "var(--t)", on)}
+          >
             {t.name}
-            <span className={cn("text-xs", on ? "text-hb-ink" : "text-faint")}>{count(t)}</span>
+            <span className="font-medium opacity-60">{count(t)}</span>
           </button>
         );
       })}
@@ -174,7 +200,7 @@ const TagTabs = ({
           onClick={() => setEditing(true)}
           aria-label="Edit tags"
           title="Edit tags"
-          className="text-muted-foreground hover:text-foreground mb-1 ml-1 grid size-9 cursor-pointer place-items-center rounded-full"
+          className="text-muted-foreground hover:text-foreground ml-1 grid size-9 cursor-pointer place-items-center rounded-full"
         >
           <Pencil size={15} />
         </button>
